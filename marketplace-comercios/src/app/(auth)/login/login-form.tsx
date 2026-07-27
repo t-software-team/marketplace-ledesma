@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
-import { registerSchema, type RegisterFormValues } from '@/lib/validations/auth'
+import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
 
-export default function RegisterPage() {
+export default function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [authError, setAuthError] = useState<string | null>(null)
   const supabase = createClient()
 
@@ -20,67 +21,58 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
   })
 
-  async function onSubmit(values: RegisterFormValues) {
+  async function onSubmit(values: LoginFormValues) {
     setAuthError(null)
 
-    const { error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
-      options: {
-        data: {
-          full_name: values.fullName,
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
-      },
     })
 
     if (error) {
-      setAuthError(error.message)
+      setAuthError('Email o contraseña incorrectos')
       return
     }
 
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    if (session) {
+    if (!user) {
+      router.push('/')
+      router.refresh()
+      return
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.role) {
       router.push('/onboarding')
       router.refresh()
       return
     }
 
-    setAuthError(
-      'Te enviamos un email de confirmación. Revisá tu bandeja para continuar.'
-    )
+    const next = searchParams.get('next')
+    router.push(next ?? '/')
+    router.refresh()
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl">Crear cuenta</CardTitle>
-        <CardDescription>Registrate para comprar o vender en el marketplace</CardDescription>
+        <CardTitle className="text-2xl">Ingresar</CardTitle>
+        <CardDescription>Accedé a tu cuenta del marketplace</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="fullName" className="text-sm font-medium">
-              Nombre completo
-            </label>
-            <Input
-              id="fullName"
-              autoComplete="name"
-              aria-invalid={!!errors.fullName}
-              {...register('fullName')}
-            />
-            {errors.fullName && (
-              <p className="text-xs text-destructive">{errors.fullName.message}</p>
-            )}
-          </div>
-
           <div className="space-y-2">
             <label htmlFor="email" className="text-sm font-medium">
               Email
@@ -104,7 +96,7 @@ export default function RegisterPage() {
             <Input
               id="password"
               type="password"
-              autoComplete="new-password"
+              autoComplete="current-password"
               aria-invalid={!!errors.password}
               {...register('password')}
             />
@@ -113,19 +105,22 @@ export default function RegisterPage() {
             )}
           </div>
 
-          {authError && (
-            <p className="text-sm text-muted-foreground">{authError}</p>
+          {authError && <p className="text-sm text-destructive">{authError}</p>}
+          {searchParams.get('error') === 'auth' && (
+            <p className="text-sm text-destructive">
+              No pudimos confirmar tu sesión. Intentá de nuevo.
+            </p>
           )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}
+            {isSubmitting ? 'Ingresando...' : 'Ingresar'}
           </Button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          ¿Ya tenés cuenta?{' '}
-          <Link href="/login" className="font-medium text-foreground underline-offset-4 hover:underline">
-            Ingresá
+          ¿No tenés cuenta?{' '}
+          <Link href="/registro" className="font-medium text-foreground underline-offset-4 hover:underline">
+            Registrate
           </Link>
         </p>
       </CardContent>
