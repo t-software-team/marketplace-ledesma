@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { IBM_Plex_Mono, Inter, Sora } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
@@ -36,6 +36,15 @@ export const metadata: Metadata = {
     siteName: 'Todo Marketplace',
     locale: 'es_AR',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Todo Marketplace',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#7c3aed',
 }
 
 export default function RootLayout({
