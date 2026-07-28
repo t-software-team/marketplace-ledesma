@@ -1,4 +1,6 @@
+import { unstable_cache } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 
 export async function getMyShop() {
   const supabase = await createClient()
@@ -125,41 +127,45 @@ export async function getMyProduct(productId: string) {
   return product
 }
 
-export async function getShopBySlug(slug: string) {
-  const supabase = await createClient()
+export const getShopBySlug = unstable_cache(
+  async (slug: string) => {
+    const supabase = createPublicClient()
 
-  const { data: shop, error } = await supabase
-    .from('shops')
-    .select(
+    const { data: shop, error } = await supabase
+      .from('shops')
+      .select(
+        `
+        id,
+        name,
+        slug,
+        description,
+        logo_url,
+        cover_url,
+        whatsapp_number,
+        instagram_url,
+        facebook_url,
+        website_url,
+        address,
+        city,
+        verification_status,
+        subscription_status,
+        is_paused,
+        paused_reason,
+        categories ( name )
       `
-      id,
-      name,
-      slug,
-      description,
-      logo_url,
-      cover_url,
-      whatsapp_number,
-      instagram_url,
-      facebook_url,
-      website_url,
-      address,
-      city,
-      verification_status,
-      subscription_status,
-      is_paused,
-      paused_reason,
-      categories ( name )
-    `
-    )
-    .eq('slug', slug)
-    .eq('is_active', true)
-    .is('deleted_at', null)
-    .maybeSingle()
+      )
+      .eq('slug', slug)
+      .eq('is_active', true)
+      .is('deleted_at', null)
+      .maybeSingle()
 
-  if (error || !shop) return null
+    if (error || !shop) return null
 
-  return shop
-}
+    return shop
+  },
+  ['shop-by-slug'],
+  { revalidate: 30 }
+)
 
 export async function getShopRating(shopId: string) {
   const supabase = await createClient()
@@ -334,65 +340,99 @@ export async function getMyPendingSubscription(shopId: string) {
   return subscription
 }
 
-export async function getProductDetail(productId: string) {
-  const supabase = await createClient()
+export const getProductDetail = unstable_cache(
+  async (productId: string) => {
+    const supabase = createPublicClient()
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .select(
+    const { data: product, error } = await supabase
+      .from('products')
+      .select(
+        `
+        id,
+        shop_id,
+        name,
+        description,
+        price,
+        currency,
+        is_active,
+        category_id,
+        video_url,
+        categories ( id, name, slug, parent_id ),
+        product_images ( id, url, sort_order ),
+        shops ( id, name, slug, whatsapp_number, verification_status, subscription_status, logo_url )
       `
-      id,
-      shop_id,
-      name,
-      description,
-      price,
-      currency,
-      is_active,
-      category_id,
-      video_url,
-      categories ( id, name, slug, parent_id ),
-      product_images ( id, url, sort_order ),
-      shops ( id, name, slug, whatsapp_number, verification_status, subscription_status, logo_url )
-    `
-    )
-    .eq('id', productId)
-    .maybeSingle()
-
-  if (error || !product) return null
-
-  let parentCategoryName: string | null = null
-  let parentCategorySlug: string | null = null
-  if (product.categories?.parent_id) {
-    const { data: parentCategory } = await supabase
-      .from('categories')
-      .select('name, slug')
-      .eq('id', product.categories.parent_id)
+      )
+      .eq('id', productId)
       .maybeSingle()
 
-    parentCategoryName = parentCategory?.name ?? null
-    parentCategorySlug = parentCategory?.slug ?? null
-  }
+    if (error || !product) return null
 
-  const images = [...(product.product_images ?? [])].sort(
-    (a, b) => a.sort_order - b.sort_order
-  )
+    let parentCategoryName: string | null = null
+    let parentCategorySlug: string | null = null
+    if (product.categories?.parent_id) {
+      const { data: parentCategory } = await supabase
+        .from('categories')
+        .select('name, slug')
+        .eq('id', product.categories.parent_id)
+        .maybeSingle()
 
-  return {
-    id: product.id,
-    shopId: product.shop_id,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    currency: product.currency,
-    isActive: product.is_active,
-    category: product.categories,
-    parentCategoryName,
-    parentCategorySlug,
-    videoUrl: product.video_url,
-    images,
-    shop: product.shops,
-  }
-}
+      parentCategoryName = parentCategory?.name ?? null
+      parentCategorySlug = parentCategory?.slug ?? null
+    }
+
+    const images = [...(product.product_images ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order
+    )
+
+    return {
+      id: product.id,
+      shopId: product.shop_id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      currency: product.currency,
+      isActive: product.is_active,
+      category: product.categories,
+      parentCategoryName,
+      parentCategorySlug,
+      videoUrl: product.video_url,
+      images,
+      shop: product.shops,
+    }
+  },
+  ['product-detail'],
+  { revalidate: 30 }
+)
+
+export const getFeedData = unstable_cache(
+  async (limit: number, offset: number) => {
+    const supabase = createPublicClient()
+
+    const [{ data: categories }, { data: subcategories }, { data: products }] = await Promise.all([
+      supabase
+        .from('categories')
+        .select('id, name, slug')
+        .eq('is_active', true)
+        .is('parent_id', null)
+        .order('name'),
+      supabase
+        .from('categories')
+        .select('id, name, slug, parent_id')
+        .eq('is_active', true)
+        .not('parent_id', 'is', null)
+        .order('name'),
+      supabase.rpc('get_products_feed', { p_limit: limit, p_offset: offset }),
+    ])
+
+    return {
+      categories: categories ?? [],
+      subcategories: subcategories ?? [],
+      products: products ?? [],
+    }
+  },
+  ['feed-data'],
+  { revalidate: 30 }
+)
 
 export async function getMyFavorites() {
   const supabase = await createClient()
