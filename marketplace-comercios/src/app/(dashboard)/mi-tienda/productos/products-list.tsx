@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { Search, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -79,7 +80,7 @@ export function ProductsList({
               key={product.id}
               className={cn(
                 !product.is_active && 'opacity-60',
-                product.is_featured && 'ring-2 ring-warning'
+                product.is_featured && 'ring-2 ring-primary shadow-sm shadow-primary/15'
               )}
             >
               <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
@@ -99,7 +100,7 @@ export function ProductsList({
                       </div>
                     )}
                     {product.is_featured && (
-                      <span className="absolute top-1 left-1 flex size-5 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-sm">
+                      <span className="absolute top-1 left-1 flex size-5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
                         <Star className="size-3 fill-current" aria-hidden />
                       </span>
                     )}
@@ -116,7 +117,10 @@ export function ProductsList({
                         label={product.is_active ? 'Activo' : 'Inactivo'}
                       />
                       {product.is_featured && (
-                        <StatusBadge status="active" label="Destacado" />
+                        <Badge className="gap-1">
+                          <Star className="size-2.5 fill-current" aria-hidden />
+                          Destacado
+                        </Badge>
                       )}
                       {product.categoryName && (
                         <span className="text-xs text-muted-foreground">

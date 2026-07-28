@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { getProductLimitInfo } from '@/lib/shops/queries'
+import { checkRateLimit } from '@/lib/rate-limit'
 import {
   createShopSchema,
   productSchema,
@@ -643,6 +644,11 @@ export async function reportShop(
     return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
   }
 
+  const allowed = await checkRateLimit('report_shop', 5, 60 * 60)
+  if (!allowed) {
+    return { error: 'Enviaste muchos reportes. Esperá un rato antes de enviar otro.' }
+  }
+
   const { error } = await supabase.from('shop_reports').insert({
     shop_id: shopId,
     reason: parsed.data.reason,
@@ -672,6 +678,11 @@ export async function upsertShopReview(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+
+  const allowed = await checkRateLimit('shop_review', 20, 60 * 60)
+  if (!allowed) {
+    return { error: 'Hiciste muchos cambios de reseñas. Esperá un rato antes de seguir.' }
   }
 
   const { data: shop } = await supabase
@@ -719,4 +730,62 @@ export async function deleteShopReview(shopId: string) {
 
   const { data: shop } = await supabase.from('shops').select('slug').eq('id', shopId).maybeSingle()
   if (shop) revalidatePath(`/tienda/${shop.slug}`)
+}
+
+export async function toggleShopFollow(shopId: string) {
+  const { supabase, user } = await requireUser()
+
+  const { data: existing } = await supabase
+    .from('shop_follows')
+    .select('id')
+    .eq('shop_id', shopId)
+    .eq('client_id', user.id)
+    .maybeSingle()
+
+  if (existing) {
+    const { error } = await supabase
+      .from('shop_follows')
+      .delete()
+      .eq('shop_id', shopId)
+      .eq('client_id', user.id)
+
+    if (error) {
+      console.error('toggleShopFollow: fallo al dejar de seguir', { shopId, error })
+      throw new Error('No pudimos actualizar')
+    }
+  } else {
+    const { error } = await supabase
+      .from('shop_follows')
+      .insert({ shop_id: shopId, client_id: user.id })
+
+    if (error) {
+      console.error('toggleShopFollow: fallo al seguir', { shopId, error })
+      throw new Error('No pudimos actualizar')
+    }
+  }
+
+  const { data: shop } = await supabase.from('shops').select('slug').eq('id', shopId).maybeSingle()
+  if (shop) revalidatePath(`/tienda/${shop.slug}`)
+  revalidatePath('/siguiendo')
+
+  return { isFollowing: !existing }
+}
+
+export async function logShopContact(shopId: string, productId?: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return
+
+  const { error } = await supabase.from('shop_contacts').insert({
+    shop_id: shopId,
+    client_id: user.id,
+    product_id: productId || null,
+  })
+
+  if (error) {
+    console.error('logShopContact: fallo al registrar contacto', { shopId, error })
+  }
 }

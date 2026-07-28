@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Inter, Sora } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
+import { getBaseUrl } from '@/lib/site-url'
 import './globals.css'
 
 const inter = Inter({
@@ -23,8 +24,17 @@ const ibmPlexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Todo Marketplace',
+  metadataBase: new URL(getBaseUrl()),
+  title: {
+    default: 'Todo Marketplace',
+    template: '%s | Todo Marketplace',
+  },
   description: 'Comercios locales de tu barrio',
+  openGraph: {
+    type: 'website',
+    siteName: 'Todo Marketplace',
+    locale: 'es_AR',
+  },
 }
 
 export default function RootLayout({

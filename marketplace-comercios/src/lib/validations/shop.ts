@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { uuidLike } from './uuid'
 
-const whatsappNumberSchema = z
+export const whatsappNumberSchema = z
   .string()
   .min(8, 'Ingresá un número de WhatsApp válido')
   .refine((val) => {

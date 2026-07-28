@@ -3,6 +3,14 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/server/supabase-service-role'
+import { sendEmail } from '@/lib/email/client'
+import {
+  shopVerificationApprovedEmail,
+  shopVerificationRejectedEmail,
+  subscriptionApprovedEmail,
+  subscriptionRejectedEmail,
+} from '@/lib/email/templates'
 import {
   categorySchema,
   rejectionReasonSchema,
@@ -11,6 +19,67 @@ import {
 
 export type ActionState = {
   error: string | null
+}
+
+async function notifyShopOwner(
+  shopId: string,
+  buildEmail: (shopName: string) => { subject: string; html: string }
+) {
+  try {
+    const service = createServiceRoleClient()
+    const { data: shop } = await service
+      .from('shops')
+      .select('name, owner_id')
+      .eq('id', shopId)
+      .maybeSingle()
+
+    if (!shop) return
+
+    const { data: userResult } = await service.auth.admin.getUserById(shop.owner_id)
+    const email = userResult?.user?.email
+    if (!email) return
+
+    const { subject, html } = buildEmail(shop.name)
+    await sendEmail(email, subject, html)
+  } catch (error) {
+    console.error('notifyShopOwner: fallo al notificar (best effort)', { shopId, error })
+  }
+}
+
+async function notifySubscriptionOwner(
+  subscriptionId: string,
+  buildEmail: (shopName: string, planName: string) => { subject: string; html: string }
+) {
+  try {
+    const service = createServiceRoleClient()
+    const { data: subscription } = await service
+      .from('subscriptions')
+      .select('shop_id, subscription_plans ( name )')
+      .eq('id', subscriptionId)
+      .maybeSingle()
+
+    if (!subscription) return
+
+    const { data: shop } = await service
+      .from('shops')
+      .select('name, owner_id')
+      .eq('id', subscription.shop_id)
+      .maybeSingle()
+
+    if (!shop) return
+
+    const { data: userResult } = await service.auth.admin.getUserById(shop.owner_id)
+    const email = userResult?.user?.email
+    if (!email) return
+
+    const { subject, html } = buildEmail(shop.name, subscription.subscription_plans?.name ?? 'tu plan')
+    await sendEmail(email, subject, html)
+  } catch (error) {
+    console.error('notifySubscriptionOwner: fallo al notificar (best effort)', {
+      subscriptionId,
+      error,
+    })
+  }
 }
 
 async function logAdminAction(
@@ -50,6 +119,7 @@ export async function approveShopVerification(shopId: string) {
   }
 
   await logAdminAction(supabase, 'shop_verified', 'shops', shopId)
+  await notifyShopOwner(shopId, shopVerificationApprovedEmail)
 
   revalidatePath('/admin/shops')
   revalidatePath(`/admin/shops/${shopId}`)
@@ -66,6 +136,8 @@ export async function rejectShopVerification(shopId: string) {
     console.error('rejectShopVerification: fallo al rechazar', { shopId, error })
     throw new Error('No pudimos rechazar la verificación')
   }
+
+  await notifyShopOwner(shopId, shopVerificationRejectedEmail)
 
   await logAdminAction(supabase, 'shop_verification_rejected', 'shops', shopId)
 
@@ -195,6 +267,7 @@ export async function approveSubscriptionRequest(subscriptionId: string) {
   }
 
   await logAdminAction(supabase, 'subscription_approved', 'subscriptions', subscriptionId)
+  await notifySubscriptionOwner(subscriptionId, subscriptionApprovedEmail)
 
   revalidatePath('/admin/subscripciones')
 }
@@ -227,6 +300,9 @@ export async function rejectSubscriptionRequest(
   await logAdminAction(supabase, 'subscription_rejected', 'subscriptions', subscriptionId, {
     reason: parsed.data.reason,
   })
+  await notifySubscriptionOwner(subscriptionId, (shopName) =>
+    subscriptionRejectedEmail(shopName, parsed.data.reason)
+  )
 
   revalidatePath('/admin/subscripciones')
   return { error: null }

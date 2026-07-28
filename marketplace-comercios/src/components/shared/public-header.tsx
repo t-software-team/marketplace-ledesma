@@ -1,17 +1,47 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, Store } from 'lucide-react'
+import { ArrowLeft, Bell, Heart, Store } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
+import { useTransition } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { UserMenu } from '@/components/shared/user-menu'
+import { markClientNotificationsRead } from '@/lib/notifications/actions'
 import { cn } from '@/lib/utils'
+
+interface ClientNotification {
+  id: string
+  type: string
+  reference_id: string
+  is_read: boolean
+  created_at: string
+}
 
 interface PublicHeaderProps {
   user: { email: string } | null
   profileRole: string | null
   profileFullName: string | null
   profileAvatarUrl: string | null
+  notifications?: ClientNotification[]
+  unreadNotificationsCount?: number
+}
+
+const NOTIFICATION_LABELS: Record<string, string> = {
+  new_product: 'Un comercio que seguís publicó algo nuevo',
+}
+
+function notificationHref(notification: ClientNotification) {
+  if (notification.type === 'new_product') return `/producto/${notification.reference_id}`
+  return '/'
 }
 
 const MINIMAL_HEADER_PREFIXES = ['/producto/', '/tienda/']
@@ -21,10 +51,20 @@ export function PublicHeader({
   profileRole,
   profileFullName,
   profileAvatarUrl,
+  notifications = [],
+  unreadNotificationsCount = 0,
 }: PublicHeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isMarkingRead, startMarkingRead] = useTransition()
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+
+  function handleMarkAllRead() {
+    startMarkingRead(async () => {
+      await markClientNotificationsRead()
+      router.refresh()
+    })
+  }
 
   if (isMinimal) {
     return (
@@ -70,10 +110,65 @@ export function PublicHeader({
                   Admin
                 </Button>
               )}
-              {profileRole === 'client' && (
-                <Button variant="outline" size="sm" render={<Link href="/favoritos" />} nativeButton={false}>
-                  Favoritos
-                </Button>
+              {profileRole && (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={<Button variant="outline" size="icon" className="relative" />}
+                      nativeButton={true}
+                    >
+                      <Bell className="size-4" aria-hidden />
+                      {unreadNotificationsCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-1 -right-1 h-4.5 min-w-4.5 justify-center rounded-full px-1 text-[10px] font-semibold"
+                        >
+                          {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                        </Badge>
+                      )}
+                      <span className="sr-only">Notificaciones</span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-72">
+                      <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {notifications.length === 0 ? (
+                        <p className="px-1.5 py-2 text-sm text-muted-foreground">
+                          No hay notificaciones nuevas
+                        </p>
+                      ) : (
+                        notifications.map((notification) => (
+                          <DropdownMenuItem
+                            key={notification.id}
+                            render={<Link href={notificationHref(notification)} />}
+                          >
+                            <span className="flex flex-col gap-0.5">
+                              <span>{NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(notification.created_at).toLocaleString('es-AR')}
+                              </span>
+                            </span>
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                      {notifications.length > 0 && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={handleMarkAllRead} disabled={isMarkingRead}>
+                            {isMarkingRead ? 'Marcando...' : 'Marcar todas como leídas'}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    render={<Link href="/favoritos" aria-label="Favoritos" />}
+                    nativeButton={false}
+                  >
+                    <Heart className="size-4" aria-hidden />
+                  </Button>
+                </>
               )}
               {!profileRole && (
                 <Button size="sm" render={<Link href="/onboarding" />} nativeButton={false}>

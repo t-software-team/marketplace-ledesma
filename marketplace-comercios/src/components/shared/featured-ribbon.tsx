@@ -11,7 +11,7 @@ export function FeaturedRibbon({ className, variant = 'corner' }: FeaturedRibbon
     return (
       <div
         className={cn(
-          'absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-destacado px-2.5 py-1 text-xs font-medium text-destacado-foreground shadow-md ring-1 ring-black/5',
+          'absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-primary to-primary/80 px-2.5 py-1 text-xs font-medium text-primary-foreground shadow-md shadow-primary/30 ring-1 ring-white/20',
           className
         )}
         aria-label="Comercio destacado"
@@ -25,11 +25,12 @@ export function FeaturedRibbon({ className, variant = 'corner' }: FeaturedRibbon
   return (
     <div
       className={cn(
-        'absolute top-0 left-0 rounded-br-lg bg-destacado px-2 py-0.5 text-[10px] font-medium text-destacado-foreground',
+        'absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-primary to-primary/80 px-2 py-0.5 text-[10px] font-medium text-primary-foreground shadow-sm shadow-primary/30',
         className
       )}
       aria-label="Comercio destacado"
     >
+      <Sparkles className="size-2.5" aria-hidden />
       Destacado
     </div>
   )

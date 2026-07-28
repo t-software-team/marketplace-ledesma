@@ -1,15 +1,18 @@
 'use client'
 
-import { MapPin, Search } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { MapPin, Search, Store } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { CategoryGrid } from './category-grid'
 import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
 import { ProductCard, type ProductFeedItem } from '@/components/shared/product-card'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
+import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProductsFeed } from '@/hooks/use-products'
+import { useProductsFeed, useShopSearch } from '@/hooks/use-products'
 import { useFiltersStore } from '@/stores/use-filters-store'
 
 interface Category {
@@ -53,6 +56,7 @@ export function FeedClient({
   )
 
   const { data: products, isLoading, isFetching } = useProductsFeed()
+  const { data: matchingShops } = useShopSearch()
 
   useEffect(() => {
     if (userLocation || !navigator.geolocation) return
@@ -80,11 +84,11 @@ export function FeedClient({
         <div className="relative flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar productos..."
+            placeholder="Buscar productos, servicios o comercios..."
             value={searchQuery}
             onChange={(event) => setSearch(event.target.value)}
             className="h-11 pl-9"
-            aria-label="Buscar productos"
+            aria-label="Buscar productos, servicios o comercios"
           />
         </div>
         <button
@@ -124,6 +128,38 @@ export function FeedClient({
           selectedId={categoryId === activeRubroId ? null : categoryId}
           onSelect={(id) => setCategory(id ?? activeRubroId)}
         />
+      )}
+
+      {matchingShops && matchingShops.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-medium text-muted-foreground">Comercios</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {matchingShops.map((shop) => (
+              <Link
+                key={shop.id}
+                href={`/tienda/${shop.slug}`}
+                className="flex w-56 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-primary"
+              >
+                <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  {shop.logo_url ? (
+                    <Image src={shop.logo_url} alt={shop.name} fill className="object-cover" sizes="44px" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                      <Store className="size-4" aria-hidden />
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1">
+                    <p className="truncate text-sm font-medium">{shop.name}</p>
+                    {shop.verification_status === 'verified' && <VerifiedStamp className="size-4" />}
+                  </div>
+                  {shop.city && <p className="truncate text-xs text-muted-foreground">{shop.city}</p>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {showLoading ? (

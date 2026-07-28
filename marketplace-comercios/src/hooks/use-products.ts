@@ -26,3 +26,34 @@ export function useProductsFeed() {
     },
   })
 }
+
+export interface ShopSearchResult {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  city: string | null
+  verification_status: string
+}
+
+export function useShopSearch() {
+  const { searchQuery } = useFiltersStore()
+  const supabase = createClient()
+  const trimmed = searchQuery.trim()
+
+  return useQuery({
+    queryKey: ['shop-search', trimmed],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('shops')
+        .select('id, name, slug, logo_url, city, verification_status')
+        .ilike('name', `%${trimmed}%`)
+        .eq('is_active', true)
+        .is('deleted_at', null)
+        .limit(4)
+      if (error) throw error
+      return data as ShopSearchResult[]
+    },
+    enabled: trimmed.length >= 2,
+  })
+}

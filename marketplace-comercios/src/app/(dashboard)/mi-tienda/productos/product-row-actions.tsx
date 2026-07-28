@@ -79,9 +79,8 @@ export function ProductRowActions({
           size="sm"
           disabled={isPending}
           onClick={handleToggleFeatured}
-          className={isFeatured ? 'bg-warning text-warning-foreground hover:bg-warning/90' : undefined}
         >
-          <Star className="size-3.5" aria-hidden />
+          <Star className={isFeatured ? 'size-3.5 fill-current' : 'size-3.5'} aria-hidden />
           {isFeatured ? 'Destacado' : 'Destacar'}
         </Button>
       )}

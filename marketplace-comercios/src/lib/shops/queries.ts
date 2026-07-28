@@ -174,12 +174,7 @@ export async function getShopRating(shopId: string) {
 export async function getShopReviews(shopId: string) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
-    .from('shop_reviews')
-    .select('id, rating, comment, created_at, client_id, profiles ( full_name )')
-    .eq('shop_id', shopId)
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const { data, error } = await supabase.rpc('get_shop_reviews', { p_shop_id: shopId })
 
   if (error || !data) return []
 
@@ -189,7 +184,7 @@ export async function getShopReviews(shopId: string) {
     comment: review.comment,
     createdAt: review.created_at,
     clientId: review.client_id,
-    clientName: review.profiles?.full_name ?? 'Usuario',
+    clientName: review.client_name,
   }))
 }
 
@@ -209,6 +204,87 @@ export async function getMyShopReview(shopId: string) {
     .maybeSingle()
 
   return data
+}
+
+export async function getShopFollowStats(shopId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase.rpc('get_shop_follow_stats', { p_shop_id: shopId })
+  return data?.[0]?.follower_count ? Number(data[0].follower_count) : 0
+}
+
+export async function getMyShopFollow(shopId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return false
+
+  const { data } = await supabase
+    .from('shop_follows')
+    .select('id')
+    .eq('shop_id', shopId)
+    .eq('client_id', user.id)
+    .maybeSingle()
+
+  return Boolean(data)
+}
+
+export async function getMyFollowedShops() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from('shop_follows')
+    .select(
+      `
+      created_at,
+      shops (
+        id, name, slug, logo_url, city,
+        verification_status, subscription_status,
+        categories ( name )
+      )
+    `
+    )
+    .eq('client_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  if (error || !data) return []
+
+  return data
+    .map((row) => row.shops)
+    .filter((shop): shop is NonNullable<typeof shop> => shop !== null)
+}
+
+export async function getMyContactHistory() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from('shop_contacts')
+    .select(
+      `
+      id, created_at,
+      shops ( id, name, slug, logo_url ),
+      products ( id, name )
+    `
+    )
+    .eq('client_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  if (error || !data) return []
+
+  return data.filter((row) => row.shops !== null)
 }
 
 export async function getActiveSubscriptionPlans() {

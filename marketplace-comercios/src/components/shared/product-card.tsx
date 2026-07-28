@@ -65,7 +65,8 @@ export function ProductCard({
       <Card
         className={cn(
           'relative overflow-hidden py-0 shadow-sm ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/40',
-          isFeatured && 'ring-2 ring-destacado hover:ring-destacado'
+          isFeatured &&
+            'ring-2 ring-primary shadow-md shadow-primary/15 hover:shadow-xl hover:shadow-primary/25 hover:ring-primary'
         )}
       >
         {isFeatured && <FeaturedRibbon variant="floating" />}

@@ -10,6 +10,7 @@ import { ProductGallery } from '@/components/product/product-gallery'
 import { formatPrice } from '@/lib/format'
 import { getProductDetail } from '@/lib/shops/queries'
 import { createClient } from '@/lib/supabase/server'
+import { getBaseUrl } from '@/lib/site-url'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
@@ -23,9 +24,17 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     return { title: 'Producto no encontrado' }
   }
 
+  const description = product.description ?? `${product.name} en ${product.shop.name}`
+  const image = product.images[0]?.url
+
   return {
-    title: `${product.name} | ${product.shop.name} | Todo Marketplace`,
-    description: product.description ?? `${product.name} en ${product.shop.name}`,
+    title: `${product.name} | ${product.shop.name}`,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      images: image ? [{ url: image }] : undefined,
+    },
   }
 }
 
@@ -56,9 +65,35 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const shop = product.shop
   const isVerified = shop.verification_status === 'verified'
+  const baseUrl = getBaseUrl()
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description ?? undefined,
+    image: product.images.map((image) => image.url),
+    url: `${baseUrl}/producto/${product.id}`,
+    offers: {
+      '@type': 'Offer',
+      price: product.price ?? undefined,
+      priceCurrency: product.currency ?? 'ARS',
+      availability: 'https://schema.org/InStock',
+      url: `${baseUrl}/producto/${product.id}`,
+      seller: {
+        '@type': 'Organization',
+        name: shop.name,
+        url: `${baseUrl}/tienda/${shop.slug}`,
+      },
+    },
+  }
 
   return (
     <div className="space-y-6 pb-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-3">
           <div className="relative">
@@ -140,6 +175,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductContact
             shopId={shop.id}
             shopName={shop.name}
+            productId={product.id}
             productName={product.name}
             phoneNumber={shop.whatsapp_number}
             rubroSlug={

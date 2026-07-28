@@ -277,6 +277,41 @@ export type Database = {
           },
         ]
       }
+      client_notifications: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          reference_id: string
+          type: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          reference_id: string
+          type: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          reference_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -358,6 +393,88 @@ export type Database = {
           },
           {
             foreignKeyName: "shop_reports_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_contacts: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          product_id: string | null
+          shop_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          shop_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_contacts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_contacts_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_follows: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          shop_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          shop_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_follows_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_follows_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -984,6 +1101,29 @@ export type Database = {
       get_shop_rating: {
         Args: { p_shop_id: string }
         Returns: { avg_rating: number; review_count: number }[]
+      }
+      check_rate_limit: {
+        Args: { p_actor: string; p_action: string; p_max_count: number; p_window_seconds: number }
+        Returns: boolean
+      }
+      get_shop_reviews: {
+        Args: { p_shop_id: string }
+        Returns: {
+          id: string
+          rating: number
+          comment: string | null
+          created_at: string
+          client_id: string
+          client_name: string
+        }[]
+      }
+      get_shop_follow_stats: {
+        Args: { p_shop_id: string }
+        Returns: { follower_count: number }[]
+      }
+      mark_client_notifications_read: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_products_feed: {
         Args: {

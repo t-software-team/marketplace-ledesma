@@ -155,3 +155,34 @@ export async function uploadVerificationDocument(shopId: string, file: File) {
 
   return path
 }
+
+const AVATAR_MAX_SIZE = 3 * 1024 * 1024
+
+export async function uploadAvatar(userId: string, file: File) {
+  if (!IMAGE_MIME_TYPES.includes(file.type)) {
+    throw new Error('El archivo debe ser una imagen (PNG, JPEG, WEBP o GIF)')
+  }
+
+  if (file.size > AVATAR_MAX_SIZE) {
+    throw new Error('La imagen no puede pesar más de 3MB')
+  }
+
+  const supabase = createClient()
+  const extension = file.name.split('.').pop() ?? 'jpg'
+  const path = `${userId}/${crypto.randomUUID()}.${extension}`
+
+  const { error } = await supabase.storage.from('avatars').upload(path, file, {
+    upsert: false,
+  })
+
+  if (error) {
+    console.error('uploadAvatar: fallo al subir a Storage', { userId, error })
+    throw new Error('No pudimos subir la imagen')
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('avatars').getPublicUrl(path)
+
+  return publicUrl
+}

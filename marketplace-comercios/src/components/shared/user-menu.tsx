@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+import { User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -49,6 +51,13 @@ export function UserMenu({ userEmail, userFullName, userAvatarUrl }: UserMenuPro
           <span className="font-medium text-foreground">{userFullName ?? 'Usuario'}</span>
           <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/perfil" />}>
+          <User className="size-4" aria-hidden />
+          Mi perfil
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/siguiendo" />}>Siguiendo</DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/contactos" />}>Mis contactos</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           render={

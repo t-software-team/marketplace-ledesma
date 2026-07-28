@@ -3,12 +3,14 @@
 import { MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { logShopContact } from '@/lib/shops/actions'
 import { cn } from '@/lib/utils'
 
 interface WhatsAppButtonProps {
   phoneNumber: string
   message?: string
   shopId?: string
+  productId?: string
   className?: string
 }
 
@@ -16,6 +18,7 @@ export function WhatsAppButton({
   phoneNumber,
   message = 'Hola, vi tu tienda en Todo Marketplace',
   shopId,
+  productId,
   className,
 }: WhatsAppButtonProps) {
   const sanitizedPhone = phoneNumber.replace(/\D/g, '')
@@ -25,10 +28,13 @@ export function WhatsAppButton({
     if (!shopId) return
 
     const supabase = createClient()
-    await supabase.rpc('increment_shop_metric', {
-      p_shop_id: shopId,
-      p_metric: 'whatsapp_click',
-    })
+    await Promise.all([
+      supabase.rpc('increment_shop_metric', {
+        p_shop_id: shopId,
+        p_metric: 'whatsapp_click',
+      }),
+      logShopContact(shopId, productId),
+    ])
   }
 
   return (

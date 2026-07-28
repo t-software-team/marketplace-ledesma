@@ -8,6 +8,7 @@ import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
 import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
+import { FollowShopButton } from '@/components/shop/follow-shop-button'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
@@ -17,13 +18,16 @@ import { ShopViewTracker } from '@/components/shop/shop-view-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
+  getMyShopFollow,
   getMyShopReview,
   getShopBySlug,
+  getShopFollowStats,
   getShopProducts,
   getShopRating,
   getShopReviews,
 } from '@/lib/shops/queries'
 import { createClient } from '@/lib/supabase/server'
+import { getBaseUrl } from '@/lib/site-url'
 
 interface ShopPageProps {
   params: Promise<{ slug: string }>
@@ -51,9 +55,16 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
     return { title: 'Tienda no encontrada' }
   }
 
+  const description = shop.description ?? `Productos de ${shop.name} en Todo Marketplace`
+
   return {
-    title: `${shop.name} | Todo Marketplace`,
-    description: shop.description ?? `Productos de ${shop.name} en Todo Marketplace`,
+    title: shop.name,
+    description,
+    openGraph: {
+      title: shop.name,
+      description,
+      images: shop.logo_url ? [{ url: shop.logo_url }] : undefined,
+    },
   }
 }
 
@@ -70,20 +81,48 @@ export default async function ShopPage({ params }: ShopPageProps) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const [products, shopUrl, rating, reviews, myReview] = await Promise.all([
+  const [products, shopUrl, rating, reviews, myReview, followerCount, isFollowing] = await Promise.all([
     getShopProducts(shop.id),
     getShopUrl(slug),
     getShopRating(shop.id),
     getShopReviews(shop.id),
     user ? getMyShopReview(shop.id) : Promise.resolve(null),
+    getShopFollowStats(shop.id),
+    user ? getMyShopFollow(shop.id) : Promise.resolve(false),
   ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
   const isVerified = shop.verification_status === 'verified'
   const isFeatured = shop.subscription_status === 'active'
+  const baseUrl = getBaseUrl()
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: shop.name,
+    description: shop.description ?? undefined,
+    image: shop.logo_url ?? undefined,
+    url: `${baseUrl}/tienda/${shop.slug}`,
+    telephone: shop.whatsapp_number ?? undefined,
+    address: shop.city
+      ? { '@type': 'PostalAddress', addressLocality: shop.city, streetAddress: shop.address ?? undefined }
+      : undefined,
+    aggregateRating:
+      rating.reviewCount > 0
+        ? {
+            '@type': 'AggregateRating',
+            ratingValue: rating.avgRating,
+            reviewCount: rating.reviewCount,
+          }
+        : undefined,
+  }
 
   return (
     <div className="space-y-6 pb-24">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+      />
       <ShopViewTracker shopId={shop.id} />
 
       <div className="-mx-4 overflow-hidden rounded-xl border border-border bg-surface shadow-sm md:-mx-6">
@@ -121,7 +160,14 @@ export default async function ShopPage({ params }: ShopPageProps) {
               )}
             </div>
             <div className="min-w-0 flex-1 pt-2">
-              <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
+              <div className="flex items-start justify-between gap-2">
+                <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
+                <FollowShopButton
+                  shopId={shop.id}
+                  isLoggedIn={Boolean(user)}
+                  initialIsFollowing={isFollowing}
+                />
+              </div>
               {isVerified && <VerifiedStamp showLabel className="mt-1" />}
               {isFeatured && rating.reviewCount > 0 && (
                 <div className="mt-1 flex items-center gap-1.5 text-sm">
@@ -130,6 +176,11 @@ export default async function ShopPage({ params }: ShopPageProps) {
                     {rating.avgRating} ({rating.reviewCount})
                   </span>
                 </div>
+              )}
+              {followerCount > 0 && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
+                </p>
               )}
               {(categoryName || shop.city) && (
                 <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">

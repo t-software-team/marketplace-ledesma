@@ -100,6 +100,7 @@ const MESSAGES_BY_RUBRO: Record<string, QuickMessage[]> = {
 interface ProductContactProps {
   shopId: string
   shopName: string
+  productId: string
   productName: string
   phoneNumber: string
   rubroSlug: string | null
@@ -108,6 +109,7 @@ interface ProductContactProps {
 export function ProductContact({
   shopId,
   shopName,
+  productId,
   productName,
   phoneNumber,
   rubroSlug,
@@ -143,13 +145,20 @@ export function ProductContact({
 
       <WhatsAppButton
         shopId={shopId}
+        productId={productId}
         phoneNumber={phoneNumber}
         message={message}
         className="hidden w-full sm:flex"
       />
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 p-4 backdrop-blur-sm sm:hidden">
-        <WhatsAppButton shopId={shopId} phoneNumber={phoneNumber} message={message} className="w-full" />
+        <WhatsAppButton
+          shopId={shopId}
+          productId={productId}
+          phoneNumber={phoneNumber}
+          message={message}
+          className="w-full"
+        />
       </div>
     </div>
   )

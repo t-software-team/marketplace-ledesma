@@ -1,5 +1,6 @@
 import { PublicHeader, PublicMain } from '@/components/shared/public-header'
 import { createClient } from '@/lib/supabase/server'
+import { getMyClientNotifications } from '@/lib/notifications/queries'
 
 export default async function PublicLayout({
   children,
@@ -25,6 +26,10 @@ export default async function PublicLayout({
     profileAvatarUrl = profile?.avatar_url ?? null
   }
 
+  const { notifications, unreadCount } = user
+    ? await getMyClientNotifications()
+    : { notifications: [], unreadCount: 0 }
+
   return (
     <div className="flex min-h-screen flex-col">
       <PublicHeader
@@ -32,6 +37,8 @@ export default async function PublicLayout({
         profileRole={profileRole}
         profileFullName={profileFullName}
         profileAvatarUrl={profileAvatarUrl}
+        notifications={notifications}
+        unreadNotificationsCount={unreadCount}
       />
       <PublicMain>{children}</PublicMain>
     </div>

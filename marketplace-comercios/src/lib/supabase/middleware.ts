@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PROTECTED_PREFIXES = ['/admin', '/mi-tienda', '/favoritos'] as const
+const PROTECTED_PREFIXES = ['/admin', '/mi-tienda', '/favoritos', '/perfil', '/siguiendo', '/contactos'] as const
 const AUTH_PAGES = ['/login', '/registro'] as const
 
 function isProtectedPath(path: string) {
@@ -93,10 +93,6 @@ export async function updateSession(request: NextRequest) {
     profile.role !== 'shop_admin' &&
     profile.role !== 'superadmin'
   ) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-
-  if (path.startsWith('/favoritos') && profile.role !== 'client') {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
