@@ -9,9 +9,9 @@ import {
   getMyPendingSubscription,
   getMyShop,
 } from '@/lib/shops/queries'
-import { startSubscriptionCheckout } from '@/lib/shops/actions'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { cn } from '@/lib/utils'
+import { SubscribeButton } from './subscribe-button'
 
 function formatMoney(price: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -244,15 +244,16 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
                       Es tu plan mientras no tengas una suscripción activa
                     </div>
                   ) : (
-                    <form action={startSubscriptionCheckout.bind(null, plan.id)}>
-                      <Button type="submit" className="w-full">
-                        {activePlanId
+                    <SubscribeButton
+                      planId={plan.id}
+                      label={
+                        activePlanId
                           ? plan.price > currentPlanPrice
                             ? 'Mejorar a este plan'
                             : 'Cambiar a este plan'
-                          : 'Pagar con GalioPay'}
-                      </Button>
-                    </form>
+                          : 'Pagar con GalioPay'
+                      }
+                    />
                   )}
                 </CardContent>
               </Card>

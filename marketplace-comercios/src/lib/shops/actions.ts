@@ -496,7 +496,11 @@ export async function toggleProductFeatured(productId: string, isFeatured: boole
   revalidatePath('/')
 }
 
-export async function startSubscriptionCheckout(planId: string) {
+export async function startSubscriptionCheckout(
+  planId: string,
+  _prevState: ActionState,
+  _formData: FormData
+): Promise<ActionState> {
   const { supabase, user } = await requireUser()
 
   const { data: shop } = await supabase
@@ -505,7 +509,7 @@ export async function startSubscriptionCheckout(planId: string) {
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!shop) throw new Error('No tenés una tienda creada')
+  if (!shop) return { error: 'No tenés una tienda creada' }
 
   const { data: pending } = await supabase
     .from('subscriptions')
@@ -550,7 +554,7 @@ export async function startSubscriptionCheckout(planId: string) {
     .eq('id', planId)
     .maybeSingle()
 
-  if (!plan) throw new Error('El plan seleccionado no existe')
+  if (!plan) return { error: 'El plan seleccionado no existe' }
 
   const endDate = new Date()
   endDate.setDate(endDate.getDate() + plan.duration_days)
@@ -585,9 +589,10 @@ export async function startSubscriptionCheckout(planId: string) {
       referenceId,
       error: linkError,
     })
-    throw new Error(
-      'No pudimos conectar con GalioPay para iniciar el pago. Intentá de nuevo en unos minutos.'
-    )
+    return {
+      error:
+        'No pudimos conectar con GalioPay para iniciar el pago. Intentá de nuevo en unos minutos.',
+    }
   }
 
   const { error } = await supabase.from('subscriptions').insert({
@@ -605,7 +610,7 @@ export async function startSubscriptionCheckout(planId: string) {
 
   if (error) {
     console.error('startSubscriptionCheckout: fallo al crear solicitud', { referenceId, error })
-    throw new Error('No pudimos iniciar el pago')
+    return { error: 'No pudimos iniciar el pago' }
   }
 
   revalidatePath('/mi-tienda/suscripcion')

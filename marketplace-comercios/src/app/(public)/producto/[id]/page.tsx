@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { FavoriteButton } from '@/components/shared/favorite-button'
+import { ShareButton } from '@/components/shared/share-button'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { ProductContact } from '@/components/product/product-contact'
 import { ProductGallery } from '@/components/product/product-gallery'
@@ -131,11 +132,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </div>
           )}
 
-          <div>
-            <h1 className="text-2xl font-heading">{product.name}</h1>
-            <p className="mt-1 font-mono text-xl text-foreground">
-              {formatPrice(product.price, product.currency)}
-            </p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h1 className="text-2xl font-heading">{product.name}</h1>
+              <p className="mt-1 font-mono text-xl text-foreground">
+                {formatPrice(product.price, product.currency)}
+              </p>
+            </div>
+            <ShareButton
+              title={product.name}
+              text={`Mirá "${product.name}" en ${shop.name} — ${formatPrice(product.price, product.currency)}`}
+              url={`${baseUrl}/producto/${product.id}`}
+              className="shrink-0"
+            />
           </div>
 
           {product.description && (

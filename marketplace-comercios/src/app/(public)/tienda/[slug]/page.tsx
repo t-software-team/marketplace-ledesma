@@ -11,6 +11,7 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { FollowShopButton } from '@/components/shop/follow-shop-button'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
+import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
@@ -267,6 +268,12 @@ export default async function ShopPage({ params }: ShopPageProps) {
               </Button>
             )}
             <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
+            <ShareButton
+              title={shop.name}
+              text={`Mirá ${shop.name} en Todo Marketplace`}
+              url={shopUrl}
+              size="icon"
+            />
           </div>
         </div>
       </div>
@@ -354,6 +361,12 @@ export default async function ShopPage({ params }: ShopPageProps) {
             </Button>
           )}
           <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
+          <ShareButton
+            title={shop.name}
+            text={`Mirá ${shop.name} en Todo Marketplace`}
+            url={shopUrl}
+            size="icon"
+          />
         </div>
       </div>
     </div>
