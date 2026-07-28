@@ -96,27 +96,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <div className="relative">
-            <ProductGallery images={product.images} productName={product.name} />
-            <FavoriteButton
-              productId={product.id}
-              initialIsFavorite={isFavorite}
-              isLoggedIn={Boolean(user)}
-              className="absolute top-2 right-2 z-10"
-            />
-          </div>
-
-          {product.videoUrl && (
-            <video
-              src={product.videoUrl}
-              controls
-              playsInline
-              preload="none"
-              poster={product.images[0]?.url}
-              className="aspect-[9/16] w-full max-w-xs rounded-xl border border-border bg-black"
-            />
-          )}
+        <div className="relative">
+          <ProductGallery
+            images={product.images}
+            productName={product.name}
+            videoUrl={product.videoUrl}
+          />
+          <FavoriteButton
+            productId={product.id}
+            initialIsFavorite={isFavorite}
+            isLoggedIn={Boolean(user)}
+            className="absolute top-2 right-2 z-10"
+          />
         </div>
 
         <div className="space-y-4">
@@ -135,7 +126,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="flex items-start justify-between gap-2">
             <div>
               <h1 className="text-2xl font-heading">{product.name}</h1>
-              <p className="mt-1 font-mono text-xl text-foreground">
+              <p className="mt-1 font-mono text-3xl font-semibold text-foreground">
+                {product.variants.length > 0 && (
+                  <span className="mr-1 font-sans text-sm font-normal text-muted-foreground">
+                    Desde
+                  </span>
+                )}
                 {formatPrice(product.price, product.currency)}
               </p>
             </div>
@@ -155,30 +151,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           <Link
             href={`/tienda/${shop.slug}`}
-            className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-muted"
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+            <div className="relative size-6 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border">
               {shop.logo_url ? (
-                <Image
-                  src={shop.logo_url}
-                  alt={`Logo de ${shop.name}`}
-                  fill
-                  className="object-cover"
-                  sizes="48px"
-                />
+                <Image src={shop.logo_url} alt="" fill className="object-cover" sizes="24px" />
               ) : (
-                <div className="flex h-full items-center justify-center text-sm font-heading text-muted-foreground">
+                <div className="flex h-full items-center justify-center text-[10px] font-heading text-muted-foreground">
                   {shop.name.charAt(0)}
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="truncate font-medium">{shop.name}</p>
-                {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
-              </div>
-              <p className="text-xs text-muted-foreground">Ver tienda</p>
-            </div>
+            <span className="flex min-w-0 items-center gap-1 truncate font-medium text-foreground">
+              {shop.name}
+              {isVerified && <VerifiedStamp className="size-4 shrink-0" />}
+            </span>
+            <ChevronRight className="size-3.5 shrink-0" aria-hidden />
           </Link>
 
           <ProductContact
@@ -191,6 +179,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
               product.parentCategorySlug ??
               (product.category && !product.category.parent_id ? product.category.slug : null)
             }
+            variants={product.variants}
+            currency={product.currency}
           />
         </div>
       </div>

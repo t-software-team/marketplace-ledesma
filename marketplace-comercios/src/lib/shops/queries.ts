@@ -118,7 +118,8 @@ export async function getMyProduct(productId: string) {
       category_id,
       is_active,
       video_url,
-      product_images ( id, url, sort_order )
+      product_images ( id, url, sort_order ),
+      product_variants ( id, name, price, sort_order )
     `
     )
     .eq('id', productId)
@@ -359,6 +360,7 @@ export const getProductDetail = unstable_cache(
         video_url,
         categories ( id, name, slug, parent_id ),
         product_images ( id, url, sort_order ),
+        product_variants ( id, name, price, sort_order ),
         shops ( id, name, slug, whatsapp_number, verification_status, subscription_status, logo_url )
       `
       )
@@ -383,6 +385,9 @@ export const getProductDetail = unstable_cache(
     const images = [...(product.product_images ?? [])].sort(
       (a, b) => a.sort_order - b.sort_order
     )
+    const variants = [...(product.product_variants ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order
+    )
 
     return {
       id: product.id,
@@ -397,6 +402,7 @@ export const getProductDetail = unstable_cache(
       parentCategorySlug,
       videoUrl: product.video_url,
       images,
+      variants,
       shop: product.shops,
     }
   },

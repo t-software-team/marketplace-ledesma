@@ -83,6 +83,29 @@ export const productSchema = z.object({
       }
     }),
   video_url: z.string().optional().or(z.literal('')),
+  variants: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .transform((val, ctx) => {
+      if (!val) return [] as { name: string; price: number }[]
+      try {
+        const parsed = JSON.parse(val)
+        if (!Array.isArray(parsed)) return []
+        return parsed
+          .filter(
+            (item): item is { name: string; price: number } =>
+              typeof item?.name === 'string' &&
+              item.name.trim().length > 0 &&
+              !Number.isNaN(Number(item.price))
+          )
+          .map((item) => ({ name: item.name.trim(), price: Number(item.price) }))
+      } catch (error) {
+        ctx.addIssue({ code: 'custom', message: 'Opciones inválidas' })
+        console.error('productSchema: variants inválido', { error })
+        return []
+      }
+    }),
 })
 
 export type ProductFormValues = z.infer<typeof productSchema>

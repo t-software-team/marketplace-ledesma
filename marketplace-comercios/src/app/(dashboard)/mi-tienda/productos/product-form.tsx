@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
+import { ProductVariantsField } from '@/components/shared/product-variants-field'
 import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,7 @@ interface ProductFormProps {
     is_active: boolean
     imageUrls: string[]
     videoUrl?: string | null
+    variants?: { name: string; price: number }[]
   }
   submitLabel: string
   isService?: boolean
@@ -107,6 +109,7 @@ export function ProductForm({
           <FieldError message={fieldErrors.currency} />
         </div>
       </div>
+      <ProductVariantsField initialVariants={defaultValues?.variants} noun={noun} />
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Subcategoría</label>
@@ -139,6 +142,7 @@ export function ProductForm({
       <ProductImagesField shopId={shopId} initialImages={defaultValues?.imageUrls} noun={noun} />
 
       <ProductVideoField shopId={shopId} initialVideoUrl={defaultValues?.videoUrl} noun={noun} />
+
 
       <label className="flex items-center gap-2 text-sm font-medium">
         <input

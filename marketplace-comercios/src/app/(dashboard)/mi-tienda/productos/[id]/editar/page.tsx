@@ -27,6 +27,9 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
   const images = [...(product.product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order
   )
+  const variants = [...(product.product_variants ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order
+  )
 
   const updateProductWithId = updateProduct.bind(null, product.id)
   const isService = isServiceRubro(shop.categories?.slug)
@@ -51,6 +54,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
           is_active: product.is_active,
           imageUrls: images.map((image) => image.url),
           videoUrl: product.video_url,
+          variants: variants.map((v) => ({ name: v.name, price: v.price })),
         }}
       />
     </div>

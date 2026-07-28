@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
+import { formatPrice } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 interface QuickMessage {
@@ -132,6 +133,12 @@ const MESSAGES_BY_RUBRO: Record<string, QuickMessage[]> = {
   ],
 }
 
+interface ProductVariant {
+  id: string
+  name: string
+  price: number
+}
+
 interface ProductContactProps {
   shopId: string
   shopName: string
@@ -139,6 +146,8 @@ interface ProductContactProps {
   productName: string
   phoneNumber: string
   rubroSlug: string | null
+  variants?: ProductVariant[]
+  currency?: string
 }
 
 export function ProductContact({
@@ -148,14 +157,48 @@ export function ProductContact({
   productName,
   phoneNumber,
   rubroSlug,
+  variants = [],
+  currency = 'ARS',
 }: ProductContactProps) {
   const quickMessages = (rubroSlug && MESSAGES_BY_RUBRO[rubroSlug]) || GENERIC_MESSAGES
-  const defaultMessage = `Hola ${shopName}, vi "${productName}" en Todo Marketplace`
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
+  const effectiveName = selectedVariant ? `${productName} - ${selectedVariant.name}` : productName
+  const defaultMessage = `Hola ${shopName}, vi "${effectiveName}" en Todo Marketplace`
   const [message, setMessage] = useState(defaultMessage)
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 
+  function handleSelectVariant(variant: ProductVariant | null) {
+    setSelectedVariant(variant)
+    setSelectedLabel(null)
+    const name = variant ? `${productName} - ${variant.name}` : productName
+    setMessage(`Hola ${shopName}, vi "${name}" en Todo Marketplace`)
+  }
+
   return (
     <div className="space-y-2">
+      {variants.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-muted-foreground">Elegí una opción</p>
+          <div className="flex flex-wrap gap-2">
+            {variants.map((variant) => (
+              <button
+                key={variant.id}
+                type="button"
+                onClick={() => handleSelectVariant(variant)}
+                className={cn(
+                  'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+                  selectedVariant?.id === variant.id
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-surface text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {variant.name} · {formatPrice(variant.price, currency)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="text-xs font-medium text-muted-foreground">Mensajes rápidos</p>
       <div className="flex flex-wrap gap-2">
         {quickMessages.map((option) => (
@@ -163,7 +206,7 @@ export function ProductContact({
             key={option.label}
             type="button"
             onClick={() => {
-              setMessage(option.text(shopName, productName))
+              setMessage(option.text(shopName, effectiveName))
               setSelectedLabel(option.label)
             }}
             className={cn(

@@ -305,6 +305,7 @@ export async function createProduct(
     is_active: formData.get('is_active') === 'on',
     image_urls: formData.get('image_urls') ?? '',
     video_url: formData.get('video_url') ?? '',
+    variants: formData.get('variants') ?? '',
   })
 
   if (!parsed.success) {
@@ -314,13 +315,18 @@ export async function createProduct(
     }
   }
 
+  const minVariantPrice =
+    parsed.data.variants.length > 0
+      ? Math.min(...parsed.data.variants.map((v) => v.price))
+      : null
+
   const { data: product, error } = await supabase
     .from('products')
     .insert({
       shop_id: shop.id,
       name: parsed.data.name,
       description: parsed.data.description || null,
-      price: parsed.data.price ? Number(parsed.data.price) : null,
+      price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
       is_active: parsed.data.is_active,
@@ -351,6 +357,25 @@ export async function createProduct(
     }
   }
 
+  if (parsed.data.variants.length > 0) {
+    const { error: variantsError } = await supabase.from('product_variants').insert(
+      parsed.data.variants.map((variant, index) => ({
+        product_id: product.id,
+        name: variant.name,
+        price: variant.price,
+        sort_order: index,
+      }))
+    )
+
+    if (variantsError) {
+      console.error('createProduct: fallo al guardar opciones', {
+        productId: product.id,
+        error: variantsError,
+      })
+      return { error: 'El producto se creó, pero no pudimos guardar las opciones' }
+    }
+  }
+
   revalidatePath('/mi-tienda/productos')
   redirect('/mi-tienda/productos?saved=created')
 }
@@ -371,6 +396,7 @@ export async function updateProduct(
     is_active: formData.get('is_active') === 'on',
     image_urls: formData.get('image_urls') ?? '',
     video_url: formData.get('video_url') ?? '',
+    variants: formData.get('variants') ?? '',
   })
 
   if (!parsed.success) {
@@ -380,12 +406,17 @@ export async function updateProduct(
     }
   }
 
+  const minVariantPrice =
+    parsed.data.variants.length > 0
+      ? Math.min(...parsed.data.variants.map((v) => v.price))
+      : null
+
   const { error } = await supabase
     .from('products')
     .update({
       name: parsed.data.name,
       description: parsed.data.description || null,
-      price: parsed.data.price ? Number(parsed.data.price) : null,
+      price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
       is_active: parsed.data.is_active,
@@ -422,6 +453,35 @@ export async function updateProduct(
     if (imagesError) {
       console.error('updateProduct: fallo al guardar imágenes', { productId, error: imagesError })
       return { error: 'No pudimos guardar las imágenes del producto' }
+    }
+  }
+
+  const { error: deleteVariantsError } = await supabase
+    .from('product_variants')
+    .delete()
+    .eq('product_id', productId)
+
+  if (deleteVariantsError) {
+    console.error('updateProduct: fallo al borrar opciones previas', {
+      productId,
+      error: deleteVariantsError,
+    })
+    return { error: 'No pudimos actualizar las opciones del producto' }
+  }
+
+  if (parsed.data.variants.length > 0) {
+    const { error: variantsError } = await supabase.from('product_variants').insert(
+      parsed.data.variants.map((variant, index) => ({
+        product_id: productId,
+        name: variant.name,
+        price: variant.price,
+        sort_order: index,
+      }))
+    )
+
+    if (variantsError) {
+      console.error('updateProduct: fallo al guardar opciones', { productId, error: variantsError })
+      return { error: 'No pudimos guardar las opciones del producto' }
     }
   }
 
