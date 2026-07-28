@@ -58,7 +58,7 @@ export default function RootLayout({
       className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-screen flex-col">
+      <body className="flex min-h-dvh flex-col">
         <ThemeProvider>
           <Toaster>
             <AuthListener />

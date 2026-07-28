@@ -234,7 +234,7 @@ export function BottomNav({ isLoggedIn }: BottomNavProps) {
   if (isMinimal) return null
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm sm:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm sm:hidden [padding-bottom:env(safe-area-inset-bottom)]">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-around px-2">
         {NAV_ITEMS.map((item) => {
           const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)

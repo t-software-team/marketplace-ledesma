@@ -31,7 +31,7 @@ export default async function PublicLayout({
     : { notifications: [], unreadCount: 0 }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh flex-col">
       <PublicHeader
         user={user ? { email: user.email ?? '' } : null}
         profileRole={profileRole}
