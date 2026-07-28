@@ -2,6 +2,7 @@ import {
   Beef,
   BookOpen,
   Car,
+  Droplets,
   HeartPulse,
   Key,
   Pill,
@@ -28,13 +29,20 @@ export const RUBRO_ICONS: Record<string, LucideIcon> = {
   comercio: ShoppingBag,
   comida: UtensilsCrossed,
   concesionaria: Car,
+  lavadero: Droplets,
 }
 
 export function getRubroIcon(slug: string): LucideIcon {
   return RUBRO_ICONS[slug] ?? Tag
 }
 
-const SERVICE_RUBROS = new Set(['peluquerias', 'talleres', 'salud-y-bienestar', 'alquileres'])
+const SERVICE_RUBROS = new Set([
+  'peluquerias',
+  'talleres',
+  'salud-y-bienestar',
+  'alquileres',
+  'lavadero',
+])
 
 export function isServiceRubro(slug: string | null | undefined): boolean {
   return slug ? SERVICE_RUBROS.has(slug) : false

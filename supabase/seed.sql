@@ -191,6 +191,22 @@ values
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
+-- 4.5 Rubro: Lavadero
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f3333333-3333-3333-3333-333333333333', 'Lavadero', 'lavadero', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f3000001-0000-0000-0000-000000000000', 'Lavado de autos', 'lavadero-autos', true, 'f3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('f3000002-0000-0000-0000-000000000000', 'Lavado de motos', 'lavadero-motos', true, 'f3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('f3000003-0000-0000-0000-000000000000', 'Encerado y pulido', 'lavadero-encerado-pulido', true, 'f3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('f3000004-0000-0000-0000-000000000000', 'Limpieza de tapizados', 'lavadero-tapizados', true, 'f3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
 -- 5. Shop verificada y activa del shop_admin
 -- -----------------------------------------------------------
 insert into public.shops (
