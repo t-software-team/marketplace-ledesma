@@ -175,17 +175,47 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="instagram_url" className="text-sm font-medium">
+                Instagram (URL)
+              </label>
+              <Input
+                id="instagram_url"
+                name="instagram_url"
+                placeholder="https://instagram.com/tu-comercio"
+                defaultValue={shop.instagram_url ?? ''}
+                aria-invalid={Boolean(fieldErrors.instagram_url)}
+              />
+              <FieldError message={fieldErrors.instagram_url} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="facebook_url" className="text-sm font-medium">
+                Facebook (URL)
+              </label>
+              <Input
+                id="facebook_url"
+                name="facebook_url"
+                placeholder="https://facebook.com/tu-comercio"
+                defaultValue={shop.facebook_url ?? ''}
+                aria-invalid={Boolean(fieldErrors.facebook_url)}
+              />
+              <FieldError message={fieldErrors.facebook_url} />
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <label htmlFor="instagram_url" className="text-sm font-medium">
-              Instagram (URL)
+            <label htmlFor="website_url" className="text-sm font-medium">
+              Sitio web
             </label>
             <Input
-              id="instagram_url"
-              name="instagram_url"
-              defaultValue={shop.instagram_url ?? ''}
-              aria-invalid={Boolean(fieldErrors.instagram_url)}
+              id="website_url"
+              name="website_url"
+              placeholder="https://tu-comercio.com"
+              defaultValue={shop.website_url ?? ''}
+              aria-invalid={Boolean(fieldErrors.website_url)}
             />
-            <FieldError message={fieldErrors.instagram_url} />
+            <FieldError message={fieldErrors.website_url} />
           </div>
         </CardContent>
       </Card>

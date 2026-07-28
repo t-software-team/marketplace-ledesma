@@ -18,7 +18,6 @@ interface VerificationDocumentCardProps {
 
 const STATUS_HELP: Record<string, string> = {
   pending: 'Subí un documento que acredite tu comercio (habilitación, DNI del titular, factura de servicios) para que el equipo lo revise.',
-  verified: 'Tu comercio ya está verificado. Si necesitás actualizar el documento, podés volver a subirlo.',
   rejected: 'Tu verificación fue rechazada. Subí un documento nuevo o más claro para volver a solicitarla.',
 }
 
@@ -58,6 +57,8 @@ export function VerificationDocumentCard({
     })
   }
 
+  const isVerified = verificationStatus === 'verified'
+
   return (
     <Card>
       <CardContent className="space-y-4 pt-6">
@@ -69,53 +70,61 @@ export function VerificationDocumentCard({
           <StatusBadge status={verificationStatus} />
         </div>
 
-        <p className="text-sm text-muted-foreground">
-          {STATUS_HELP[verificationStatus] ?? STATUS_HELP.pending}
-        </p>
+        {isVerified ? (
+          <p className="text-sm text-muted-foreground">
+            Tu comercio ya tiene el sello de verificado ✓
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground">
+              {STATUS_HELP[verificationStatus] ?? STATUS_HELP.pending}
+            </p>
 
-        {hasDocument && (
-          <a
-            href={documentUrl ?? '#'}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
-          >
-            <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <span className="truncate">Ver documento cargado</span>
-          </a>
+            {hasDocument && (
+              <a
+                href={documentUrl ?? '#'}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+              >
+                <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                <span className="truncate">Ver documento cargado</span>
+              </a>
+            )}
+
+            <div>
+              <input
+                ref={inputRef}
+                id="verification-document"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,application/pdf"
+                className="hidden"
+                onChange={handleFileChange}
+                disabled={isPending}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => inputRef.current?.click()}
+              >
+                <UploadCloud className="size-4" aria-hidden />
+                {isPending
+                  ? 'Subiendo...'
+                  : hasDocument
+                    ? 'Subir otro documento'
+                    : 'Subir documento'}
+              </Button>
+              {fileName && !isPending && (
+                <p className="mt-1 text-xs text-muted-foreground">Último archivo: {fileName}</p>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Formatos aceptados: PNG, JPEG, WEBP o PDF. Máximo 10MB.
+            </p>
+          </>
         )}
-
-        <div>
-          <input
-            ref={inputRef}
-            id="verification-document"
-            type="file"
-            accept="image/png,image/jpeg,image/webp,application/pdf"
-            className="hidden"
-            onChange={handleFileChange}
-            disabled={isPending}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={() => inputRef.current?.click()}
-          >
-            <UploadCloud className="size-4" aria-hidden />
-            {isPending
-              ? 'Subiendo...'
-              : hasDocument
-                ? 'Subir otro documento'
-                : 'Subir documento'}
-          </Button>
-          {fileName && !isPending && (
-            <p className="mt-1 text-xs text-muted-foreground">Último archivo: {fileName}</p>
-          )}
-        </div>
-
-        <p className="text-xs text-muted-foreground">
-          Formatos aceptados: PNG, JPEG, WEBP o PDF. Máximo 10MB.
-        </p>
       </CardContent>
     </Card>
   )

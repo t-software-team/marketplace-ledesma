@@ -14,7 +14,7 @@ export async function getMyShop() {
     .select(
       `
       id, owner_id, category_id, name, slug, description, logo_url, cover_url,
-      whatsapp_number, email, instagram_url, address, city,
+      whatsapp_number, email, instagram_url, facebook_url, website_url, address, city,
       verification_status, verification_document_url, verified_by, verified_at,
       subscription_status, subscription_expires_at,
       is_active, is_paused, paused_reason, business_hours,
@@ -140,6 +140,8 @@ export async function getShopBySlug(slug: string) {
       cover_url,
       whatsapp_number,
       instagram_url,
+      facebook_url,
+      website_url,
       address,
       city,
       verification_status,

@@ -174,6 +174,23 @@ values
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
+-- 4.4 Rubro: Concesionaria
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('c3333333-3333-3333-3333-333333333333', 'Concesionaria', 'concesionaria', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('c3000001-0000-0000-0000-000000000000', 'Autos 0km', 'concesionaria-autos-0km', true, 'c3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('c3000002-0000-0000-0000-000000000000', 'Autos usados', 'concesionaria-autos-usados', true, 'c3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('c3000003-0000-0000-0000-000000000000', 'Motos', 'concesionaria-motos', true, 'c3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('c3000004-0000-0000-0000-000000000000', 'Repuestos y accesorios', 'concesionaria-repuestos-accesorios', true, 'c3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001'),
+  ('c3000005-0000-0000-0000-000000000000', 'Financiación', 'concesionaria-financiacion', true, 'c3333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
 -- 5. Shop verificada y activa del shop_admin
 -- -----------------------------------------------------------
 insert into public.shops (

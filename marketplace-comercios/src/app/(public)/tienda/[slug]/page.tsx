@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { MapPin } from 'lucide-react'
+import { Globe, MapPin } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
+import { FacebookIcon } from '@/components/shared/facebook-icon'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
@@ -241,6 +242,30 @@ export default async function ShopPage({ params }: ShopPageProps) {
                 <InstagramIcon className="size-4" />
               </Button>
             )}
+            {shop.facebook_url && (
+              <Button
+                variant="outline"
+                size="icon"
+                render={
+                  <a href={shop.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Facebook" />
+                }
+                nativeButton={false}
+              >
+                <FacebookIcon className="size-4" />
+              </Button>
+            )}
+            {shop.website_url && (
+              <Button
+                variant="outline"
+                size="icon"
+                render={
+                  <a href={shop.website_url} target="_blank" rel="noopener noreferrer" aria-label="Ver sitio web" />
+                }
+                nativeButton={false}
+              >
+                <Globe className="size-4" />
+              </Button>
+            )}
             <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
           </div>
         </div>
@@ -302,6 +327,30 @@ export default async function ShopPage({ params }: ShopPageProps) {
               nativeButton={false}
             >
               <InstagramIcon className="size-4" />
+            </Button>
+          )}
+          {shop.facebook_url && (
+            <Button
+              variant="outline"
+              size="icon"
+              render={
+                <a href={shop.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Facebook" />
+              }
+              nativeButton={false}
+            >
+              <FacebookIcon className="size-4" />
+            </Button>
+          )}
+          {shop.website_url && (
+            <Button
+              variant="outline"
+              size="icon"
+              render={
+                <a href={shop.website_url} target="_blank" rel="noopener noreferrer" aria-label="Ver sitio web" />
+              }
+              nativeButton={false}
+            >
+              <Globe className="size-4" />
             </Button>
           )}
           <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />

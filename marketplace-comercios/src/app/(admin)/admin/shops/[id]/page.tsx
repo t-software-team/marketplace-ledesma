@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { getShopForReview } from '@/lib/admin/queries'
 import { ShopVerificationActions } from './shop-verification-actions'
+import { ShopSuspensionActions } from './shop-suspension-actions'
 
 interface ShopDetailPageProps {
   params: Promise<{ id: string }>
@@ -25,7 +26,20 @@ export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-heading">{shop.name}</h1>
-        <StatusBadge status={shop.verification_status} />
+        <div className="flex items-center gap-2">
+          {!shop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
+          <StatusBadge status={shop.verification_status} />
+        </div>
+      </div>
+
+      {!shop.is_active && shop.suspended_reason && (
+        <p className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          <strong>Motivo de la suspensión:</strong> {shop.suspended_reason}
+        </p>
+      )}
+
+      <div className="flex justify-end">
+        <ShopSuspensionActions shopId={shop.id} isActive={shop.is_active} />
       </div>
 
       <Card>

@@ -14,6 +14,7 @@ import {
 } from '@/lib/admin/queries'
 import { SubscriptionActions } from './subscription-actions'
 import { PlanRowActions } from './plan-row-actions'
+import { GalioPayCheckButton } from './galiopay-check-button'
 
 function formatMoney(price: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -87,6 +88,12 @@ export default async function AdminSubscriptionsPage() {
                           Ver comprobante
                         </a>
                       )}
+                      {subscription.galiopay_link_id && (
+                        <p className="text-xs text-muted-foreground">
+                          Pago vía GalioPay — se activa solo en cuanto se confirme, no requiere
+                          aprobación manual.
+                        </p>
+                      )}
                       {subscription.rejection_reason && (
                         <p className="text-xs text-destructive">
                           Motivo: {subscription.rejection_reason}
@@ -94,8 +101,16 @@ export default async function AdminSubscriptionsPage() {
                       )}
                     </div>
                     <StatusBadge status={subscription.status} />
-                    {subscription.status === 'pending' && (
-                      <SubscriptionActions subscriptionId={subscription.id} />
+                    {subscription.status === 'pending' && subscription.galiopay_link_id ? (
+                      <GalioPayCheckButton
+                        subscriptionId={subscription.id}
+                        linkId={subscription.galiopay_link_id}
+                        proofToken={subscription.galiopay_proof_token ?? ''}
+                      />
+                    ) : (
+                      subscription.status === 'pending' && (
+                        <SubscriptionActions subscriptionId={subscription.id} />
+                      )
                     )}
                   </CardContent>
                 </Card>

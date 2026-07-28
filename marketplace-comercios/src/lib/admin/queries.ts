@@ -6,7 +6,7 @@ export async function getShopsForReview() {
   const { data: shops } = await supabase
     .from('shops')
     .select(
-      'id, name, city, whatsapp_number, verification_status, created_at'
+      'id, name, city, whatsapp_number, verification_status, created_at, is_active'
     )
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
@@ -21,7 +21,7 @@ export async function getShopForReview(shopId: string) {
   const { data: shop } = await supabase
     .from('shops')
     .select(
-      'id, name, city, whatsapp_number, email, address, verification_status, verification_document_url, created_at'
+      'id, name, city, whatsapp_number, email, address, verification_status, verification_document_url, created_at, is_active, suspended_reason'
     )
     .eq('id', shopId)
     .maybeSingle()
@@ -77,6 +77,8 @@ export async function getSubscriptionRequests() {
       created_at,
       payment_proof_url,
       rejection_reason,
+      galiopay_link_id,
+      galiopay_proof_token,
       shops ( id, name ),
       subscription_plans ( id, name, price )
     `

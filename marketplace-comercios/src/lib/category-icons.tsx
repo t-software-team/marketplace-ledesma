@@ -1,6 +1,7 @@
 import {
   Beef,
   BookOpen,
+  Car,
   HeartPulse,
   Key,
   Pill,
@@ -26,6 +27,7 @@ export const RUBRO_ICONS: Record<string, LucideIcon> = {
   alquileres: Key,
   comercio: ShoppingBag,
   comida: UtensilsCrossed,
+  concesionaria: Car,
 }
 
 export function getRubroIcon(slug: string): LucideIcon {

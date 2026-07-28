@@ -538,6 +538,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           email: string | null
+          facebook_url: string | null
           id: string
           instagram_url: string | null
           is_active: boolean
@@ -549,6 +550,7 @@ export type Database = {
           paused_reason: string | null
           profile_views: number
           slug: string
+          suspended_reason: string | null
           subscription_expires_at: string | null
           subscription_status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
@@ -556,6 +558,7 @@ export type Database = {
           verification_status: Database["public"]["Enums"]["verification_status"]
           verified_at: string | null
           verified_by: string | null
+          website_url: string | null
           whatsapp_clicks: number
           whatsapp_number: string
         }
@@ -569,6 +572,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -587,6 +591,7 @@ export type Database = {
           verification_status?: Database["public"]["Enums"]["verification_status"]
           verified_at?: string | null
           verified_by?: string | null
+          website_url?: string | null
           whatsapp_clicks?: number
           whatsapp_number: string
         }
@@ -600,6 +605,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -611,6 +617,7 @@ export type Database = {
           paused_reason?: string | null
           profile_views?: number
           slug?: string
+          suspended_reason?: string | null
           subscription_expires_at?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
@@ -618,6 +625,7 @@ export type Database = {
           verification_status?: Database["public"]["Enums"]["verification_status"]
           verified_at?: string | null
           verified_by?: string | null
+          website_url?: string | null
           whatsapp_clicks?: number
           whatsapp_number?: string
         }
@@ -1116,6 +1124,14 @@ export type Database = {
           client_id: string
           client_name: string
         }[]
+      }
+      suspend_shop: {
+        Args: { p_shop_id: string; p_reason?: string }
+        Returns: undefined
+      }
+      unsuspend_shop: {
+        Args: { p_shop_id: string }
+        Returns: undefined
       }
       get_shop_follow_stats: {
         Args: { p_shop_id: string }

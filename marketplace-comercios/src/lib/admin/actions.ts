@@ -5,7 +5,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { sendEmail } from '@/lib/email/client'
+import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import {
+  shopReactivatedEmail,
+  shopSuspendedEmail,
   shopVerificationApprovedEmail,
   shopVerificationRejectedEmail,
   subscriptionApprovedEmail,
@@ -145,6 +148,58 @@ export async function rejectShopVerification(shopId: string) {
   revalidatePath(`/admin/shops/${shopId}`)
 }
 
+export async function suspendShop(
+  shopId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = await createClient()
+
+  const parsed = rejectionReasonSchema.safeParse({
+    reason: formData.get('reason'),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+
+  const { error } = await supabase.rpc('suspend_shop', {
+    p_shop_id: shopId,
+    p_reason: parsed.data.reason,
+  })
+
+  if (error) {
+    console.error('suspendShop: fallo al suspender', { shopId, error })
+    return { error: 'No pudimos suspender el comercio' }
+  }
+
+  await notifyShopOwner(shopId, (shopName) => shopSuspendedEmail(shopName, parsed.data.reason))
+  await logAdminAction(supabase, 'shop_suspended', 'shops', shopId, { reason: parsed.data.reason })
+
+  revalidatePath('/')
+  revalidatePath('/admin/shops')
+  revalidatePath(`/admin/shops/${shopId}`)
+  return { error: null }
+}
+
+export async function unsuspendShop(shopId: string) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc('unsuspend_shop', { p_shop_id: shopId })
+
+  if (error) {
+    console.error('unsuspendShop: fallo al reactivar', { shopId, error })
+    throw new Error('No pudimos reactivar el comercio')
+  }
+
+  await notifyShopOwner(shopId, shopReactivatedEmail)
+  await logAdminAction(supabase, 'shop_unsuspended', 'shops', shopId)
+
+  revalidatePath('/')
+  revalidatePath('/admin/shops')
+  revalidatePath(`/admin/shops/${shopId}`)
+}
+
 export async function createCategory(
   _prevState: ActionState,
   formData: FormData
@@ -252,6 +307,24 @@ export async function toggleCategoryActive(categoryId: string, isActive: boolean
   }
 
   revalidatePath('/admin/categorias')
+}
+
+export async function checkGalioPaySubscription(
+  subscriptionId: string,
+  linkId: string,
+  proofToken: string
+) {
+  try {
+    const result = await syncGalioPaySubscription(subscriptionId, linkId, proofToken)
+    revalidatePath('/admin/subscripciones')
+    return { activated: result.activated, status: result.status }
+  } catch (error) {
+    console.error('checkGalioPaySubscription: fallo al verificar con GalioPay', {
+      subscriptionId,
+      error,
+    })
+    throw new Error('No pudimos consultar el estado del pago con GalioPay')
+  }
 }
 
 export async function approveSubscriptionRequest(subscriptionId: string) {

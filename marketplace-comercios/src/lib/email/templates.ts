@@ -68,3 +68,29 @@ export function subscriptionRejectedEmail(shopName: string, reason: string) {
     ),
   }
 }
+
+export function shopSuspendedEmail(shopName: string, reason: string) {
+  return {
+    subject: `Tu comercio ${shopName} fue suspendido`,
+    html: layout(
+      'Tu comercio fue suspendido',
+      `<p><strong>${shopName}</strong> dejó de mostrarse en el feed y en el marketplace.</p>
+       <p><strong>Motivo:</strong> ${reason}</p>
+       <p>Si creés que es un error, respondé este email o contactanos para resolverlo.</p>`,
+      '/mi-tienda',
+      'Ir a mi tienda'
+    ),
+  }
+}
+
+export function shopReactivatedEmail(shopName: string) {
+  return {
+    subject: `¡${shopName} volvió a estar activo!`,
+    html: layout(
+      'Tu comercio fue reactivado',
+      `<p><strong>${shopName}</strong> ya vuelve a mostrarse en el feed y en el marketplace.</p>`,
+      '/mi-tienda',
+      'Ir a mi tienda'
+    ),
+  }
+}

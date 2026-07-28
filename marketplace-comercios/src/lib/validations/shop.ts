@@ -39,6 +39,16 @@ export const shopSettingsSchema = z.object({
     .url('Ingresá una URL válida')
     .optional()
     .or(z.literal('')),
+  facebook_url: z
+    .string()
+    .url('Ingresá una URL válida')
+    .optional()
+    .or(z.literal('')),
+  website_url: z
+    .string()
+    .url('Ingresá una URL válida')
+    .optional()
+    .or(z.literal('')),
   business_hours_text: z.string().max(2000).optional().or(z.literal('')),
   is_paused: z.boolean(),
   paused_reason: z.string().max(300).optional().or(z.literal('')),

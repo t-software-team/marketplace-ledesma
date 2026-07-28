@@ -58,7 +58,10 @@ export default async function AdminShopsPage() {
                         Registrado el {formatDate(shop.created_at)}
                       </p>
                     </div>
-                    <StatusBadge status={shop.verification_status} />
+                    <div className="flex items-center gap-1.5">
+                      {!shop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
+                      <StatusBadge status={shop.verification_status} />
+                    </div>
                     <Button
                       render={<Link href={`/admin/shops/${shop.id}`} />}
                       nativeButton={false}
