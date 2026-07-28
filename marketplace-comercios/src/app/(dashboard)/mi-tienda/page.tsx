@@ -117,15 +117,21 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               )}
             </div>
           </div>
-          <div className="flex gap-2 pb-0.5">
-            <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} />
+          <div className="flex items-center gap-2 pb-0.5">
+            <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
             <ShareButton
               title={shop.name}
               text={`Mirá ${shop.name} en Todo Marketplace`}
               url={shopUrl}
               variant="outline"
+              size="icon"
             />
-            <Button render={<Link href={`/tienda/${shop.slug}`} target="_blank" />} nativeButton={false} variant="outline">
+            <Button
+              render={<Link href={`/tienda/${shop.slug}`} target="_blank" />}
+              nativeButton={false}
+              variant="outline"
+              className="gap-1.5"
+            >
               Ver tienda pública
             </Button>
           </div>

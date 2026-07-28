@@ -181,9 +181,9 @@ export function DashboardHeader({
             className="gap-1.5"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Volver al sitio</span>
+            <span>Volver al sitio</span>
           </Button>
-          <ThemeToggle className="hidden sm:inline-flex" />
+          <ThemeToggle />
           {notificationList && (
             <DropdownMenu>
               <DropdownMenuTrigger

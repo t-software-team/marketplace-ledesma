@@ -55,6 +55,7 @@ export function ShareButton({
       size={size}
       className={cn('gap-1.5', className)}
       onClick={handleShare}
+      aria-label={size === 'icon' ? (copied ? 'Link copiado' : 'Compartir') : undefined}
     >
       {copied ? <Check className="size-4" aria-hidden /> : <Share2 className="size-4" aria-hidden />}
       {size !== 'icon' && (copied ? 'Copiado' : 'Compartir')}
