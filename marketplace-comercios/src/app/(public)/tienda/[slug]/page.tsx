@@ -127,7 +127,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
       />
       <ShopViewTracker shopId={shop.id} />
 
-      <div className="-mx-4 overflow-hidden rounded-xl border border-border bg-surface shadow-sm md:-mx-6">
+      <div className="-mx-4 overflow-hidden rounded-xl bg-surface md:-mx-6">
         <div className="relative h-36 bg-muted md:h-44">
           {shop.cover_url ? (
             <Image
