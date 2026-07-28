@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
+import { SavedToast } from '@/components/shared/saved-toast'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { getRubroIcon } from '@/lib/category-icons'
 import { getCategoriesList } from '@/lib/admin/queries'
@@ -14,6 +16,9 @@ export default async function AdminCategoriesPage() {
 
   return (
     <div className="space-y-4">
+      <Suspense fallback={null}>
+        <SavedToast />
+      </Suspense>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-heading">Categorías</h1>
         <Button render={<Link href="/admin/categorias/nueva" />} nativeButton={false}>

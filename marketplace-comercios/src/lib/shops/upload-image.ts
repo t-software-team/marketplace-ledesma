@@ -127,3 +127,31 @@ export async function uploadPaymentProof(shopId: string, file: File) {
 
   return path
 }
+
+const VERIFICATION_DOC_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
+const VERIFICATION_DOC_MAX_SIZE = 10 * 1024 * 1024
+
+export async function uploadVerificationDocument(shopId: string, file: File) {
+  if (!VERIFICATION_DOC_MIME_TYPES.includes(file.type)) {
+    throw new Error('El documento debe ser una imagen o un PDF')
+  }
+
+  if (file.size > VERIFICATION_DOC_MAX_SIZE) {
+    throw new Error('El documento no puede pesar más de 10MB')
+  }
+
+  const supabase = createClient()
+  const extension = file.name.split('.').pop() ?? 'jpg'
+  const path = `${shopId}/${crypto.randomUUID()}.${extension}`
+
+  const { error } = await supabase.storage.from('verification-docs').upload(path, file, {
+    upsert: false,
+  })
+
+  if (error) {
+    console.error('uploadVerificationDocument: fallo al subir a Storage', { shopId, error })
+    throw new Error('No pudimos subir el documento')
+  }
+
+  return path
+}

@@ -247,6 +247,23 @@ export async function updateShopSettings(
   return { error: null, warning }
 }
 
+export async function updateVerificationDocument(documentPath: string): Promise<ActionState> {
+  const { supabase, user } = await requireUser()
+
+  const { error } = await supabase
+    .from('shops')
+    .update({ verification_document_url: documentPath })
+    .eq('owner_id', user.id)
+
+  if (error) {
+    console.error('updateVerificationDocument: fallo al guardar el documento', { error })
+    return { error: 'No pudimos guardar el documento' }
+  }
+
+  revalidatePath('/mi-tienda/configuracion')
+  return { error: null }
+}
+
 export async function createProduct(
   _prevState: ActionState,
   formData: FormData
@@ -321,7 +338,7 @@ export async function createProduct(
   }
 
   revalidatePath('/mi-tienda/productos')
-  redirect('/mi-tienda/productos')
+  redirect('/mi-tienda/productos?saved=created')
 }
 
 export async function updateProduct(
@@ -392,7 +409,7 @@ export async function updateProduct(
   }
 
   revalidatePath('/mi-tienda/productos')
-  redirect('/mi-tienda/productos')
+  redirect('/mi-tienda/productos?saved=updated')
 }
 
 export async function deleteProduct(productId: string) {

@@ -4,6 +4,7 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { toast } from '@/components/ui/toast'
 import { approveShopVerification, rejectShopVerification } from '@/lib/admin/actions'
 
 interface ShopVerificationActionsProps {
@@ -16,15 +17,25 @@ export function ShopVerificationActions({ shopId }: ShopVerificationActionsProps
 
   function handleApprove() {
     startTransition(async () => {
-      await approveShopVerification(shopId)
-      router.refresh()
+      try {
+        await approveShopVerification(shopId)
+        toast.add({ title: 'Comercio verificado', type: 'success' })
+        router.refresh()
+      } catch {
+        toast.add({ title: 'No pudimos aprobar la verificación', type: 'error' })
+      }
     })
   }
 
   function handleReject() {
     startTransition(async () => {
-      await rejectShopVerification(shopId)
-      router.refresh()
+      try {
+        await rejectShopVerification(shopId)
+        toast.add({ title: 'Verificación rechazada', type: 'success' })
+        router.refresh()
+      } catch {
+        toast.add({ title: 'No pudimos rechazar la verificación', type: 'error' })
+      }
     })
   }
 

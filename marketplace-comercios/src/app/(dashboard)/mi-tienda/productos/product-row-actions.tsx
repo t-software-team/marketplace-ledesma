@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import { toast } from '@/components/ui/toast'
 import { deleteProduct, toggleProductActive } from '@/lib/shops/actions'
 
 interface ProductRowActionsProps {
@@ -15,14 +16,24 @@ export function ProductRowActions({ productId, isActive }: ProductRowActionsProp
   const [isPending, startTransition] = useTransition()
 
   function handleToggle() {
-    startTransition(() => {
-      toggleProductActive(productId, !isActive)
+    startTransition(async () => {
+      try {
+        await toggleProductActive(productId, !isActive)
+        toast.add({ title: isActive ? 'Producto desactivado' : 'Producto activado', type: 'success' })
+      } catch {
+        toast.add({ title: 'No pudimos actualizar el producto', type: 'error' })
+      }
     })
   }
 
   function handleDelete() {
-    startTransition(() => {
-      deleteProduct(productId)
+    startTransition(async () => {
+      try {
+        await deleteProduct(productId)
+        toast.add({ title: 'Producto eliminado', type: 'success' })
+      } catch {
+        toast.add({ title: 'No pudimos eliminar el producto', type: 'error' })
+      }
     })
   }
 

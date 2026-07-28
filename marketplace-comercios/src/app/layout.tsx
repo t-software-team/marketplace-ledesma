@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { IBM_Plex_Mono, Inter, Sora } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { Toaster } from '@/components/ui/toast'
 import './globals.css'
 
 const inter = Inter({
@@ -36,7 +37,9 @@ export default function RootLayout({
       className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-screen flex-col">
-        <QueryProvider>{children}</QueryProvider>
+        <Toaster>
+          <QueryProvider>{children}</QueryProvider>
+        </Toaster>
       </body>
     </html>
   )

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
 import { toggleSubscriptionPlanActive } from '@/lib/admin/actions'
 
 interface PlanRowActionsProps {
@@ -14,8 +15,13 @@ export function PlanRowActions({ planId, isActive }: PlanRowActionsProps) {
   const [isPending, startTransition] = useTransition()
 
   function handleToggle() {
-    startTransition(() => {
-      toggleSubscriptionPlanActive(planId, !isActive)
+    startTransition(async () => {
+      try {
+        await toggleSubscriptionPlanActive(planId, !isActive)
+        toast.add({ title: isActive ? 'Plan desactivado' : 'Plan activado', type: 'success' })
+      } catch {
+        toast.add({ title: 'No pudimos actualizar el plan', type: 'error' })
+      }
     })
   }
 

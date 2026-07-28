@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
+import { SavedToast } from '@/components/shared/saved-toast'
 import { StatusBadge } from '@/components/shared/status-badge'
 import {
   getSignedPaymentProofUrl,
@@ -38,6 +40,9 @@ export default async function AdminSubscriptionsPage() {
 
   return (
     <div className="space-y-4">
+      <Suspense fallback={null}>
+        <SavedToast />
+      </Suspense>
       <div>
         <h1 className="text-2xl font-heading">Suscripciones</h1>
         <p className="text-sm text-muted-foreground">

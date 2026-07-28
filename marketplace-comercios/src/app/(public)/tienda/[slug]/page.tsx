@@ -81,7 +81,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
           ) : (
             <div className="h-full bg-gradient-to-br from-primary/20 to-muted" />
           )}
-          {isFeatured && <FeaturedRibbon className="rounded-none" />}
+          {isFeatured && <FeaturedRibbon variant="floating" />}
         </div>
 
         <div className="relative px-4 pb-5 md:px-6">
@@ -102,10 +102,8 @@ export default async function ShopPage({ params }: ShopPageProps) {
               )}
             </div>
             <div className="min-w-0 flex-1 pt-2">
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
-                {isVerified && <VerifiedStamp className="size-7 shrink-0" />}
-              </div>
+              <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
+              {isVerified && <VerifiedStamp showLabel className="mt-1" />}
               {locationLabel && (
                 <p className="mt-0.5 text-sm text-muted-foreground">{locationLabel}</p>
               )}

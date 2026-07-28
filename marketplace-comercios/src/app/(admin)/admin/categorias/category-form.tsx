@@ -1,8 +1,9 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import type { ActionState } from '@/lib/admin/actions'
 
@@ -38,6 +39,13 @@ export function CategoryForm({
   currentCategoryId,
 }: CategoryFormProps) {
   const [state, formAction, isPending] = useActionState(action, initialState)
+
+  useEffect(() => {
+    if (state.error) {
+      toast.add({ title: 'No pudimos guardar la categoría', description: state.error, type: 'error' })
+    }
+  }, [state])
+
   const [name, setName] = useState(defaultValues?.name ?? '')
   const [slug, setSlug] = useState(defaultValues?.slug ?? '')
   const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug))

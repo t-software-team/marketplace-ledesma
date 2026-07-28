@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/toast'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
 import { GoogleButton } from '@/components/auth/google-button'
@@ -61,6 +62,7 @@ export default function LoginForm() {
       return
     }
 
+    toast.add({ title: `¡Bienvenido de nuevo!`, type: 'success' })
     const next = searchParams.get('next')
     router.push(next ?? '/')
     router.refresh()

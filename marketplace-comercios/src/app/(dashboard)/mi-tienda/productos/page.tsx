@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
+import { SavedToast } from '@/components/shared/saved-toast'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getMyShop, getMyShopProducts, getProductLimitInfo } from '@/lib/shops/queries'
 import { ProductsList } from './products-list'
@@ -24,6 +26,9 @@ export default async function ProductsPage() {
 
   return (
     <div className="space-y-4">
+      <Suspense fallback={null}>
+        <SavedToast />
+      </Suspense>
       <div className="flex items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-heading">{nounPlural}</h1>

@@ -115,7 +115,7 @@ export async function createCategory(
   }
 
   revalidatePath('/admin/categorias')
-  redirect('/admin/categorias')
+  redirect('/admin/categorias?saved=created')
 }
 
 export async function updateCategory(
@@ -163,7 +163,7 @@ export async function updateCategory(
   }
 
   revalidatePath('/admin/categorias')
-  redirect('/admin/categorias')
+  redirect('/admin/categorias?saved=updated')
 }
 
 export async function toggleCategoryActive(categoryId: string, isActive: boolean) {
@@ -277,7 +277,7 @@ export async function createSubscriptionPlan(
   }
 
   revalidatePath('/admin/subscripciones')
-  redirect('/admin/subscripciones')
+  redirect('/admin/subscripciones?saved=created')
 }
 
 export async function updateSubscriptionPlan(
@@ -329,7 +329,7 @@ export async function updateSubscriptionPlan(
   }
 
   revalidatePath('/admin/subscripciones')
-  redirect('/admin/subscripciones')
+  redirect('/admin/subscripciones?saved=updated')
 }
 
 export async function toggleSubscriptionPlanActive(planId: string, isActive: boolean) {

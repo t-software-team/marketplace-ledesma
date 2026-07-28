@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bell, Menu } from 'lucide-react'
+import { Bell, FileCheck, Flag, Menu, ReceiptText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -44,6 +44,22 @@ const NOTIFICATION_LINKS: Record<string, string> = {
   new_verification_request: '/admin/shops',
   new_subscription_request: '/admin/subscripciones',
   new_report: '/admin/reportes',
+}
+
+const NOTIFICATION_ICONS: Record<string, typeof FileCheck> = {
+  new_verification_request: FileCheck,
+  new_subscription_request: ReceiptText,
+  new_report: Flag,
+}
+
+const NOTIFICATION_STYLES: Record<string, string> = {
+  new_verification_request: 'bg-verified/20 text-verified-foreground',
+  new_subscription_request: 'bg-primary/15 text-primary',
+  new_report: 'bg-destructive/15 text-destructive',
+}
+
+function formatUnreadCount(count: number) {
+  return count > 9 ? '9+' : String(count)
 }
 
 interface DashboardHeaderProps {
@@ -164,38 +180,58 @@ export function DashboardHeader({
               >
                 <Bell className="size-5" aria-hidden />
                 {unreadCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute top-0.5 right-0.5 h-4 min-w-4 justify-center rounded-full px-1 text-[10px]"
-                  >
-                    {unreadCount}
-                  </Badge>
+                  <>
+                    <span className="absolute top-1 right-1 size-2.5 animate-ping rounded-full bg-destructive opacity-75" />
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-4.5 min-w-4.5 justify-center rounded-full px-1 text-[10px] font-semibold shadow-sm"
+                    >
+                      {formatUnreadCount(unreadCount)}
+                    </Badge>
+                  </>
                 )}
                 <span className="sr-only">Notificaciones</span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-72">
-                <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-80">
+                <div className="flex items-center justify-between px-1.5 py-1">
+                  <DropdownMenuLabel className="p-0">Notificaciones</DropdownMenuLabel>
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive" className="rounded-full px-1.5 text-[10px]">
+                      {formatUnreadCount(unreadCount)} nuevas
+                    </Badge>
+                  )}
+                </div>
                 <DropdownMenuSeparator />
                 {notificationList.length === 0 ? (
-                  <p className="px-1.5 py-2 text-sm text-muted-foreground">
+                  <p className="px-1.5 py-6 text-center text-sm text-muted-foreground">
                     No hay notificaciones nuevas
                   </p>
                 ) : (
-                  notificationList.map((notification) => (
-                    <DropdownMenuItem
-                      key={notification.id}
-                      render={<Link href={notificationHref(notification)} />}
-                    >
-                      <span className="flex flex-col gap-0.5">
-                        <span>
-                          {NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}
+                  notificationList.map((notification) => {
+                    const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell
+                    const style = NOTIFICATION_STYLES[notification.type] ?? 'bg-muted text-muted-foreground'
+                    return (
+                      <DropdownMenuItem
+                        key={notification.id}
+                        render={<Link href={notificationHref(notification)} />}
+                        className="items-start gap-2.5 py-2"
+                      >
+                        <span
+                          className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full ${style}`}
+                        >
+                          <Icon className="size-4" aria-hidden />
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(notification.created_at).toLocaleString('es-AR')}
+                        <span className="flex min-w-0 flex-col gap-0.5">
+                          <span className="text-sm leading-snug">
+                            {NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(notification.created_at).toLocaleString('es-AR')}
+                          </span>
                         </span>
-                      </span>
-                    </DropdownMenuItem>
-                  ))
+                      </DropdownMenuItem>
+                    )
+                  })
                 )}
                 {notificationList.length > 0 && (
                   <>
@@ -203,6 +239,7 @@ export function DashboardHeader({
                     <DropdownMenuItem
                       onClick={handleMarkAllRead}
                       disabled={isMarkingRead}
+                      className="justify-center text-sm font-medium text-primary"
                     >
                       {isMarkingRead ? 'Marcando...' : 'Marcar todas como leídas'}
                     </DropdownMenuItem>

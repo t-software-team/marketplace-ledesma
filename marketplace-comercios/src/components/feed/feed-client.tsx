@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, MapPin, Search } from 'lucide-react'
+import { ArrowLeft, MapPin, Search, Sparkles } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { CategoryGrid } from './category-grid'
 import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
@@ -88,21 +88,31 @@ export function FeedClient({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-4 rounded-2xl bg-gradient-to-br from-primary to-destacado p-5 shadow-sm">
-        <div>
-          <h1 className="font-heading text-2xl text-primary-foreground">Comercios cerca tuyo</h1>
-          <p className="mt-1 text-sm text-primary-foreground/80">
+      <div className="relative space-y-5 overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-surface to-surface p-6 shadow-sm">
+        <span
+          className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary opacity-20 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-primary/25 to-primary/10 px-3 py-1 text-xs font-medium text-primary shadow-inner">
+            <Sparkles className="size-3" aria-hidden />
+            Cerca tuyo
+          </span>
+          <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight">
+            Comercios cerca tuyo
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Descubrí productos de emprendimientos locales
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar productos..."
               value={searchQuery}
               onChange={(event) => setSearch(event.target.value)}
-              className="border-transparent bg-surface pl-9 shadow-none"
+              className="h-11 pl-9"
               aria-label="Buscar productos"
             />
           </div>
@@ -120,7 +130,7 @@ export function FeedClient({
                 () => setLocation(null)
               )
             }}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface text-muted-foreground transition-colors hover:text-foreground"
+            className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Usar mi ubicación"
           >
             <MapPin className="size-4" />

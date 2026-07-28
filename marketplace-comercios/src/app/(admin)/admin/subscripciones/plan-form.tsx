@@ -1,9 +1,10 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/components/ui/toast'
 import type { ActionState } from '@/lib/admin/actions'
 
 interface PlanFormProps {
@@ -23,6 +24,12 @@ const initialState: ActionState = { error: null }
 
 export function PlanForm({ action, defaultValues, submitLabel }: PlanFormProps) {
   const [state, formAction, isPending] = useActionState(action, initialState)
+
+  useEffect(() => {
+    if (state.error) {
+      toast.add({ title: 'No pudimos guardar el plan', description: state.error, type: 'error' })
+    }
+  }, [state])
 
   return (
     <form action={formAction} className="space-y-4">

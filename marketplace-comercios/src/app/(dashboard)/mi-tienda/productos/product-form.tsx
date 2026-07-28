@@ -1,11 +1,12 @@
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import type { ActionState } from '@/lib/shops/actions'
 
@@ -40,6 +41,12 @@ export function ProductForm({
   const noun = isService ? 'servicio' : 'producto'
   const [state, formAction, isPending] = useActionState(action, initialState)
   const [categoryId, setCategoryId] = useState(defaultValues?.category_id ?? '')
+
+  useEffect(() => {
+    if (state.error) {
+      toast.add({ title: `No pudimos guardar el ${noun}`, description: state.error, type: 'error' })
+    }
+  }, [state, noun])
 
   return (
     <form action={formAction} className="space-y-4">

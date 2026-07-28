@@ -1,11 +1,12 @@
 'use client'
 
 import Image from 'next/image'
-import { useActionState, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { getRubroIcon } from '@/lib/category-icons'
 import { uploadShopImage } from '@/lib/shops/upload-image'
@@ -30,6 +31,19 @@ function FieldError({ message }: { message?: string }) {
 export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateShopSettings, initialState)
   const fieldErrors = state.fieldErrors ?? {}
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    if (state.error) {
+      toast.add({ title: 'No pudimos guardar los cambios', description: state.error, type: 'error' })
+    } else {
+      toast.add({ title: 'Cambios guardados', type: 'success' })
+    }
+  }, [state])
   const [logoUrl, setLogoUrl] = useState(shop.logo_url ?? '')
   const [coverUrl, setCoverUrl] = useState(shop.cover_url ?? '')
   const [isPaused, setIsPaused] = useState(shop.is_paused)

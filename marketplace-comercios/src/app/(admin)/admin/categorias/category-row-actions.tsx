@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
 import { toggleCategoryActive } from '@/lib/admin/actions'
 
 interface CategoryRowActionsProps {
@@ -14,8 +15,13 @@ export function CategoryRowActions({ categoryId, isActive }: CategoryRowActionsP
   const [isPending, startTransition] = useTransition()
 
   function handleToggle() {
-    startTransition(() => {
-      toggleCategoryActive(categoryId, !isActive)
+    startTransition(async () => {
+      try {
+        await toggleCategoryActive(categoryId, !isActive)
+        toast.add({ title: isActive ? 'Categoría desactivada' : 'Categoría activada', type: 'success' })
+      } catch {
+        toast.add({ title: 'No pudimos actualizar la categoría', type: 'error' })
+      }
     })
   }
 

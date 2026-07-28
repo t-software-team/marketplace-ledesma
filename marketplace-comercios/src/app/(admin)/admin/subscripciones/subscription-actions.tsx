@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
+import { toast } from '@/components/ui/toast'
 import {
   approveSubscriptionRequest,
   rejectSubscriptionRequest,
@@ -32,18 +33,31 @@ export function SubscriptionActions({ subscriptionId }: SubscriptionActionsProps
   const rejectAction = rejectSubscriptionRequest.bind(null, subscriptionId)
   const [state, formAction, isRejecting] = useActionState(rejectAction, initialState)
 
+  const [prevState, setPrevState] = useState(state)
+  if (state !== prevState) {
+    setPrevState(state)
+    if (state.error === null) setOpen(false)
+  }
+
   useEffect(() => {
     if (state === initialState) return
     if (state.error === null) {
-      setOpen(false)
+      toast.add({ title: 'Suscripción rechazada', type: 'success' })
       router.refresh()
+    } else {
+      toast.add({ title: 'No pudimos rechazar la suscripción', description: state.error, type: 'error' })
     }
   }, [state, router])
 
   function handleApprove() {
     startTransition(async () => {
-      await approveSubscriptionRequest(subscriptionId)
-      router.refresh()
+      try {
+        await approveSubscriptionRequest(subscriptionId)
+        toast.add({ title: 'Suscripción aprobada', type: 'success' })
+        router.refresh()
+      } catch {
+        toast.add({ title: 'No pudimos aprobar la suscripción', type: 'error' })
+      }
     })
   }
 
