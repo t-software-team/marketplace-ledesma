@@ -562,22 +562,33 @@ export async function startSubscriptionCheckout(planId: string) {
 
   const referenceId = `sub-${shop.id}-${crypto.randomUUID()}`
 
-  const link = await createPaymentLink({
-    items: [
-      {
-        title: `Plan ${plan.name} — Todo Marketplace`,
-        quantity: 1,
-        unitPrice: plan.price,
-        currencyId: 'ARS',
+  let link: Awaited<ReturnType<typeof createPaymentLink>>
+  try {
+    link = await createPaymentLink({
+      items: [
+        {
+          title: `Plan ${plan.name} — Todo Marketplace`,
+          quantity: 1,
+          unitPrice: plan.price,
+          currencyId: 'ARS',
+        },
+      ],
+      referenceId,
+      backUrl: {
+        success: `${origin}/mi-tienda/suscripcion?status=success`,
+        failure: `${origin}/mi-tienda/suscripcion?status=failure`,
       },
-    ],
-    referenceId,
-    backUrl: {
-      success: `${origin}/mi-tienda/suscripcion?status=success`,
-      failure: `${origin}/mi-tienda/suscripcion?status=failure`,
-    },
-    notificationUrl: `${origin}/api/webhooks/galiopay`,
-  })
+      notificationUrl: `${origin}/api/webhooks/galiopay`,
+    })
+  } catch (linkError) {
+    console.error('startSubscriptionCheckout: fallo al crear el link de pago en GalioPay', {
+      referenceId,
+      error: linkError,
+    })
+    throw new Error(
+      'No pudimos conectar con GalioPay para iniciar el pago. Intentá de nuevo en unos minutos.'
+    )
+  }
 
   const { error } = await supabase.from('subscriptions').insert({
     shop_id: shop.id,
