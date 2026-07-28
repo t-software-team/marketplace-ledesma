@@ -13,6 +13,7 @@ import {
   Tag,
   UtensilsCrossed,
   Wrench,
+  PawPrint,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -30,6 +31,7 @@ export const RUBRO_ICONS: Record<string, LucideIcon> = {
   comida: UtensilsCrossed,
   concesionaria: Car,
   lavadero: Droplets,
+  veterinaria: PawPrint,
 }
 
 export function getRubroIcon(slug: string): LucideIcon {
@@ -42,6 +44,7 @@ const SERVICE_RUBROS = new Set([
   'salud-y-bienestar',
   'alquileres',
   'lavadero',
+  'veterinaria',
 ])
 
 export function isServiceRubro(slug: string | null | undefined): boolean {

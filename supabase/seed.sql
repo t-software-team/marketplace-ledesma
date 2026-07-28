@@ -207,6 +207,22 @@ values
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
+-- 4.6 Rubro: Veterinaria
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f4444444-4444-4444-4444-444444444444', 'Veterinaria', 'veterinaria', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f4000001-0000-0000-0000-000000000000', 'Consultas y vacunación', 'veterinaria-consultas-vacunacion', true, 'f4444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000001'),
+  ('f4000002-0000-0000-0000-000000000000', 'Peluquería canina y felina', 'veterinaria-peluqueria', true, 'f4444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000001'),
+  ('f4000003-0000-0000-0000-000000000000', 'Alimento y accesorios para mascotas', 'veterinaria-alimento-accesorios', true, 'f4444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000001'),
+  ('f4000004-0000-0000-0000-000000000000', 'Internación y cirugía', 'veterinaria-internacion-cirugia', true, 'f4444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
 -- 5. Shop verificada y activa del shop_admin
 -- -----------------------------------------------------------
 insert into public.shops (
