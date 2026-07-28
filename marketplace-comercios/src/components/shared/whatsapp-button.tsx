@@ -4,6 +4,7 @@ import { MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { logShopContact } from '@/lib/shops/actions'
+import { toWhatsAppNumber } from '@/lib/whatsapp'
 import { cn } from '@/lib/utils'
 
 interface WhatsAppButtonProps {
@@ -21,7 +22,7 @@ export function WhatsAppButton({
   productId,
   className,
 }: WhatsAppButtonProps) {
-  const sanitizedPhone = phoneNumber.replace(/\D/g, '')
+  const sanitizedPhone = toWhatsAppNumber(phoneNumber)
   const url = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`
 
   async function handleClick() {

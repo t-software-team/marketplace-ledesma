@@ -137,10 +137,14 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               <Input
                 id="whatsapp_number"
                 name="whatsapp_number"
+                placeholder="5493886000000"
                 defaultValue={shop.whatsapp_number}
                 required
                 aria-invalid={Boolean(fieldErrors.whatsapp_number)}
               />
+              <p className="text-xs text-muted-foreground">
+                Código de país + 9 + número, sin 0 ni 15 (ej: 5493886000000)
+              </p>
               <FieldError message={fieldErrors.whatsapp_number} />
             </div>
             <div className="space-y-2">
