@@ -10,10 +10,10 @@ export function useProductsFeed() {
     queryKey: ['products-feed', categoryId, searchQuery, userLocation],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_products_feed', {
-        user_lat: userLocation?.lat ?? null,
-        user_lng: userLocation?.lng ?? null,
-        p_category_id: categoryId,
-        p_search: searchQuery || null,
+        user_lat: userLocation?.lat,
+        user_lng: userLocation?.lng,
+        p_category_id: categoryId ?? undefined,
+        p_search: searchQuery || undefined,
       })
       if (error) throw error
       return data
