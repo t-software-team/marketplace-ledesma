@@ -163,29 +163,38 @@ export default async function ShopPage({ params }: ShopPageProps) {
             </div>
             <div className="min-w-0 flex-1 pt-2">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
+                    {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-muted-foreground">
+                    {isFeatured && rating.reviewCount > 0 && (
+                      <span className="flex items-center gap-1">
+                        <StarRating rating={rating.avgRating} />
+                        <span>
+                          {rating.avgRating} ({rating.reviewCount})
+                        </span>
+                      </span>
+                    )}
+                    {isFeatured && rating.reviewCount > 0 && followerCount > 0 && (
+                      <span aria-hidden>·</span>
+                    )}
+                    {followerCount > 0 && (
+                      <span>
+                        {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <FollowShopButton
                   shopId={shop.id}
                   isLoggedIn={Boolean(user)}
                   initialIsFollowing={isFollowing}
                 />
               </div>
-              {isVerified && <VerifiedStamp showLabel className="mt-1" />}
-              {isFeatured && rating.reviewCount > 0 && (
-                <div className="mt-1 flex items-center gap-1.5 text-sm">
-                  <StarRating rating={rating.avgRating} />
-                  <span className="text-muted-foreground">
-                    {rating.avgRating} ({rating.reviewCount})
-                  </span>
-                </div>
-              )}
-              {followerCount > 0 && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
-                </p>
-              )}
               {(categoryName || shop.city) && (
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
                   {categoryName && (
                     <Badge variant="outline" className="font-normal">
                       {categoryName}
