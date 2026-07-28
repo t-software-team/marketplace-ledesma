@@ -223,6 +223,40 @@ values
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
+-- 4.7 Rubro: Construcción
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f5555555-5555-5555-5555-555555555555', 'Construcción', 'construccion', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f5000001-0000-0000-0000-000000000000', 'Albañilería', 'construccion-albanileria', true, 'f5555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001'),
+  ('f5000002-0000-0000-0000-000000000000', 'Corralón', 'construccion-corralon', true, 'f5555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001'),
+  ('f5000003-0000-0000-0000-000000000000', 'Pintura', 'construccion-pintura', true, 'f5555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001'),
+  ('f5000004-0000-0000-0000-000000000000', 'Herrería', 'construccion-herreria', true, 'f5555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001'),
+  ('f5000005-0000-0000-0000-000000000000', 'Electricidad', 'construccion-electricidad', true, 'f5555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001'),
+  ('f5000006-0000-0000-0000-000000000000', 'Plomería', 'construccion-plomeria', true, 'f5555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
+-- 4.8 Rubro: Servicio técnico
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f6666666-6666-6666-6666-666666666666', 'Servicio técnico', 'servicio-tecnico', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f6000001-0000-0000-0000-000000000000', 'Reparación de PC y notebooks', 'servicio-tecnico-pc', true, 'f6666666-6666-6666-6666-666666666666', '00000000-0000-0000-0000-000000000001'),
+  ('f6000002-0000-0000-0000-000000000000', 'Reparación de celulares', 'servicio-tecnico-celulares', true, 'f6666666-6666-6666-6666-666666666666', '00000000-0000-0000-0000-000000000001'),
+  ('f6000003-0000-0000-0000-000000000000', 'Reparación de consolas', 'servicio-tecnico-consolas', true, 'f6666666-6666-6666-6666-666666666666', '00000000-0000-0000-0000-000000000001'),
+  ('f6000004-0000-0000-0000-000000000000', 'Venta de repuestos y accesorios', 'servicio-tecnico-repuestos', true, 'f6666666-6666-6666-6666-666666666666', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
 -- 5. Shop verificada y activa del shop_admin
 -- -----------------------------------------------------------
 insert into public.shops (
