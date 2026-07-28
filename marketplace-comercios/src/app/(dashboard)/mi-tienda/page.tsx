@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
+import { ShareButton } from '@/components/shared/share-button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isServiceRubro } from '@/lib/category-icons'
@@ -118,6 +119,12 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
           </div>
           <div className="flex gap-2 pb-0.5">
             <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} />
+            <ShareButton
+              title={shop.name}
+              text={`Mirá ${shop.name} en Todo Marketplace`}
+              url={shopUrl}
+              variant="outline"
+            />
             <Button render={<Link href={`/tienda/${shop.slug}`} target="_blank" />} nativeButton={false} variant="outline">
               Ver tienda pública
             </Button>
