@@ -227,6 +227,7 @@ export type Database = {
           search_vector: unknown
           shop_id: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           category_id?: string | null
@@ -240,6 +241,7 @@ export type Database = {
           search_vector?: unknown
           shop_id: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           category_id?: string | null
@@ -253,6 +255,7 @@ export type Database = {
           search_vector?: unknown
           shop_id?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -540,6 +543,11 @@ export type Database = {
           approved_by: string | null
           created_at: string
           end_date: string | null
+          galiopay_checkout_url: string | null
+          galiopay_link_id: string | null
+          galiopay_proof_token: string | null
+          galiopay_reference_id: string | null
+          galiopay_status: string | null
           id: string
           payment_proof_url: string | null
           plan_id: string
@@ -553,6 +561,11 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           end_date?: string | null
+          galiopay_checkout_url?: string | null
+          galiopay_link_id?: string | null
+          galiopay_proof_token?: string | null
+          galiopay_reference_id?: string | null
+          galiopay_status?: string | null
           id?: string
           payment_proof_url?: string | null
           plan_id: string
@@ -566,6 +579,11 @@ export type Database = {
           approved_by?: string | null
           created_at?: string
           end_date?: string | null
+          galiopay_checkout_url?: string | null
+          galiopay_link_id?: string | null
+          galiopay_proof_token?: string | null
+          galiopay_reference_id?: string | null
+          galiopay_status?: string | null
           id?: string
           payment_proof_url?: string | null
           plan_id?: string
@@ -771,6 +789,18 @@ export type Database = {
             }
             Returns: string
           }
+      approve_shop_verification: {
+        Args: { p_shop_id: string }
+        Returns: undefined
+      }
+      approve_subscription: {
+        Args: { p_subscription_id: string }
+        Returns: undefined
+      }
+      approve_subscription_by_payment: {
+        Args: { p_subscription_id: string }
+        Returns: undefined
+      }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -913,8 +943,10 @@ export type Database = {
           user_lng?: number
         }
         Returns: {
+          category_name: string
           distance_km: number
           main_image: string
+          parent_category_name: string
           price: number
           product_id: string
           product_name: string
@@ -930,7 +962,17 @@ export type Database = {
         Returns: undefined
       }
       is_superadmin: { Args: never; Returns: boolean }
+      log_admin_action: {
+        Args: {
+          p_action: string
+          p_metadata?: Json
+          p_target_id: string
+          p_target_table: string
+        }
+        Returns: undefined
+      }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_all_admin_notifications_read: { Args: never; Returns: undefined }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -971,6 +1013,18 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      reject_shop_verification: {
+        Args: { p_shop_id: string }
+        Returns: undefined
+      }
+      reject_subscription: {
+        Args: { p_reason: string; p_subscription_id: string }
+        Returns: undefined
+      }
+      set_shop_location: {
+        Args: { p_lat: number; p_lng: number; p_shop_id: string }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       st_3dclosestpoint: {

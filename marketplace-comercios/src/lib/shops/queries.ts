@@ -1,5 +1,128 @@
 import { createClient } from '@/lib/supabase/server'
 
+export async function getMyShop() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return null
+
+  const { data: shop } = await supabase
+    .from('shops')
+    .select(
+      `
+      id, owner_id, category_id, name, slug, description, logo_url, cover_url,
+      whatsapp_number, email, instagram_url, address, city,
+      verification_status, verification_document_url, verified_by, verified_at,
+      subscription_status, subscription_expires_at,
+      is_active, is_paused, paused_reason, business_hours,
+      profile_views, whatsapp_clicks, created_at, updated_at, deleted_at,
+      categories ( slug )
+    `
+    )
+    .eq('owner_id', user.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  return shop
+}
+
+export async function getMyShopProducts(shopId: string) {
+  const supabase = await createClient()
+
+  const { data: products, error } = await supabase
+    .from('products')
+    .select(
+      `
+      id,
+      name,
+      price,
+      currency,
+      is_active,
+      product_images ( id, url, sort_order ),
+      categories ( name )
+    `
+    )
+    .eq('shop_id', shopId)
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error || !products) return []
+
+  return products.map((product) => {
+    const images = [...(product.product_images ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order
+    )
+
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      currency: product.currency,
+      is_active: product.is_active,
+      mainImage: images[0]?.url ?? null,
+      categoryName: product.categories?.name ?? null,
+    }
+  })
+}
+
+export async function getActiveCategories() {
+  const supabase = await createClient()
+
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name, slug')
+    .eq('is_active', true)
+    .is('parent_id', null)
+    .order('name', { ascending: true })
+    .limit(100)
+
+  return categories ?? []
+}
+
+export async function getSubcategories(parentId: string | null) {
+  if (!parentId) return []
+
+  const supabase = await createClient()
+
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, name')
+    .eq('is_active', true)
+    .eq('parent_id', parentId)
+    .order('name', { ascending: true })
+    .limit(100)
+
+  return categories ?? []
+}
+
+export async function getMyProduct(productId: string) {
+  const supabase = await createClient()
+
+  const { data: product } = await supabase
+    .from('products')
+    .select(
+      `
+      id,
+      shop_id,
+      name,
+      description,
+      price,
+      currency,
+      category_id,
+      is_active,
+      video_url,
+      product_images ( id, url, sort_order )
+    `
+    )
+    .eq('id', productId)
+    .maybeSingle()
+
+  return product
+}
+
 export async function getShopBySlug(slug: string) {
   const supabase = await createClient()
 
@@ -33,6 +156,152 @@ export async function getShopBySlug(slug: string) {
   return shop
 }
 
+export async function getActiveSubscriptionPlans() {
+  const supabase = await createClient()
+
+  const { data: plans } = await supabase
+    .from('subscription_plans')
+    .select('id, name, description, price, duration_days, benefits')
+    .eq('is_active', true)
+    .order('price', { ascending: true })
+    .limit(50)
+
+  return plans ?? []
+}
+
+export async function getMyPendingSubscription(shopId: string) {
+  const supabase = await createClient()
+
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select(
+      'id, status, created_at, galiopay_link_id, galiopay_proof_token, galiopay_checkout_url, subscription_plans ( id, name )'
+    )
+    .eq('shop_id', shopId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return subscription
+}
+
+export async function getProductDetail(productId: string) {
+  const supabase = await createClient()
+
+  const { data: product, error } = await supabase
+    .from('products')
+    .select(
+      `
+      id,
+      shop_id,
+      name,
+      description,
+      price,
+      currency,
+      is_active,
+      category_id,
+      video_url,
+      categories ( id, name, slug, parent_id ),
+      product_images ( id, url, sort_order ),
+      shops ( id, name, slug, whatsapp_number, verification_status, subscription_status, logo_url )
+    `
+    )
+    .eq('id', productId)
+    .maybeSingle()
+
+  if (error || !product) return null
+
+  let parentCategoryName: string | null = null
+  let parentCategorySlug: string | null = null
+  if (product.categories?.parent_id) {
+    const { data: parentCategory } = await supabase
+      .from('categories')
+      .select('name, slug')
+      .eq('id', product.categories.parent_id)
+      .maybeSingle()
+
+    parentCategoryName = parentCategory?.name ?? null
+    parentCategorySlug = parentCategory?.slug ?? null
+  }
+
+  const images = [...(product.product_images ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order
+  )
+
+  return {
+    id: product.id,
+    shopId: product.shop_id,
+    name: product.name,
+    description: product.description,
+    price: product.price,
+    currency: product.currency,
+    isActive: product.is_active,
+    category: product.categories,
+    parentCategoryName,
+    parentCategorySlug,
+    videoUrl: product.video_url,
+    images,
+    shop: product.shops,
+  }
+}
+
+export async function getMyFavorites() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return []
+
+  const { data: favorites, error } = await supabase
+    .from('favorites')
+    .select(
+      `
+      created_at,
+      products (
+        id,
+        name,
+        price,
+        currency,
+        shop_id,
+        is_active,
+        product_images ( url, sort_order ),
+        shops ( id, name, is_featured:subscription_status, is_active )
+      )
+    `
+    )
+    .eq('client_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error || !favorites) return []
+
+  return favorites
+    .map((favorite) => favorite.products)
+    .filter(
+      (product): product is NonNullable<typeof product> =>
+        product != null && product.is_active === true && product.shops?.is_active === true
+    )
+    .map((product) => {
+      const images = [...(product.product_images ?? [])].sort(
+        (a, b) => a.sort_order - b.sort_order
+      )
+
+      return {
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price,
+        shop_id: product.shop_id,
+        shop_name: product.shops?.name ?? '',
+        shop_is_featured: product.shops?.is_featured === 'active',
+        distance_km: null,
+        main_image: images[0]?.url ?? null,
+      }
+    })
+}
+
 export async function getShopProducts(shopId: string) {
   const supabase = await createClient()
 
@@ -50,6 +319,7 @@ export async function getShopProducts(shopId: string) {
     .eq('shop_id', shopId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
+    .limit(200)
 
   if (error || !products) return []
 
@@ -66,4 +336,40 @@ export async function getShopProducts(shopId: string) {
       mainImage: images[0]?.url ?? null,
     }
   })
+}
+
+const FREE_PLAN_MAX_PRODUCTS = 30
+
+export async function getProductLimitInfo(shopId: string) {
+  const supabase = await createClient()
+
+  const [{ count }, { data: activeSubscription }] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('shop_id', shopId),
+    supabase
+      .from('subscriptions')
+      .select('subscription_plans ( benefits )')
+      .eq('shop_id', shopId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+
+  const used = count ?? 0
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    | { max_products?: number | null }
+    | null
+    | undefined
+
+  const hasActivePlan = Boolean(activeSubscription)
+  const max = hasActivePlan ? (benefits?.max_products ?? null) : FREE_PLAN_MAX_PRODUCTS
+
+  return {
+    used,
+    max,
+    reached: max !== null && used >= max,
+  }
 }

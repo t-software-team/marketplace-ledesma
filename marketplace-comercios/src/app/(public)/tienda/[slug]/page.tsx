@@ -7,6 +7,7 @@ import { headers } from 'next/headers'
 import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
+import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopViewTracker } from '@/components/shop/shop-view-tracker'
@@ -152,6 +153,10 @@ export default async function ShopPage({ params }: ShopPageProps) {
         <h2 className="text-lg font-heading">Productos</h2>
         <ShopProductGrid products={products} shopName={shop.name} />
       </section>
+
+      <div className="flex justify-center">
+        <ReportShopDialog shopId={shop.id} />
+      </div>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 p-4 backdrop-blur-sm sm:hidden">
         <div className="mx-auto flex max-w-5xl gap-2">

@@ -1,0 +1,58 @@
+import { createClient } from '@/lib/supabase/server'
+import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
+import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
+import { isServiceRubro } from '@/lib/category-icons'
+
+export default async function MiTiendaLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let fullName: string | null = null
+  let avatarUrl: string | null = null
+  let rubroSlug: string | null = null
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url')
+      .eq('id', user.id)
+      .single()
+
+    fullName = profile?.full_name ?? null
+    avatarUrl = profile?.avatar_url ?? null
+
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('categories ( slug )')
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    rubroSlug = shop?.categories?.slug ?? null
+  }
+
+  const isService = isServiceRubro(rubroSlug)
+
+  const navItems: DashboardNavItem[] = [
+    { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
+    { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
+    { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
+  ]
+
+  return (
+    <DashboardShell
+      navItems={navItems}
+      userEmail={user?.email ?? ''}
+      userFullName={fullName}
+      userAvatarUrl={avatarUrl}
+      sectionTitle="Mi tienda"
+    >
+      {children}
+    </DashboardShell>
+  )
+}

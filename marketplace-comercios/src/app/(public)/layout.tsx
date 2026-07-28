@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { UserMenu } from '@/components/shared/user-menu'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function PublicLayout({
@@ -14,17 +15,21 @@ export default async function PublicLayout({
   } = await supabase.auth.getUser()
 
   let profileRole: string | null = null
+  let profileFullName: string | null = null
+  let profileAvatarUrl: string | null = null
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('role, full_name, avatar_url')
       .eq('id', user.id)
       .single()
     profileRole = profile?.role ?? null
+    profileFullName = profile?.full_name ?? null
+    profileAvatarUrl = profile?.avatar_url ?? null
   }
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2 font-heading text-lg">
@@ -54,6 +59,11 @@ export default async function PublicLayout({
                     Completar perfil
                   </Button>
                 )}
+                <UserMenu
+                  userEmail={user.email ?? ''}
+                  userFullName={profileFullName}
+                  userAvatarUrl={profileAvatarUrl}
+                />
               </>
             ) : (
               <>

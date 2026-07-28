@@ -1,0 +1,39 @@
+import {
+  Beef,
+  BookOpen,
+  HeartPulse,
+  Key,
+  Pill,
+  Scissors,
+  Shirt,
+  ShoppingBag,
+  ShoppingBasket,
+  Tag,
+  UtensilsCrossed,
+  Wrench,
+  type LucideIcon,
+} from 'lucide-react'
+
+export const RUBRO_ICONS: Record<string, LucideIcon> = {
+  farmacias: Pill,
+  almacenes: ShoppingBasket,
+  carnicerias: Beef,
+  peluquerias: Scissors,
+  talleres: Wrench,
+  'salud-y-bienestar': HeartPulse,
+  'tienda-de-ropa': Shirt,
+  libreria: BookOpen,
+  alquileres: Key,
+  comercio: ShoppingBag,
+  comida: UtensilsCrossed,
+}
+
+export function getRubroIcon(slug: string): LucideIcon {
+  return RUBRO_ICONS[slug] ?? Tag
+}
+
+const SERVICE_RUBROS = new Set(['peluquerias', 'talleres', 'salud-y-bienestar', 'alquileres'])
+
+export function isServiceRubro(slug: string | null | undefined): boolean {
+  return slug ? SERVICE_RUBROS.has(slug) : false
+}

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import { registerSchema, type RegisterFormValues } from '@/lib/validations/auth'
+import { GoogleButton } from '@/components/auth/google-button'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -121,6 +122,14 @@ export default function RegisterPage() {
             {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}
           </Button>
         </form>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">o</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <GoogleButton next="/onboarding" />
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           ¿Ya tenés cuenta?{' '}

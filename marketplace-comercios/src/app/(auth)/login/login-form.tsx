@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
+import { GoogleButton } from '@/components/auth/google-button'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -116,6 +117,14 @@ export default function LoginForm() {
             {isSubmitting ? 'Ingresando...' : 'Ingresar'}
           </Button>
         </form>
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">o</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+
+        <GoogleButton next={searchParams.get('next') ?? '/'} />
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           ¿No tenés cuenta?{' '}

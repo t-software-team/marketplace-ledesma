@@ -20,32 +20,39 @@ export default function OnboardingPage() {
     setError(null)
     setLoadingRole(role)
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    if (!user) {
-      router.push('/login')
-      return
-    }
+      if (!user) {
+        router.push('/login')
+        return
+      }
 
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ role })
-      .eq('id', user.id)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role })
+        .eq('id', user.id)
 
-    if (updateError) {
+      if (updateError) {
+        console.error('selectRole: failed to update profile role', updateError)
+        setError('No pudimos guardar tu elección. Intentá de nuevo.')
+        return
+      }
+
+      if (role === 'shop_admin') {
+        router.push('/mi-tienda')
+      } else {
+        router.push('/')
+      }
+      router.refresh()
+    } catch (err) {
+      console.error('selectRole: unexpected error', err)
       setError('No pudimos guardar tu elección. Intentá de nuevo.')
+    } finally {
       setLoadingRole(null)
-      return
     }
-
-    if (role === 'shop_admin') {
-      router.push('/mi-tienda')
-    } else {
-      router.push('/')
-    }
-    router.refresh()
   }
 
   return (
@@ -73,7 +80,13 @@ export default function OnboardingPage() {
                 <p className="font-heading text-lg">Quiero comprar</p>
                 <p className="mt-1 text-sm text-muted-foreground">Cliente</p>
               </div>
-              <Button disabled={loadingRole === 'client'} variant="outline" className="mt-2">
+              <Button
+                render={<span />}
+                nativeButton={false}
+                disabled={loadingRole === 'client'}
+                variant="outline"
+                className="mt-2"
+              >
                 {loadingRole === 'client' ? 'Guardando...' : 'Elegir'}
               </Button>
             </CardContent>
@@ -95,7 +108,12 @@ export default function OnboardingPage() {
                 <p className="font-heading text-lg">Quiero vender</p>
                 <p className="mt-1 text-sm text-muted-foreground">Comercio</p>
               </div>
-              <Button disabled={loadingRole === 'shop_admin'} className="mt-2">
+              <Button
+                render={<span />}
+                nativeButton={false}
+                disabled={loadingRole === 'shop_admin'}
+                className="mt-2"
+              >
                 {loadingRole === 'shop_admin' ? 'Guardando...' : 'Elegir'}
               </Button>
             </CardContent>

@@ -35,7 +35,7 @@ export default function RootLayout({
       lang="es"
       className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-screen flex-col">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

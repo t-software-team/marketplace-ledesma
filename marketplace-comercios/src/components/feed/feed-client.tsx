@@ -1,9 +1,12 @@
 'use client'
 
-import { MapPin, Search } from 'lucide-react'
-import { useEffect } from 'react'
-import { CategoryFilter } from '@/components/shared/category-filter'
+import { ArrowLeft, MapPin, Search } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
+import { CategoryGrid } from './category-grid'
+import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
 import { ProductCard, type ProductFeedItem } from '@/components/shared/product-card'
+import { EmptyState } from '@/components/shared/empty-state'
+import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useProductsFeed } from '@/hooks/use-products'
@@ -15,12 +18,26 @@ interface Category {
   slug: string
 }
 
-interface FeedClientProps {
-  categories: Category[]
-  initialProducts: ProductFeedItem[]
+interface Subcategory extends Category {
+  parent_id: string | null
 }
 
-export function FeedClient({ categories, initialProducts }: FeedClientProps) {
+interface FeedClientProps {
+  categories: Category[]
+  subcategories: Subcategory[]
+  initialProducts: ProductFeedItem[]
+  isLoggedIn?: boolean
+  favoriteIds?: string[]
+}
+
+export function FeedClient({
+  categories,
+  subcategories,
+  initialProducts,
+  isLoggedIn = false,
+  favoriteIds = [],
+}: FeedClientProps) {
+  const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const {
     categoryId,
     searchQuery,
@@ -29,6 +46,22 @@ export function FeedClient({ categories, initialProducts }: FeedClientProps) {
     setSearch,
     setLocation,
   } = useFiltersStore()
+
+  const activeRubroId = useMemo(() => {
+    if (!categoryId) return null
+    if (categories.some((category) => category.id === categoryId)) return categoryId
+    return subcategories.find((sub) => sub.id === categoryId)?.parent_id ?? null
+  }, [categoryId, categories, subcategories])
+
+  const visibleSubcategories = useMemo(
+    () => subcategories.filter((sub) => sub.parent_id === activeRubroId),
+    [subcategories, activeRubroId]
+  )
+
+  const activeRubroName = useMemo(
+    () => categories.find((category) => category.id === activeRubroId)?.name,
+    [categories, activeRubroId]
+  )
 
   const { data: products, isLoading, isFetching } = useProductsFeed()
 
@@ -51,6 +84,7 @@ export function FeedClient({ categories, initialProducts }: FeedClientProps) {
 
   const displayProducts = products ?? initialProducts
   const showLoading = isLoading || (isFetching && !products)
+  const isBrowsingCategories = !categoryId && !searchQuery.trim()
 
   return (
     <div className="space-y-4">
@@ -86,31 +120,66 @@ export function FeedClient({ categories, initialProducts }: FeedClientProps) {
         </button>
       </div>
 
-      <CategoryFilter
-        categories={categories}
-        selectedId={categoryId}
-        onSelect={setCategory}
-      />
-
-      {showLoading ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
-          ))}
-        </div>
-      ) : displayProducts.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            No encontramos comercios en esta categoría. Probá con otra o ampliá la
-            distancia.
-          </p>
-        </div>
+      {isBrowsingCategories ? (
+        <CategoryGrid categories={categories} onSelect={setCategory} />
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {displayProducts.map((product) => (
-            <ProductCard key={product.product_id} product={product} />
-          ))}
-        </div>
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setCategory(null)
+                setSearch('')
+              }}
+              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" aria-hidden />
+              Categorías
+            </button>
+            {activeRubroName && (
+              <span className="font-heading text-sm text-foreground">{activeRubroName}</span>
+            )}
+          </div>
+
+          {visibleSubcategories.length > 0 && (
+            <div className="border-t border-dashed border-border pt-3">
+              <SubcategoryFilterSheet
+                subcategories={visibleSubcategories}
+                selectedId={categoryId === activeRubroId ? null : categoryId}
+                onSelect={(id) => setCategory(id ?? activeRubroId)}
+              />
+            </div>
+          )}
+
+          {showLoading ? (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
+              ))}
+            </div>
+          ) : displayProducts.length === 0 ? (
+            <EmptyState
+              illustration={<EmptySearchIllustration />}
+              message="No encontramos comercios en esta categoría. Probá con otra o ampliá la distancia."
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {displayProducts.map((product, index) => (
+                <div
+                  key={product.product_id}
+                  className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both duration-300"
+                  style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+                >
+                  <ProductCard
+                    product={product}
+                    isLoggedIn={isLoggedIn}
+                    initialIsFavorite={favoriteIdSet.has(product.product_id)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
