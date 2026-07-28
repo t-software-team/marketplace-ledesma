@@ -45,3 +45,32 @@ export async function updateProfile(
   revalidatePath('/perfil')
   return { error: null }
 }
+
+export async function becomeShopAdmin() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('No autenticado')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profile?.role !== 'client') {
+    throw new Error('Solo un cliente puede pasar a vender')
+  }
+
+  const { error } = await supabase.from('profiles').update({ role: 'shop_admin' }).eq('id', user.id)
+
+  if (error) {
+    console.error('becomeShopAdmin: fallo al cambiar de rol', { error })
+    throw new Error('No pudimos cambiar tu tipo de cuenta')
+  }
+
+  revalidatePath('/perfil')
+  revalidatePath('/mi-tienda')
+}

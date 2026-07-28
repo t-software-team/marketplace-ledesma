@@ -26,6 +26,7 @@ import { SidebarNav, type DashboardNavItem } from './dashboard-sidebar'
 import { signOut } from '@/lib/auth/actions'
 import { markAllNotificationsRead } from '@/lib/admin/actions'
 import { createClient } from '@/lib/supabase/client'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 
 export interface AdminNotification {
   id: string
@@ -172,6 +173,7 @@ export function DashboardHeader({
         </div>
 
         <div className="flex items-center gap-1">
+          <ThemeToggle className="hidden sm:inline-flex" />
           {notificationList && (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -268,6 +270,8 @@ export function DashboardHeader({
                 <span className="font-medium text-foreground">{userFullName ?? 'Usuario'}</span>
                 <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/" />}>Volver al sitio</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 render={

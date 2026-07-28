@@ -141,11 +141,9 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               )}
             </div>
           </div>
-          {shop.subscription_status !== 'active' && (
-            <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
-              Mejorar visibilidad
-            </Button>
-          )}
+          <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
+            {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
+          </Button>
         </CardContent>
       </Card>
 

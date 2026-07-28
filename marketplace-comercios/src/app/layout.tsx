@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { IBM_Plex_Mono, Inter, Sora } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
 import { getBaseUrl } from '@/lib/site-url'
@@ -46,12 +47,15 @@ export default function RootLayout({
     <html
       lang="es"
       className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="flex min-h-screen flex-col">
-        <Toaster>
-          <AuthListener />
-          <QueryProvider>{children}</QueryProvider>
-        </Toaster>
+        <ThemeProvider>
+          <Toaster>
+            <AuthListener />
+            <QueryProvider>{children}</QueryProvider>
+          </Toaster>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { BackLink } from '@/components/shared/back-link'
 import { getMyProfile } from '@/lib/profile/queries'
 import { ProfileForm } from './profile-form'
+import { BecomeSellerCard } from './become-seller-card'
 
 export default async function ProfilePage() {
   const profile = await getMyProfile()
@@ -14,6 +15,7 @@ export default async function ProfilePage() {
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-8">
       <BackLink href="/" />
       <h1 className="text-2xl font-heading">Mi perfil</h1>
+      {profile.role === 'client' && <BecomeSellerCard />}
       <ProfileForm
         userId={profile.id}
         email={profile.email}

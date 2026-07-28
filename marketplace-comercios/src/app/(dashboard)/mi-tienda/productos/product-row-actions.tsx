@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Star } from 'lucide-react'
+import { Eye, EyeOff, Pencil, Star, Trash2 } from 'lucide-react'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
@@ -61,32 +61,41 @@ export function ProductRowActions({
   }
 
   return (
-    <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+    <div className="flex shrink-0 items-center gap-1.5">
       <Button
-        render={<Link href={`/mi-tienda/productos/${productId}/editar`} />}
+        render={<Link href={`/mi-tienda/productos/${productId}/editar`} aria-label="Editar" />}
         nativeButton={false}
         variant="outline"
-        size="sm"
+        size="icon"
       >
-        Editar
+        <Pencil className="size-4" aria-hidden />
       </Button>
-      <Button variant="outline" size="sm" disabled={isPending} onClick={handleToggle}>
-        {isActive ? 'Desactivar' : 'Activar'}
+
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={isPending}
+        onClick={handleToggle}
+        aria-label={isActive ? 'Desactivar' : 'Activar'}
+      >
+        {isActive ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
       </Button>
+
       {canFeature && (
         <Button
           variant={isFeatured ? 'default' : 'outline'}
-          size="sm"
+          size="icon"
           disabled={isPending}
           onClick={handleToggleFeatured}
+          aria-label={isFeatured ? 'Quitar de destacados' : 'Destacar'}
         >
-          <Star className={isFeatured ? 'size-3.5 fill-current' : 'size-3.5'} aria-hidden />
-          {isFeatured ? 'Destacado' : 'Destacar'}
+          <Star className={isFeatured ? 'size-4 fill-current' : 'size-4'} aria-hidden />
         </Button>
       )}
+
       <ConfirmDialog
-        trigger={<Button variant="destructive" size="sm" disabled={isPending} />}
-        triggerLabel="Eliminar"
+        trigger={<Button variant="destructive" size="icon" disabled={isPending} aria-label="Eliminar" />}
+        triggerLabel={<Trash2 className="size-4" aria-hidden />}
         title="¿Eliminar este producto?"
         description="Esta acción no se puede deshacer."
         confirmLabel="Eliminar"

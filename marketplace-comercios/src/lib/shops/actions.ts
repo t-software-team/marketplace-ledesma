@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
+import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
@@ -20,6 +21,17 @@ export type ActionState = {
   error: string | null
   warning?: string | null
   fieldErrors?: Record<string, string>
+}
+
+function buildFieldErrors(error: ZodError): Record<string, string> {
+  const fieldErrors: Record<string, string> = {}
+  for (const issue of error.issues) {
+    const key = issue.path[0]
+    if (typeof key === 'string' && !fieldErrors[key]) {
+      fieldErrors[key] = issue.message
+    }
+  }
+  return fieldErrors
 }
 
 async function requireUser() {
@@ -123,16 +135,9 @@ export async function updateShopSettings(
   })
 
   if (!parsed.success) {
-    const fieldErrors: Record<string, string> = {}
-    for (const issue of parsed.error.issues) {
-      const key = issue.path[0]
-      if (typeof key === 'string' && !fieldErrors[key]) {
-        fieldErrors[key] = issue.message
-      }
-    }
     return {
       error: parsed.error.issues[0]?.message ?? 'Revisá los campos marcados',
-      fieldErrors,
+      fieldErrors: buildFieldErrors(parsed.error),
     }
   }
 
@@ -299,7 +304,10 @@ export async function createProduct(
   })
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+    return {
+      error: parsed.error.issues[0]?.message ?? 'Revisá los campos marcados',
+      fieldErrors: buildFieldErrors(parsed.error),
+    }
   }
 
   const { data: product, error } = await supabase
@@ -362,7 +370,10 @@ export async function updateProduct(
   })
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+    return {
+      error: parsed.error.issues[0]?.message ?? 'Revisá los campos marcados',
+      fieldErrors: buildFieldErrors(parsed.error),
+    }
   }
 
   const { error } = await supabase

@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { FieldError } from '@/components/shared/field-error'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -22,11 +23,6 @@ interface ShopSettingsFormProps {
 }
 
 const initialState: ActionState = { error: null }
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null
-  return <p className="text-xs text-destructive">{message}</p>
-}
 
 export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateShopSettings, initialState)
@@ -105,7 +101,17 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               defaultValue={shop.slug}
               required
               aria-invalid={Boolean(fieldErrors.slug)}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              onChange={(event) => {
+                event.target.value = event.target.value.toLowerCase()
+              }}
             />
+            <p className="text-xs text-muted-foreground">
+              Es la dirección de tu tienda pública: marketplace-ledesma.com/tienda/tu-slug. Si la
+              cambiás, los links que ya compartiste van a dejar de funcionar.
+            </p>
             <FieldError message={fieldErrors.slug} />
           </div>
 

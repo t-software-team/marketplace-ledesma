@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
+import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import type { ActionState } from '@/lib/shops/actions'
@@ -41,6 +42,7 @@ export function ProductForm({
   const noun = isService ? 'servicio' : 'producto'
   const [state, formAction, isPending] = useActionState(action, initialState)
   const [categoryId, setCategoryId] = useState(defaultValues?.category_id ?? '')
+  const fieldErrors = state.fieldErrors ?? {}
 
   useEffect(() => {
     if (state.error) {
@@ -54,7 +56,14 @@ export function ProductForm({
         <label htmlFor="name" className="text-sm font-medium">
           Nombre
         </label>
-        <Input id="name" name="name" defaultValue={defaultValues?.name} required />
+        <Input
+          id="name"
+          name="name"
+          defaultValue={defaultValues?.name}
+          required
+          aria-invalid={Boolean(fieldErrors.name)}
+        />
+        <FieldError message={fieldErrors.name} />
       </div>
 
       <div className="space-y-2">
@@ -67,6 +76,7 @@ export function ProductForm({
           rows={4}
           defaultValue={defaultValues?.description ?? ''}
         />
+        <FieldError message={fieldErrors.description} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -80,13 +90,21 @@ export function ProductForm({
             type="number"
             step="0.01"
             defaultValue={defaultValues?.price ?? ''}
+            aria-invalid={Boolean(fieldErrors.price)}
           />
+          <FieldError message={fieldErrors.price} />
         </div>
         <div className="space-y-2">
           <label htmlFor="currency" className="text-sm font-medium">
             Moneda
           </label>
-          <Input id="currency" name="currency" defaultValue={defaultValues?.currency ?? 'ARS'} />
+          <Input
+            id="currency"
+            name="currency"
+            defaultValue={defaultValues?.currency ?? 'ARS'}
+            aria-invalid={Boolean(fieldErrors.currency)}
+          />
+          <FieldError message={fieldErrors.currency} />
         </div>
       </div>
 
@@ -115,6 +133,7 @@ export function ProductForm({
             No hay subcategorías para el rubro de tu comercio todavía.
           </p>
         )}
+        <FieldError message={fieldErrors.category_id} />
       </div>
 
       <ProductImagesField shopId={shopId} initialImages={defaultValues?.imageUrls} noun={noun} />

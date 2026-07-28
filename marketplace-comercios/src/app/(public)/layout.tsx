@@ -1,4 +1,4 @@
-import { PublicHeader, PublicMain } from '@/components/shared/public-header'
+import { BottomNav, PublicHeader, PublicMain } from '@/components/shared/public-header'
 import { createClient } from '@/lib/supabase/server'
 import { getMyClientNotifications } from '@/lib/notifications/queries'
 
@@ -41,6 +41,7 @@ export default async function PublicLayout({
         unreadNotificationsCount={unreadCount}
       />
       <PublicMain>{children}</PublicMain>
+      <BottomNav isLoggedIn={Boolean(user)} />
     </div>
   )
 }

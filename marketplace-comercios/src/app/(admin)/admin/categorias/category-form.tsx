@@ -77,7 +77,20 @@ export function CategoryForm({
         <label htmlFor="slug" className="text-sm font-medium">
           URL
         </label>
-        <Input id="slug" name="slug" value={slug} onChange={handleSlugChange} required />
+        <Input
+          id="slug"
+          name="slug"
+          value={slug}
+          onChange={handleSlugChange}
+          required
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+        <p className="text-xs text-muted-foreground">
+          Identificador único usado internamente para filtrar productos por esta categoría. Se
+          genera solo a partir del nombre, pero podés ajustarlo.
+        </p>
       </div>
 
       <div className="space-y-2">

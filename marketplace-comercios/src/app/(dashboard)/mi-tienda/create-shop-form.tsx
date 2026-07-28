@@ -23,7 +23,18 @@ export function CreateShopForm() {
         <label htmlFor="slug" className="text-sm font-medium">
           URL (slug)
         </label>
-        <Input id="slug" name="slug" placeholder="mi-tienda" required />
+        <Input
+          id="slug"
+          name="slug"
+          placeholder="mi-tienda"
+          required
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          onChange={(event) => {
+            event.target.value = event.target.value.toLowerCase()
+          }}
+        />
         <p className="text-xs text-muted-foreground">
           Se usará como marketplace-ledesma.com/tienda/tu-slug
         </p>

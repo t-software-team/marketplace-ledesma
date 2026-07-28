@@ -300,6 +300,21 @@ export async function getActiveSubscriptionPlans() {
   return plans ?? []
 }
 
+export async function getMyActiveSubscription(shopId: string) {
+  const supabase = await createClient()
+
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('id, plan_id, end_date')
+    .eq('shop_id', shopId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  return subscription
+}
+
 export async function getMyPendingSubscription(shopId: string) {
   const supabase = await createClient()
 

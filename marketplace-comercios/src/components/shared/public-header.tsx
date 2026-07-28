@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, Bell, Heart, Store } from 'lucide-react'
+import { ArrowLeft, Bell, Compass, Heart, Home, Store, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { UserMenu } from '@/components/shared/user-menu'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { markClientNotificationsRead } from '@/lib/notifications/actions'
 import { cn } from '@/lib/utils'
 
@@ -98,6 +99,7 @@ export function PublicHeader({
           </span>
         </Link>
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <ThemeToggle className="hidden sm:inline-flex" />
           {user ? (
             <>
               {profileRole === 'shop_admin' && (
@@ -165,6 +167,7 @@ export function PublicHeader({
                     size="icon"
                     render={<Link href="/favoritos" aria-label="Favoritos" />}
                     nativeButton={false}
+                    className="hidden sm:inline-flex"
                   >
                     <Heart className="size-4" aria-hidden />
                   </Button>
@@ -205,10 +208,55 @@ export function PublicMain({ children }: { children: React.ReactNode }) {
     <main
       className={cn(
         'mx-auto w-full max-w-5xl flex-1 px-4 md:px-6',
-        isMinimal ? 'pt-5 pb-6' : 'py-6'
+        isMinimal ? 'pt-5 pb-6' : 'py-6 pb-24 sm:pb-6'
       )}
     >
       {children}
     </main>
+  )
+}
+
+interface BottomNavProps {
+  isLoggedIn: boolean
+}
+
+const NAV_ITEMS = [
+  { href: '/', label: 'Inicio', icon: Home, exact: true },
+  { href: '/favoritos', label: 'Favoritos', icon: Heart, exact: false },
+  { href: '/siguiendo', label: 'Siguiendo', icon: Compass, exact: false },
+  { href: '/perfil', label: 'Perfil', icon: User, exact: false },
+] as const
+
+export function BottomNav({ isLoggedIn }: BottomNavProps) {
+  const pathname = usePathname()
+  const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+
+  if (isMinimal) return null
+
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm sm:hidden">
+      <div className="mx-auto flex h-16 max-w-5xl items-center justify-around px-2">
+        {NAV_ITEMS.map((item) => {
+          const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+          const href = isLoggedIn || item.href === '/' ? item.href : '/login'
+          const Icon = item.icon
+
+          return (
+            <Link
+              key={item.href}
+              href={href}
+              className={cn(
+                'flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors',
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <Icon className="size-5" aria-hidden />
+              {item.label}
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
   )
 }

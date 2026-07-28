@@ -74,18 +74,19 @@ export function ProductsList({
           No encontramos {noun}s que coincidan con &quot;{query}&quot;.
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {filtered.map((product) => (
             <Card
               key={product.id}
               className={cn(
+                'py-0 transition-shadow',
                 !product.is_active && 'opacity-60',
                 product.is_featured && 'ring-2 ring-primary shadow-sm shadow-primary/15'
               )}
             >
-              <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-                <div className="flex flex-1 items-center gap-3">
-                  <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+              <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3">
+                  <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-muted sm:size-16">
                     {product.mainImage ? (
                       <Image
                         src={product.mainImage}
@@ -95,48 +96,58 @@ export function ProductsList({
                         sizes="64px"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                      <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
                         Sin imagen
                       </div>
                     )}
                     {product.is_featured && (
-                      <span className="absolute top-1 left-1 flex size-5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
-                        <Star className="size-3 fill-current" aria-hidden />
+                      <span className="absolute top-1 left-1 flex size-4.5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
+                        <Star className="size-2.5 fill-current" aria-hidden />
                       </span>
                     )}
                   </div>
 
-                  <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="min-w-0 flex-1 space-y-1 sm:hidden">
+                    <p className="truncate text-sm font-medium leading-snug">{product.name}</p>
+                    <p className="font-mono text-base font-semibold text-foreground">
+                      {formatPrice(product.price, product.currency)}
+                    </p>
+                  </div>
+
+                  <div className="hidden min-w-0 flex-1 space-y-1 sm:block">
                     <p className="truncate font-medium">{product.name}</p>
                     <p className="font-mono text-sm text-muted-foreground">
                       {formatPrice(product.price, product.currency)}
                     </p>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <StatusBadge
-                        status={product.is_active ? 'active' : 'none'}
-                        label={product.is_active ? 'Activo' : 'Inactivo'}
-                      />
-                      {product.is_featured && (
-                        <Badge className="gap-1">
-                          <Star className="size-2.5 fill-current" aria-hidden />
-                          Destacado
-                        </Badge>
-                      )}
-                      {product.categoryName && (
-                        <span className="text-xs text-muted-foreground">
-                          {product.categoryName}
-                        </span>
-                      )}
-                    </div>
                   </div>
                 </div>
 
-                <ProductRowActions
-                  productId={product.id}
-                  isActive={product.is_active}
-                  isFeatured={product.is_featured}
-                  canFeature={canFeature}
-                />
+                <div className="flex items-center justify-between gap-2 sm:flex-1 sm:justify-between">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <StatusBadge
+                      status={product.is_active ? 'active' : 'none'}
+                      label={product.is_active ? 'Activo' : 'Inactivo'}
+                    />
+                    {product.is_featured && (
+                      <Badge className="gap-1">
+                        <Star className="size-2.5 fill-current" aria-hidden />
+                        Destacado
+                      </Badge>
+                    )}
+                    {product.categoryName && (
+                      <span className="hidden truncate text-xs text-muted-foreground sm:inline">
+                        {product.categoryName}
+                      </span>
+                    )}
+                  </div>
+
+                  <ProductRowActions
+                    productId={product.id}
+                    isActive={product.is_active}
+                    isFeatured={product.is_featured}
+                    canFeature={canFeature}
+                  />
+                </div>
               </CardContent>
             </Card>
           ))}
