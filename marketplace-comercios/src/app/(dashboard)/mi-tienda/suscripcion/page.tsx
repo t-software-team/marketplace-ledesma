@@ -47,6 +47,8 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
   const { status } = await searchParams
 
   let pendingSubscription = await getMyPendingSubscription(shop.id)
+  let gatewayStatus: string | null = null
+  let syncFailed = false
 
   if (
     pendingSubscription?.galiopay_link_id &&
@@ -62,9 +64,17 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
         pendingSubscription.galiopay_proof_token
       )
       activated = result.activated
+      gatewayStatus = result.status
+      console.log('mi-tienda/suscripcion: estado de GalioPay', {
+        subscriptionId: pendingSubscription.id,
+        linkId: pendingSubscription.galiopay_link_id,
+        status: result.status,
+      })
     } catch (error) {
+      syncFailed = true
       console.error('mi-tienda/suscripcion: fallo al verificar pago pendiente', {
         subscriptionId: pendingSubscription.id,
+        linkId: pendingSubscription.galiopay_link_id,
         error,
       })
     }
@@ -94,11 +104,37 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
               <strong>{pendingSubscription.subscription_plans?.name ?? ''}</strong>. Si saliste de
               GalioPay antes de terminar, podés retomarlo desde donde quedó.
             </p>
-            {pendingSubscription.galiopay_checkout_url && (
-              <Button render={<a href={pendingSubscription.galiopay_checkout_url} />} className="w-full">
-                Continuar pago
-              </Button>
+            {gatewayStatus && gatewayStatus !== 'approved' && (
+              <p className="text-xs text-muted-foreground">
+                Último estado informado por GalioPay: <strong>{gatewayStatus}</strong>. Si ya
+                pagaste, puede tardar unos minutos en confirmarse.
+              </p>
             )}
+            {syncFailed && (
+              <p className="text-xs text-destructive">
+                No pudimos consultar el estado del pago con GalioPay. Probá verificar de nuevo en
+                unos segundos.
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {pendingSubscription.galiopay_checkout_url && (
+                <Button
+                  render={<a href={pendingSubscription.galiopay_checkout_url} />}
+                  nativeButton={false}
+                  className="flex-1"
+                >
+                  Continuar pago
+                </Button>
+              )}
+              <Button
+                render={<a href="/mi-tienda/suscripcion" />}
+                nativeButton={false}
+                variant="outline"
+                className="flex-1"
+              >
+                Verificar pago
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : plans.length === 0 ? (

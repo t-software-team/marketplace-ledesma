@@ -30,7 +30,7 @@ function extractLinkId(url: string) {
 interface PaymentLinkStatusResponse {
   id: string
   proofToken: string
-  status: 'pending' | 'approved' | 'expired' | 'cancelled' | string
+  status: 'pending' | 'approved' | 'paid' | 'expired' | 'cancelled' | string
   items: GalioPayItem[]
   referenceId: string
   paymentId: string | null

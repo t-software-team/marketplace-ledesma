@@ -33,7 +33,7 @@ export function CategoryGrid({ categories, onSelect }: CategoryGridProps) {
               key={category.id}
               type="button"
               onClick={() => onSelect(category.id)}
-              className="flex flex-col items-center gap-2.5 rounded-2xl border border-border bg-surface px-4 py-6 text-center transition-all hover:-translate-y-0.5 hover:border-primary/50"
+              className="flex flex-col items-center gap-2.5 rounded-2xl border border-border bg-surface px-4 py-6 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
             >
               <span
                 className={`flex size-12 items-center justify-center rounded-full ${TILE_COLORS[index % TILE_COLORS.length]}`}

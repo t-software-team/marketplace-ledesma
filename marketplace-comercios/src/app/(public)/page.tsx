@@ -35,12 +35,6 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading">Comercios cerca tuyo</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Descubrí productos de emprendimientos locales
-        </p>
-      </div>
       <FeedClient
         categories={categories ?? []}
         subcategories={subcategories ?? []}

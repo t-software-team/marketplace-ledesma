@@ -88,36 +88,44 @@ export function FeedClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar productos..."
-            value={searchQuery}
-            onChange={(event) => setSearch(event.target.value)}
-            className="pl-9"
-            aria-label="Buscar productos"
-          />
+      <div className="space-y-4 rounded-2xl bg-gradient-to-br from-primary to-destacado p-5 shadow-sm">
+        <div>
+          <h1 className="font-heading text-2xl text-primary-foreground">Comercios cerca tuyo</h1>
+          <p className="mt-1 text-sm text-primary-foreground/80">
+            Descubrí productos de emprendimientos locales
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (!navigator.geolocation) return
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                setLocation({
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                })
-              },
-              () => setLocation(null)
-            )
-          }}
-          className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Usar mi ubicación"
-        >
-          <MapPin className="size-4" />
-        </button>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar productos..."
+              value={searchQuery}
+              onChange={(event) => setSearch(event.target.value)}
+              className="border-transparent bg-surface pl-9 shadow-none"
+              aria-label="Buscar productos"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (!navigator.geolocation) return
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  setLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                  })
+                },
+                () => setLocation(null)
+              )
+            }}
+            className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-surface text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Usar mi ubicación"
+          >
+            <MapPin className="size-4" />
+          </button>
+        </div>
       </div>
 
       {isBrowsingCategories ? (

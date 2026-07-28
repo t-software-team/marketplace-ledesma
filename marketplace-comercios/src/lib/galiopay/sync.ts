@@ -7,8 +7,9 @@ export async function syncGalioPaySubscription(
   proofToken: string
 ) {
   const status = await getPaymentLinkStatus(linkId, proofToken)
+  const isPaid = status.status === 'approved' || status.status === 'paid'
 
-  if (status.status !== 'approved') {
+  if (!isPaid) {
     return { activated: false, status: status.status }
   }
 
@@ -19,5 +20,5 @@ export async function syncGalioPaySubscription(
 
   if (error) throw new Error('No pudimos activar la suscripción')
 
-  return { activated: true, status: 'approved' as const }
+  return { activated: true, status: status.status }
 }

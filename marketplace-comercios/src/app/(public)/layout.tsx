@@ -30,10 +30,12 @@ export default async function PublicLayout({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 md:px-6">
           <Link href="/" className="flex items-center gap-2 font-heading text-lg">
-            <Store className="size-5 text-primary" aria-hidden />
+            <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-destacado">
+              <Store className="size-4 text-primary-foreground" aria-hidden />
+            </span>
             Marketplace Ledesma
           </Link>
           <nav className="flex items-center gap-2">
@@ -77,6 +79,7 @@ export default async function PublicLayout({
             )}
           </nav>
         </div>
+        <div className="h-0.5 bg-gradient-to-r from-primary via-destacado to-primary" />
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">{children}</main>
     </div>
