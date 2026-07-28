@@ -98,12 +98,10 @@ export function FeedClient({
             <Sparkles className="size-3" aria-hidden />
             Cerca tuyo
           </span>
-          <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight">
-            Comercios cerca tuyo
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="mt-3 font-heading text-1xl font-semibold tracking-tight">
             Descubrí productos de emprendimientos locales
-          </p>
+          </h1>
+      
         </div>
         <div className="relative flex gap-2">
           <div className="relative flex-1">

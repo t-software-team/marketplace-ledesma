@@ -1,4 +1,4 @@
-import { PublicHeader } from '@/components/shared/public-header'
+import { PublicHeader, PublicMain } from '@/components/shared/public-header'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function PublicLayout({
@@ -33,7 +33,7 @@ export default async function PublicLayout({
         profileFullName={profileFullName}
         profileAvatarUrl={profileAvatarUrl}
       />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">{children}</main>
+      <PublicMain>{children}</PublicMain>
     </div>
   )
 }
