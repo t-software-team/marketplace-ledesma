@@ -46,15 +46,15 @@ export function PublicHeader({
   }
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 md:px-6">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 font-heading text-lg">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <Store className="size-4 text-primary" aria-hidden />
           </span>
           <span className="truncate">
-            <span className="sm:hidden">Ledesma</span>
-            <span className="hidden sm:inline">Marketplace Ledesma</span>
+            <span className="sm:hidden">Todo</span>
+            <span className="hidden sm:inline">Marketplace</span>
           </span>
         </Link>
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">

@@ -1,18 +1,26 @@
 'use client'
 
 import Link from 'next/link'
+import { Star } from 'lucide-react'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { toast } from '@/components/ui/toast'
-import { deleteProduct, toggleProductActive } from '@/lib/shops/actions'
+import { deleteProduct, toggleProductActive, toggleProductFeatured } from '@/lib/shops/actions'
 
 interface ProductRowActionsProps {
   productId: string
   isActive: boolean
+  isFeatured: boolean
+  canFeature: boolean
 }
 
-export function ProductRowActions({ productId, isActive }: ProductRowActionsProps) {
+export function ProductRowActions({
+  productId,
+  isActive,
+  isFeatured,
+  canFeature,
+}: ProductRowActionsProps) {
   const [isPending, startTransition] = useTransition()
 
   function handleToggle() {
@@ -22,6 +30,21 @@ export function ProductRowActions({ productId, isActive }: ProductRowActionsProp
         toast.add({ title: isActive ? 'Producto desactivado' : 'Producto activado', type: 'success' })
       } catch {
         toast.add({ title: 'No pudimos actualizar el producto', type: 'error' })
+      }
+    })
+  }
+
+  function handleToggleFeatured() {
+    startTransition(async () => {
+      try {
+        await toggleProductFeatured(productId, !isFeatured)
+        toast.add({ title: isFeatured ? 'Ya no está destacado' : 'Producto destacado', type: 'success' })
+      } catch (error) {
+        toast.add({
+          title: 'No pudimos destacar el producto',
+          description: error instanceof Error ? error.message : undefined,
+          type: 'error',
+        })
       }
     })
   }
@@ -50,6 +73,18 @@ export function ProductRowActions({ productId, isActive }: ProductRowActionsProp
       <Button variant="outline" size="sm" disabled={isPending} onClick={handleToggle}>
         {isActive ? 'Desactivar' : 'Activar'}
       </Button>
+      {canFeature && (
+        <Button
+          variant={isFeatured ? 'default' : 'outline'}
+          size="sm"
+          disabled={isPending}
+          onClick={handleToggleFeatured}
+          className={isFeatured ? 'bg-warning text-warning-foreground hover:bg-warning/90' : undefined}
+        >
+          <Star className="size-3.5" aria-hidden />
+          {isFeatured ? 'Destacado' : 'Destacar'}
+        </Button>
+      )}
       <ConfirmDialog
         trigger={<Button variant="destructive" size="sm" disabled={isPending} />}
         triggerLabel="Eliminar"

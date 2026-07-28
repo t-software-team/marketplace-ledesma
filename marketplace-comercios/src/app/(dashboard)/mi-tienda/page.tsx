@@ -11,6 +11,7 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getMyShop, getMyShopProducts } from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
+import { OnboardingChecklist } from './onboarding-checklist'
 
 const subscriptionLabels: Record<string, string> = {
   none: 'Sin suscripción',
@@ -74,6 +75,15 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
           ¡Listo! Tu pago se acreditó y tu suscripción ya está activa.
         </p>
       )}
+
+      <OnboardingChecklist
+        hasCategory={Boolean(shop.category_id)}
+        hasBranding={Boolean(shop.logo_url)}
+        hasProducts={products.length > 0}
+        isVerified={shop.verification_status === 'verified'}
+        isSubscribed={shop.subscription_status === 'active'}
+        noun={noun}
+      />
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="relative h-28 bg-gradient-to-br from-primary/30 to-destacado/30 sm:h-36">

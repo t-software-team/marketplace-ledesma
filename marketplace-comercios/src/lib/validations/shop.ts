@@ -83,3 +83,10 @@ export const reportShopSchema = z.object({
 })
 
 export type ReportShopFormValues = z.infer<typeof reportShopSchema>
+
+export const shopReviewSchema = z.object({
+  rating: z.coerce.number().int().min(1, 'Elegí una calificación').max(5),
+  comment: z.string().max(500).optional().or(z.literal('')),
+})
+
+export type ShopReviewFormValues = z.infer<typeof shopReviewSchema>

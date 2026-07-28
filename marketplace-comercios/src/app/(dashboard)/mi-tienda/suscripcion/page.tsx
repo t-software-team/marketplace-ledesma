@@ -46,7 +46,7 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
 
   const { status } = await searchParams
 
-  let pendingSubscription = await getMyPendingSubscription(shop.id)
+  const pendingSubscription = await getMyPendingSubscription(shop.id)
   let gatewayStatus: string | null = null
   let syncFailed = false
 

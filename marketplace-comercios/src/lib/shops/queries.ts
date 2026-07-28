@@ -41,6 +41,7 @@ export async function getMyShopProducts(shopId: string) {
       price,
       currency,
       is_active,
+      is_featured,
       product_images ( id, url, sort_order ),
       categories ( name )
     `
@@ -62,6 +63,7 @@ export async function getMyShopProducts(shopId: string) {
       price: product.price,
       currency: product.currency,
       is_active: product.is_active,
+      is_featured: product.is_featured,
       mainImage: images[0]?.url ?? null,
       categoryName: product.categories?.name ?? null,
     }
@@ -137,6 +139,7 @@ export async function getShopBySlug(slug: string) {
       logo_url,
       cover_url,
       whatsapp_number,
+      instagram_url,
       address,
       city,
       verification_status,
@@ -154,6 +157,58 @@ export async function getShopBySlug(slug: string) {
   if (error || !shop) return null
 
   return shop
+}
+
+export async function getShopRating(shopId: string) {
+  const supabase = await createClient()
+
+  const { data } = await supabase.rpc('get_shop_rating', { p_shop_id: shopId })
+  const row = data?.[0]
+
+  return {
+    avgRating: row?.avg_rating ? Number(row.avg_rating) : 0,
+    reviewCount: row?.review_count ? Number(row.review_count) : 0,
+  }
+}
+
+export async function getShopReviews(shopId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('shop_reviews')
+    .select('id, rating, comment, created_at, client_id, profiles ( full_name )')
+    .eq('shop_id', shopId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error || !data) return []
+
+  return data.map((review) => ({
+    id: review.id,
+    rating: review.rating,
+    comment: review.comment,
+    createdAt: review.created_at,
+    clientId: review.client_id,
+    clientName: review.profiles?.full_name ?? 'Usuario',
+  }))
+}
+
+export async function getMyShopReview(shopId: string) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return null
+
+  const { data } = await supabase
+    .from('shop_reviews')
+    .select('id, rating, comment')
+    .eq('shop_id', shopId)
+    .eq('client_id', user.id)
+    .maybeSingle()
+
+  return data
 }
 
 export async function getActiveSubscriptionPlans() {

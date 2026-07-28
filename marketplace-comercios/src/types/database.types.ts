@@ -222,6 +222,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_featured: boolean
           name: string
           price: number | null
           search_vector: unknown
@@ -236,6 +237,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           name: string
           price?: number | null
           search_vector?: unknown
@@ -250,6 +252,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           name?: string
           price?: number | null
           search_vector?: unknown
@@ -355,6 +358,51 @@ export type Database = {
           },
           {
             foreignKeyName: "shop_reports_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_reviews: {
+        Row: {
+          client_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rating: number
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating: number
+          shop_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating?: number
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_reviews_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_reviews_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -933,12 +981,17 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_shop_rating: {
+        Args: { p_shop_id: string }
+        Returns: { avg_rating: number; review_count: number }[]
+      }
       get_products_feed: {
         Args: {
           p_category_id?: string
           p_limit?: number
           p_offset?: number
           p_search?: string
+          p_seed?: string
           user_lat?: number
           user_lng?: number
         }
@@ -949,6 +1002,7 @@ export type Database = {
           parent_category_name: string
           price: number
           product_id: string
+          product_is_featured: boolean
           product_name: string
           shop_id: string
           shop_is_featured: boolean

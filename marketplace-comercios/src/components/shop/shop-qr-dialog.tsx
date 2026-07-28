@@ -16,9 +16,10 @@ import {
 interface ShopQrDialogProps {
   shopName: string
   shopUrl: string
+  triggerVariant?: 'default' | 'icon'
 }
 
-export function ShopQrDialog({ shopName, shopUrl }: ShopQrDialogProps) {
+export function ShopQrDialog({ shopName, shopUrl, triggerVariant = 'default' }: ShopQrDialogProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   function handleDownload() {
@@ -64,11 +65,15 @@ export function ShopQrDialog({ shopName, shopUrl }: ShopQrDialogProps) {
     <Dialog>
       <DialogTrigger
         render={
-          <Button variant="outline" className="flex-1 gap-2" aria-label="Ver código QR" />
+          triggerVariant === 'icon' ? (
+            <Button variant="outline" size="icon" aria-label="Ver código QR" />
+          ) : (
+            <Button variant="outline" className="flex-1 gap-2" aria-label="Ver código QR" />
+          )
         }
       >
         <QrCode className="size-4" />
-        QR
+        {triggerVariant === 'default' && 'QR'}
       </DialogTrigger>
       <DialogContent className="sm:max-w-xs">
         <DialogHeader>

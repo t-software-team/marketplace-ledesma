@@ -163,7 +163,7 @@ export function DashboardHeader({
             </SheetTrigger>
             <SheetContent side="left" className="w-64">
               <SheetHeader>
-                <SheetTitle>Marketplace Ledesma</SheetTitle>
+                <SheetTitle>Todo Marketplace</SheetTitle>
               </SheetHeader>
               <SidebarNav navItems={navItems} onNavigate={() => setMobileNavOpen(false)} />
             </SheetContent>

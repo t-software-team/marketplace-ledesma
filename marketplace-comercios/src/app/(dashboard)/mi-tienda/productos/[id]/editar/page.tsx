@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getMyProduct, getMyShop, getSubcategories } from '@/lib/shops/queries'
 import { updateProduct } from '@/lib/shops/actions'
+import { BackLink } from '@/components/shared/back-link'
 import { ProductForm } from '../../product-form'
 
 interface EditProductPageProps {
@@ -33,6 +34,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
 
   return (
     <div className="max-w-2xl space-y-4">
+      <BackLink href="/mi-tienda/productos" />
       <h1 className="text-2xl font-heading">Editar {noun}</h1>
       <ProductForm
         shopId={shop.id}

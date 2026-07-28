@@ -11,6 +11,7 @@ import {
   createShopSchema,
   productSchema,
   reportShopSchema,
+  shopReviewSchema,
   shopSettingsSchema,
 } from '@/lib/validations/shop'
 
@@ -441,6 +442,44 @@ export async function toggleProductActive(productId: string, isActive: boolean) 
   revalidatePath('/mi-tienda/productos')
 }
 
+export async function toggleProductFeatured(productId: string, isFeatured: boolean) {
+  const { supabase, user } = await requireUser()
+
+  if (isFeatured) {
+    const { data: product } = await supabase
+      .from('products')
+      .select('shop_id')
+      .eq('id', productId)
+      .maybeSingle()
+
+    if (!product) throw new Error('Producto no encontrado')
+
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('subscription_status')
+      .eq('id', product.shop_id)
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    if (shop?.subscription_status !== 'active') {
+      throw new Error('Necesitás una suscripción activa para destacar productos')
+    }
+  }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ is_featured: isFeatured })
+    .eq('id', productId)
+
+  if (error) {
+    console.error('toggleProductFeatured: fallo al actualizar producto', { productId, error })
+    throw new Error('No pudimos actualizar el producto')
+  }
+
+  revalidatePath('/mi-tienda/productos')
+  revalidatePath('/')
+}
+
 export async function startSubscriptionCheckout(planId: string) {
   const { supabase, user } = await requireUser()
 
@@ -510,7 +549,7 @@ export async function startSubscriptionCheckout(planId: string) {
   const link = await createPaymentLink({
     items: [
       {
-        title: `Plan ${plan.name} — Marketplace Ledesma`,
+        title: `Plan ${plan.name} — Todo Marketplace`,
         quantity: 1,
         unitPrice: plan.price,
         currencyId: 'ARS',
@@ -617,4 +656,67 @@ export async function reportShop(
   }
 
   return { error: null }
+}
+
+export async function upsertShopReview(
+  shopId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await requireUser()
+
+  const parsed = shopReviewSchema.safeParse({
+    rating: formData.get('rating'),
+    comment: formData.get('comment') ?? '',
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+
+  const { data: shop } = await supabase
+    .from('shops')
+    .select('slug, subscription_status')
+    .eq('id', shopId)
+    .maybeSingle()
+
+  if (shop?.subscription_status !== 'active') {
+    return { error: 'Este comercio no tiene las reseñas habilitadas' }
+  }
+
+  const { error } = await supabase.from('shop_reviews').upsert(
+    {
+      shop_id: shopId,
+      client_id: user.id,
+      rating: parsed.data.rating,
+      comment: parsed.data.comment || null,
+    },
+    { onConflict: 'shop_id,client_id' }
+  )
+
+  if (error) {
+    console.error('upsertShopReview: fallo al guardar reseña', { shopId, error })
+    return { error: 'No pudimos guardar tu reseña' }
+  }
+
+  revalidatePath(`/tienda/${shop.slug}`)
+  return { error: null }
+}
+
+export async function deleteShopReview(shopId: string) {
+  const { supabase, user } = await requireUser()
+
+  const { error } = await supabase
+    .from('shop_reviews')
+    .delete()
+    .eq('shop_id', shopId)
+    .eq('client_id', user.id)
+
+  if (error) {
+    console.error('deleteShopReview: fallo al borrar reseña', { shopId, error })
+    throw new Error('No pudimos borrar tu reseña')
+  }
+
+  const { data: shop } = await supabase.from('shops').select('slug').eq('id', shopId).maybeSingle()
+  if (shop) revalidatePath(`/tienda/${shop.slug}`)
 }

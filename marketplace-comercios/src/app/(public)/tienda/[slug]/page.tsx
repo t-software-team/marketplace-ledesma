@@ -1,19 +1,29 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import Link from 'next/link'
 import { MapPin } from 'lucide-react'
+import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
+import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
+import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
+import { ShopReviewsList } from '@/components/shop/shop-reviews-list'
 import { ShopViewTracker } from '@/components/shop/shop-view-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { getShopBySlug, getShopProducts } from '@/lib/shops/queries'
+import {
+  getMyShopReview,
+  getShopBySlug,
+  getShopProducts,
+  getShopRating,
+  getShopReviews,
+} from '@/lib/shops/queries'
+import { createClient } from '@/lib/supabase/server'
 
 interface ShopPageProps {
   params: Promise<{ slug: string }>
@@ -42,8 +52,8 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
   }
 
   return {
-    title: `${shop.name} | Marketplace Ledesma`,
-    description: shop.description ?? `Productos de ${shop.name} en Marketplace Ledesma`,
+    title: `${shop.name} | Todo Marketplace`,
+    description: shop.description ?? `Productos de ${shop.name} en Todo Marketplace`,
   }
 }
 
@@ -55,19 +65,28 @@ export default async function ShopPage({ params }: ShopPageProps) {
     notFound()
   }
 
-  const products = await getShopProducts(shop.id)
-  const shopUrl = await getShopUrl(slug)
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const [products, shopUrl, rating, reviews, myReview] = await Promise.all([
+    getShopProducts(shop.id),
+    getShopUrl(slug),
+    getShopRating(shop.id),
+    getShopReviews(shop.id),
+    user ? getMyShopReview(shop.id) : Promise.resolve(null),
+  ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
   const isVerified = shop.verification_status === 'verified'
   const isFeatured = shop.subscription_status === 'active'
-  const locationLabel = [categoryName, shop.city].filter(Boolean).join(' · ')
 
   return (
     <div className="space-y-6 pb-24">
       <ShopViewTracker shopId={shop.id} />
 
-      <div className="-mx-4 overflow-hidden rounded-xl border border-border bg-surface md:-mx-6">
+      <div className="-mx-4 overflow-hidden rounded-xl border border-border bg-surface shadow-sm md:-mx-6">
         <div className="relative h-36 bg-muted md:h-44">
           {shop.cover_url ? (
             <Image
@@ -86,7 +105,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
 
         <div className="relative px-4 pb-5 md:px-6">
           <div className="flex items-end gap-3">
-            <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-muted ring-1 ring-border">
+            <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-muted shadow-md ring-1 ring-border">
               {shop.logo_url ? (
                 <Image
                   src={shop.logo_url}
@@ -104,8 +123,28 @@ export default async function ShopPage({ params }: ShopPageProps) {
             <div className="min-w-0 flex-1 pt-2">
               <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
               {isVerified && <VerifiedStamp showLabel className="mt-1" />}
-              {locationLabel && (
-                <p className="mt-0.5 text-sm text-muted-foreground">{locationLabel}</p>
+              {isFeatured && rating.reviewCount > 0 && (
+                <div className="mt-1 flex items-center gap-1.5 text-sm">
+                  <StarRating rating={rating.avgRating} />
+                  <span className="text-muted-foreground">
+                    {rating.avgRating} ({rating.reviewCount})
+                  </span>
+                </div>
+              )}
+              {(categoryName || shop.city) && (
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                  {categoryName && (
+                    <Badge variant="outline" className="font-normal">
+                      {categoryName}
+                    </Badge>
+                  )}
+                  {shop.city && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="size-3.5" aria-hidden />
+                      {shop.city}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -122,27 +161,36 @@ export default async function ShopPage({ params }: ShopPageProps) {
             </p>
           )}
 
-          <div className="mt-4 hidden gap-2 sm:flex">
+          <div className="mt-4 hidden items-center gap-2 sm:flex">
             <WhatsAppButton
               shopId={shop.id}
               phoneNumber={shop.whatsapp_number}
-              message={`Hola ${shop.name}, vi tu tienda en Marketplace Ledesma`}
-              className="max-w-xs"
+              message={`Hola ${shop.name}, vi tu tienda en Todo Marketplace`}
+              className="max-w-xs flex-1"
             />
             {mapsUrl && (
               <Button
                 variant="outline"
-                className="gap-2"
-                render={
-                  <a href={mapsUrl} target="_blank" rel="noopener noreferrer" />
-                }
+                size="icon"
+                render={<a href={mapsUrl} target="_blank" rel="noopener noreferrer" aria-label="Ver en mapa" />}
                 nativeButton={false}
               >
                 <MapPin className="size-4" />
-                Ver en mapa
               </Button>
             )}
-            <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} />
+            {shop.instagram_url && (
+              <Button
+                variant="outline"
+                size="icon"
+                render={
+                  <a href={shop.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Instagram" />
+                }
+                nativeButton={false}
+              >
+                <InstagramIcon className="size-4" />
+              </Button>
+            )}
+            <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
           </div>
         </div>
       </div>
@@ -151,6 +199,18 @@ export default async function ShopPage({ params }: ShopPageProps) {
         <h2 className="text-lg font-heading">Productos</h2>
         <ShopProductGrid products={products} shopName={shop.name} />
       </section>
+
+      {isFeatured && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg font-heading">
+              Reseñas {rating.reviewCount > 0 && `(${rating.reviewCount})`}
+            </h2>
+            {user && <ShopReviewDialog shopId={shop.id} myReview={myReview} />}
+          </div>
+          <ShopReviewsList reviews={reviews} />
+        </section>
+      )}
 
       <div className="flex justify-center">
         <ReportShopDialog shopId={shop.id} />
@@ -161,7 +221,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
           <WhatsAppButton
             shopId={shop.id}
             phoneNumber={shop.whatsapp_number}
-            message={`Hola ${shop.name}, vi tu tienda en Marketplace Ledesma`}
+            message={`Hola ${shop.name}, vi tu tienda en Todo Marketplace`}
             className="flex-1"
           />
           {mapsUrl && (
@@ -181,7 +241,19 @@ export default async function ShopPage({ params }: ShopPageProps) {
               <MapPin className="size-4" />
             </Button>
           )}
-          <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} />
+          {shop.instagram_url && (
+            <Button
+              variant="outline"
+              size="icon"
+              render={
+                <a href={shop.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Instagram" />
+              }
+              nativeButton={false}
+            >
+              <InstagramIcon className="size-4" />
+            </Button>
+          )}
+          <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
         </div>
       </div>
     </div>

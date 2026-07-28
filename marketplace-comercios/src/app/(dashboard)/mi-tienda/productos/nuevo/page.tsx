@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getMyShop, getProductLimitInfo, getSubcategories } from '@/lib/shops/queries'
 import { createProduct } from '@/lib/shops/actions'
+import { BackLink } from '@/components/shared/back-link'
 import { ProductForm } from '../product-form'
 
 export default async function NewProductPage() {
@@ -19,6 +20,7 @@ export default async function NewProductPage() {
   if (limitInfo.reached) {
     return (
       <div className="max-w-2xl space-y-4">
+        <BackLink href="/mi-tienda/productos" />
         <h1 className="text-2xl font-heading">Nuevo {noun}</h1>
         <p className="rounded-lg border border-warning bg-warning/30 p-3 text-sm text-warning-foreground">
           Llegaste al límite de {limitInfo.max} {noun}s de tu plan actual.{' '}
@@ -34,6 +36,7 @@ export default async function NewProductPage() {
   if (!shop.category_id) {
     return (
       <div className="max-w-2xl space-y-4">
+        <BackLink href="/mi-tienda/productos" />
         <h1 className="text-2xl font-heading">Nuevo {noun}</h1>
         <p className="text-sm text-muted-foreground">
           Antes de cargar {noun}s, elegí el rubro de tu comercio en{' '}
@@ -50,6 +53,7 @@ export default async function NewProductPage() {
 
   return (
     <div className="max-w-2xl space-y-4">
+      <BackLink href="/mi-tienda/productos" />
       <h1 className="text-2xl font-heading">Nuevo {noun}</h1>
       <ProductForm
         shopId={shop.id}

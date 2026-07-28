@@ -1,6 +1,7 @@
 import { ProductCard } from '@/components/shared/product-card'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyHeartIllustration } from '@/components/shared/empty-illustrations'
+import { BackLink } from '@/components/shared/back-link'
 import { getMyFavorites } from '@/lib/shops/queries'
 
 export default async function FavoritesPage() {
@@ -8,6 +9,7 @@ export default async function FavoritesPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-8">
+      <BackLink href="/" />
       <h1 className="text-2xl font-heading">Favoritos</h1>
 
       {favorites.length === 0 ? (

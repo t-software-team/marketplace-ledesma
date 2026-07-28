@@ -113,7 +113,7 @@ export function ProductContact({
   rubroSlug,
 }: ProductContactProps) {
   const quickMessages = (rubroSlug && MESSAGES_BY_RUBRO[rubroSlug]) || GENERIC_MESSAGES
-  const defaultMessage = `Hola ${shopName}, vi "${productName}" en Marketplace Ledesma`
+  const defaultMessage = `Hola ${shopName}, vi "${productName}" en Todo Marketplace`
   const [message, setMessage] = useState(defaultMessage)
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 

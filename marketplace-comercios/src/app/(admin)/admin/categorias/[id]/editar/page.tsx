@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getCategoriesList, getCategoryById } from '@/lib/admin/queries'
 import { updateCategory } from '@/lib/admin/actions'
+import { BackLink } from '@/components/shared/back-link'
 import { CategoryForm } from '../../category-form'
 
 interface EditCategoryPageProps {
@@ -18,6 +19,7 @@ export default async function EditCategoryPage({ params }: EditCategoryPageProps
 
   return (
     <div className="max-w-2xl space-y-4">
+      <BackLink href="/admin/categorias" />
       <h1 className="text-2xl font-heading">Editar categoría</h1>
       <CategoryForm
         categories={categories}

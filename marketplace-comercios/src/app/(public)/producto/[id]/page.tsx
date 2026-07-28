@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   return {
-    title: `${product.name} | ${product.shop.name} | Marketplace Ledesma`,
+    title: `${product.name} | ${product.shop.name} | Todo Marketplace`,
     description: product.description ?? `${product.name} en ${product.shop.name}`,
   }
 }

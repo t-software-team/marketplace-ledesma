@@ -15,10 +15,16 @@ export function ShopViewTracker({ shopId }: ShopViewTrackerProps) {
     tracked.current = true
 
     const supabase = createClient()
-    void supabase.rpc('increment_shop_metric', {
-      p_shop_id: shopId,
-      p_metric: 'view',
-    })
+    supabase
+      .rpc('increment_shop_metric', {
+        p_shop_id: shopId,
+        p_metric: 'view',
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.error('ShopViewTracker: fallo al registrar la vista', { shopId, error })
+        }
+      })
   }, [shopId])
 
   return null

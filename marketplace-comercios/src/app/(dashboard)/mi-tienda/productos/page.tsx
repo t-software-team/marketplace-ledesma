@@ -23,6 +23,7 @@ export default async function ProductsPage() {
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
+  const canFeature = shop.subscription_status === 'active'
 
   return (
     <div className="space-y-4">
@@ -68,7 +69,18 @@ export default async function ProductsPage() {
           }
         />
       ) : (
-        <ProductsList products={products} noun={noun} />
+        <>
+          {!canFeature && (
+            <p className="text-xs text-muted-foreground">
+              Con una suscripción activa podés destacar tus {noun}s para que aparezcan primero en
+              el feed.{' '}
+              <Link href="/mi-tienda/suscripcion" className="underline">
+                Mejorar visibilidad
+              </Link>
+            </p>
+          )}
+          <ProductsList products={products} noun={noun} canFeature={canFeature} />
+        </>
       )}
     </div>
   )

@@ -14,6 +14,7 @@ export interface ProductFeedItem {
   shop_id: string
   shop_name: string
   shop_is_featured: boolean
+  product_is_featured?: boolean
   distance_km: number | null
   main_image: string | null
   category_name?: string | null
@@ -57,10 +58,17 @@ export function ProductCard({
       : product.category_name
     : null
 
+  const isFeatured = Boolean(product.product_is_featured)
+
   return (
     <Link href={`/producto/${product.product_id}`} className={cn('block', className)}>
-      <Card className="relative overflow-hidden py-0 shadow-sm ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/40">
-        {product.shop_is_featured && <FeaturedRibbon />}
+      <Card
+        className={cn(
+          'relative overflow-hidden py-0 shadow-sm ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/40',
+          isFeatured && 'ring-2 ring-destacado hover:ring-destacado'
+        )}
+      >
+        {isFeatured && <FeaturedRibbon variant="floating" />}
         <FavoriteButton
           productId={product.product_id}
           initialIsFavorite={initialIsFavorite}

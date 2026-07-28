@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Search } from 'lucide-react'
+import { Search, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ interface Product {
   price: number | null
   currency: string
   is_active: boolean
+  is_featured: boolean
   mainImage: string | null
   categoryName: string | null
 }
@@ -31,9 +32,11 @@ function formatPrice(price: number | null, currency: string) {
 export function ProductsList({
   products,
   noun = 'producto',
+  canFeature = false,
 }: {
   products: Product[]
   noun?: string
+  canFeature?: boolean
 }) {
   const [query, setQuery] = useState('')
 
@@ -72,7 +75,13 @@ export function ProductsList({
       ) : (
         <div className="space-y-3">
           {filtered.map((product) => (
-            <Card key={product.id} className={cn(!product.is_active && 'opacity-60')}>
+            <Card
+              key={product.id}
+              className={cn(
+                !product.is_active && 'opacity-60',
+                product.is_featured && 'ring-2 ring-warning'
+              )}
+            >
               <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
                 <div className="flex flex-1 items-center gap-3">
                   <div className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
@@ -89,6 +98,11 @@ export function ProductsList({
                         Sin imagen
                       </div>
                     )}
+                    {product.is_featured && (
+                      <span className="absolute top-1 left-1 flex size-5 items-center justify-center rounded-full bg-warning text-warning-foreground shadow-sm">
+                        <Star className="size-3 fill-current" aria-hidden />
+                      </span>
+                    )}
                   </div>
 
                   <div className="min-w-0 flex-1 space-y-0.5">
@@ -101,6 +115,9 @@ export function ProductsList({
                         status={product.is_active ? 'active' : 'none'}
                         label={product.is_active ? 'Activo' : 'Inactivo'}
                       />
+                      {product.is_featured && (
+                        <StatusBadge status="active" label="Destacado" />
+                      )}
                       {product.categoryName && (
                         <span className="text-xs text-muted-foreground">
                           {product.categoryName}
@@ -110,7 +127,12 @@ export function ProductsList({
                   </div>
                 </div>
 
-                <ProductRowActions productId={product.id} isActive={product.is_active} />
+                <ProductRowActions
+                  productId={product.id}
+                  isActive={product.is_active}
+                  isFeatured={product.is_featured}
+                  canFeature={canFeature}
+                />
               </CardContent>
             </Card>
           ))}

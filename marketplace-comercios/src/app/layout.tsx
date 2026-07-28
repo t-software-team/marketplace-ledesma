@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { IBM_Plex_Mono, Inter, Sora } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { Toaster } from '@/components/ui/toast'
+import { AuthListener } from '@/components/shared/auth-listener'
 import './globals.css'
 
 const inter = Inter({
@@ -22,7 +23,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Marketplace Ledesma',
+  title: 'Todo Marketplace',
   description: 'Comercios locales de tu barrio',
 }
 
@@ -38,6 +39,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-screen flex-col">
         <Toaster>
+          <AuthListener />
           <QueryProvider>{children}</QueryProvider>
         </Toaster>
       </body>
