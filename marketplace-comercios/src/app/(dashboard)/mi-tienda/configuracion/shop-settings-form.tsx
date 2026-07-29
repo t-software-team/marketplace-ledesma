@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
-import { getRubroIcon } from '@/lib/category-icons'
+import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
 import { uploadShopImage } from '@/lib/shops/upload-image'
 import { updateShopSettings, type ActionState } from '@/lib/shops/actions'
 import { BusinessHoursEditor } from './business-hours-editor'
@@ -234,6 +234,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => {
                 const Icon = getRubroIcon(category.slug)
+                const isSelected = categoryId === category.id
                 return (
                   <button
                     key={category.id}
@@ -241,13 +242,25 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
                     onClick={() => setCategoryId(category.id === categoryId ? '' : category.id)}
                     className={cn(
                       'flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors',
-                      categoryId === category.id
+                      isSelected
                         ? 'border-primary bg-primary text-primary-foreground'
                         : 'border-border bg-surface text-muted-foreground hover:text-foreground'
                     )}
                   >
                     <Icon className="size-3.5" aria-hidden />
                     {category.name}
+                    {isServiceRubro(category.slug) && (
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 py-0.5 text-[10px] font-medium',
+                          isSelected
+                            ? 'bg-primary-foreground/20 text-primary-foreground'
+                            : 'bg-muted text-muted-foreground'
+                        )}
+                      >
+                        Servicio
+                      </span>
+                    )}
                   </button>
                 )
               })}

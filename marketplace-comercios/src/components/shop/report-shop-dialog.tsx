@@ -49,7 +49,7 @@ function ReportShopForm({ shopId }: { shopId: string }) {
 
   return (
     <form action={formAction} className="space-y-3">
-      <Select name="reason" defaultValue="other">
+      <Select name="reason" defaultValue="Otro">
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Elegí un motivo" />
         </SelectTrigger>

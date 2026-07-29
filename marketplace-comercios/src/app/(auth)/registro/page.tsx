@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,6 +16,7 @@ import { GoogleButton } from '@/components/auth/google-button'
 export default function RegisterPage() {
   const router = useRouter()
   const [authError, setAuthError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
   const supabase = createClient()
 
   const {
@@ -60,7 +62,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card>
+    <Card className="border-border/60 shadow-lg shadow-black/[0.03]">
       <CardHeader>
         <CardTitle className="text-2xl">Crear cuenta</CardTitle>
         <CardDescription>Registrate para comprar o vender en el marketplace</CardDescription>
@@ -71,12 +73,20 @@ export default function RegisterPage() {
             <label htmlFor="fullName" className="text-sm font-medium">
               Nombre completo
             </label>
-            <Input
-              id="fullName"
-              autoComplete="name"
-              aria-invalid={!!errors.fullName}
-              {...register('fullName')}
-            />
+            <div className="relative">
+              <User
+                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id="fullName"
+                autoComplete="name"
+                placeholder="Tu nombre"
+                className="h-11 pl-9"
+                aria-invalid={!!errors.fullName}
+                {...register('fullName')}
+              />
+            </div>
             {errors.fullName && (
               <p className="text-xs text-destructive">{errors.fullName.message}</p>
             )}
@@ -86,13 +96,21 @@ export default function RegisterPage() {
             <label htmlFor="email" className="text-sm font-medium">
               Email
             </label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              aria-invalid={!!errors.email}
-              {...register('email')}
-            />
+            <div className="relative">
+              <Mail
+                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="tu@email.com"
+                className="h-11 pl-9"
+                aria-invalid={!!errors.email}
+                {...register('email')}
+              />
+            </div>
             {errors.email && (
               <p className="text-xs text-destructive">{errors.email.message}</p>
             )}
@@ -102,13 +120,29 @@ export default function RegisterPage() {
             <label htmlFor="password" className="text-sm font-medium">
               Contraseña
             </label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              aria-invalid={!!errors.password}
-              {...register('password')}
-            />
+            <div className="relative">
+              <Lock
+                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                className="h-11 pr-10 pl-9"
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-destructive">{errors.password.message}</p>
             )}
@@ -118,12 +152,12 @@ export default function RegisterPage() {
             <p className="text-sm text-muted-foreground">{authError}</p>
           )}
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}
           </Button>
         </form>
 
-        <div className="my-4 flex items-center gap-3">
+        <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1 bg-border" />
           <span className="text-xs text-muted-foreground">o</span>
           <div className="h-px flex-1 bg-border" />

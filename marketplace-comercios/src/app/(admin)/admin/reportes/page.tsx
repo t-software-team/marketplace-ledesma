@@ -2,6 +2,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
+import { PaginatedSection } from '@/components/shared/paginated-section'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { getShopReports } from '@/lib/admin/queries'
 import { ReportActions } from './report-actions'
@@ -29,48 +30,52 @@ export default async function AdminReportsPage() {
     }
 
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Comercio</TableHead>
-            <TableHead>Motivo</TableHead>
-            <TableHead>Reportado por</TableHead>
-            <TableHead>Fecha</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {list.map((report) => {
-            const reporterName = report.reported_by_profile?.full_name ?? 'Anónimo'
-            return (
-              <TableRow key={report.id}>
-                <TableCell className="font-medium">{report.shops?.name ?? 'Comercio'}</TableCell>
-                <TableCell>
-                  {REASON_LABEL[report.reason]}
-                  {report.comment && (
-                    <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
-                      {report.comment}
-                    </p>
-                  )}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-muted-foreground">
-                  {reporterName}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                  {new Date(report.created_at).toLocaleDateString('es-AR')}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={report.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  {report.status === 'pending' && <ReportActions reportId={report.id} />}
-                </TableCell>
+      <PaginatedSection items={list} pageSize={10}>
+        {(pageReports) => (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Comercio</TableHead>
+                <TableHead>Motivo</TableHead>
+                <TableHead>Reportado por</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
+            </TableHeader>
+            <TableBody>
+              {pageReports.map((report) => {
+                const reporterName = report.reported_by_profile?.full_name ?? 'Anónimo'
+                return (
+                  <TableRow key={report.id}>
+                    <TableCell className="font-medium">{report.shops?.name ?? 'Comercio'}</TableCell>
+                    <TableCell>
+                      {REASON_LABEL[report.reason]}
+                      {report.comment && (
+                        <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
+                          {report.comment}
+                        </p>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {reporterName}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {new Date(report.created_at).toLocaleDateString('es-AR')}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={report.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {report.status === 'pending' && <ReportActions reportId={report.id} />}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </PaginatedSection>
     )
   }
 

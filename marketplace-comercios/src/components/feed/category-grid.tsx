@@ -1,6 +1,6 @@
 'use client'
 
-import { getRubroIcon } from '@/lib/category-icons'
+import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
 import { cn } from '@/lib/utils'
 
 interface Category {
@@ -46,6 +46,7 @@ export function CategoryGrid({ categories, selectedId, onSelect }: CategoryGridP
       {categories.map((category) => {
         const Icon = getRubroIcon(category.slug)
         const isSelected = selectedId === category.id
+        const isService = isServiceRubro(category.slug)
         return (
           <button
             key={category.id}
@@ -53,13 +54,23 @@ export function CategoryGrid({ categories, selectedId, onSelect }: CategoryGridP
             onClick={() => onSelect(isSelected ? null : category.id)}
             className="flex shrink-0 flex-col items-center gap-1.5"
           >
-            <span
-              className={cn(
-                'flex size-14 items-center justify-center rounded-full border-2 bg-surface transition-colors',
-                isSelected ? 'border-primary text-primary' : 'border-border text-muted-foreground'
+            <span className="relative">
+              <span
+                className={cn(
+                  'flex size-14 items-center justify-center rounded-full border-2 bg-surface transition-colors',
+                  isSelected ? 'border-primary text-primary' : 'border-border text-muted-foreground'
+                )}
+              >
+                <Icon className="size-6" aria-hidden />
+              </span>
+              {isService && (
+                <span
+                  title="Servicio"
+                  className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border-2 border-background bg-primary text-[8px] font-bold text-primary-foreground"
+                >
+                  S
+                </span>
               )}
-            >
-              <Icon className="size-6" aria-hidden />
             </span>
             <span
               className={cn(

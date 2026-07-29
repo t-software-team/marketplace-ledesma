@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Bell, Compass, Heart, Home, Store, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useEffect, useRef, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -59,6 +59,21 @@ export function PublicHeader({
   const router = useRouter()
   const [isMarkingRead, startMarkingRead] = useTransition()
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  const isFirstPathname = useRef(true)
+
+  // `window.history.length` is unreliable on mobile: opening a product/shop
+  // link from WhatsApp, Instagram or a QR code often reports length > 1 with
+  // no real in-app page behind it, so router.back() bounces the user out of
+  // the site instead of going to the feed. Track real in-app navigations
+  // instead and only use router.back() once we know one happened.
+  useEffect(() => {
+    if (isFirstPathname.current) {
+      isFirstPathname.current = false
+      return
+    }
+    const count = Number(sessionStorage.getItem('internal-nav-count') ?? '0')
+    sessionStorage.setItem('internal-nav-count', String(count + 1))
+  }, [pathname])
 
   function handleMarkAllRead() {
     startMarkingRead(async () => {
@@ -72,7 +87,9 @@ export function PublicHeader({
       <button
         type="button"
         onClick={() => {
-          if (window.history.length > 1) {
+          const navigatedWithinApp = Number(sessionStorage.getItem('internal-nav-count') ?? '0') > 0
+
+          if (navigatedWithinApp) {
             router.back()
           } else {
             router.push('/')

@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
 import { getBaseUrl } from '@/lib/site-url'
+
 import './globals.css'
 
 const inter = Inter({

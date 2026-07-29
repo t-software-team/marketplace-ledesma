@@ -109,7 +109,11 @@ export function ProductForm({
           <FieldError message={fieldErrors.currency} />
         </div>
       </div>
-      <ProductVariantsField initialVariants={defaultValues?.variants} noun={noun} />
+      <ProductVariantsField
+        initialVariants={defaultValues?.variants}
+        noun={noun}
+        isService={isService}
+      />
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Subcategoría</label>

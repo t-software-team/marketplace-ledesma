@@ -36,7 +36,7 @@ export function GoogleButton({ next = '/' }: GoogleButtonProps) {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="h-11 w-full gap-2"
         disabled={isLoading}
         onClick={handleClick}
       >

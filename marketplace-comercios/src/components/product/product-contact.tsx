@@ -131,6 +131,20 @@ const MESSAGES_BY_RUBRO: Record<string, QuickMessage[]> = {
     { label: '¿Tenés el repuesto?', text: (shop, product) => `Hola ${shop}! ¿Tenés disponible "${product}"?` },
     { label: '¿Dan garantía del arreglo?', text: (shop) => `Hola ${shop}! ¿Dan garantía sobre el arreglo?` },
   ],
+  corralon: [
+    { label: '¿Tenés stock de esto?', text: (shop, product) => `Hola ${shop}! ¿Tenés stock de "${product}"?` },
+    { label: '¿Cuál es el precio final?', text: (shop, product) => `Hola ${shop}! ¿Cuál es el precio final de "${product}"?` },
+    { label: '¿Hacen envíos a obra?', text: (shop, product) => `Hola ${shop}! ¿Hacen envío de "${product}" a la obra?` },
+    { label: '¿Cuánto tarda la entrega?', text: (shop, product) => `Hola ${shop}! Si pido "${product}", ¿cuánto tarda la entrega?` },
+    { label: '¿Aceptan transferencia?', text: (shop) => `Hola ${shop}! ¿Qué formas de pago aceptan?` },
+  ],
+  tecnologia: [
+    { label: '¿Podés hacer este trabajo?', text: (shop, product) => `Hola ${shop}! Necesito ayuda con "${product}", ¿podés hacerlo?` },
+    { label: '¿Cuánto sale?', text: (shop, product) => `Hola ${shop}! ¿Cuánto sale "${product}"?` },
+    { label: '¿Cuánto tarda?', text: (shop, product) => `Hola ${shop}! ¿Cuánto tarda "${product}"?` },
+    { label: '¿Trabajás de forma remota?', text: (shop) => `Hola ${shop}! ¿Trabajás de forma remota o hay que coordinar presencial?` },
+    { label: '¿Me pasás un presupuesto?', text: (shop, product) => `Hola ${shop}! Para "${product}", ¿me pasás un presupuesto?` },
+  ],
 }
 
 interface ProductVariant {
