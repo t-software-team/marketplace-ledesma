@@ -125,11 +125,20 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
       {!activePlanId && (
         <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
           <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-          <p className="text-sm text-foreground">
-            <strong>¿Querés reseñas de tus clientes o mejor posicionamiento en el feed?</strong>{' '}
-            Esos dos beneficios se activan con cualquier plan pago — con el plan Free no están
-            disponibles.
-          </p>
+          {isService ? (
+            <p className="text-sm text-foreground">
+              <strong>Para un negocio de servicios, lo que más suma no es cuántos servicios cargues</strong>{' '}
+              — es que tus clientes puedan dejarte reseñas y que aparezcas mejor posicionado que la
+              competencia en el feed. Esos dos beneficios se activan con cualquier plan pago; con el
+              plan Free no están disponibles.
+            </p>
+          ) : (
+            <p className="text-sm text-foreground">
+              <strong>¿Querés reseñas de tus clientes o mejor posicionamiento en el feed?</strong>{' '}
+              Esos dos beneficios se activan con cualquier plan pago — con el plan Free no están
+              disponibles.
+            </p>
+          )}
         </div>
       )}
 
@@ -190,10 +199,12 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
             const isFree = plan.price === 0
             const isCurrentPlan = activePlanId ? plan.id === activePlanId : plan.id === freePlanId
             const Icon = PLAN_ICONS[index % PLAN_ICONS.length]
-            const benefitLines = [
-              ...getBenefitLines(plan.benefits, noun, nounPlural),
-              ...(isFree ? [] : ['Reseñas de clientes habilitadas', 'Mejor posicionamiento en el feed']),
-            ]
+            const visibilityLines = isFree
+              ? []
+              : ['Reseñas de clientes habilitadas', 'Mejor posicionamiento en el feed']
+            const benefitLines = isService
+              ? [...visibilityLines, ...getBenefitLines(plan.benefits, noun, nounPlural)]
+              : [...getBenefitLines(plan.benefits, noun, nounPlural), ...visibilityLines]
 
             return (
               <Card
