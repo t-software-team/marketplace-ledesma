@@ -18,6 +18,7 @@ import {
   Smartphone,
   Truck,
   Laptop,
+  Music,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -40,6 +41,7 @@ export const RUBRO_ICONS: Record<string, LucideIcon> = {
   'servicio-tecnico': Smartphone,
   corralon: Truck,
   tecnologia: Laptop,
+  'bandas-musicales': Music,
 }
 
 export function getRubroIcon(slug: string): LucideIcon {
@@ -56,6 +58,7 @@ const SERVICE_RUBROS = new Set([
   'servicio-tecnico',
   'construccion',
   'tecnologia',
+  'bandas-musicales',
 ])
 
 export function isServiceRubro(slug: string | null | undefined): boolean {

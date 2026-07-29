@@ -61,7 +61,7 @@ export function ProductRowActions({
   }
 
   return (
-    <div className="flex shrink-0 items-center gap-1.5">
+    <div className="flex shrink-0 items-center justify-center gap-1.5">
       <Button
         render={<Link href={`/mi-tienda/productos/${productId}/editar`} aria-label="Editar" />}
         nativeButton={false}

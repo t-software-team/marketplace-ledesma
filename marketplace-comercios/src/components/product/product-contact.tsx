@@ -145,6 +145,13 @@ const MESSAGES_BY_RUBRO: Record<string, QuickMessage[]> = {
     { label: '¿Trabajás de forma remota?', text: (shop) => `Hola ${shop}! ¿Trabajás de forma remota o hay que coordinar presencial?` },
     { label: '¿Me pasás un presupuesto?', text: (shop, product) => `Hola ${shop}! Para "${product}", ¿me pasás un presupuesto?` },
   ],
+  'bandas-musicales': [
+    { label: '¿Están disponibles esa fecha?', text: (shop, product) => `Hola ${shop}! Quiero contratar "${product}", ¿están disponibles para mi fecha de evento?` },
+    { label: '¿Cuánto sale?', text: (shop, product) => `Hola ${shop}! ¿Cuánto sale contratar "${product}"?` },
+    { label: '¿Cuántas horas tocan?', text: (shop, product) => `Hola ${shop}! ¿Cuántas horas toca "${product}" y qué incluye?` },
+    { label: '¿Llevan su propio sonido?', text: (shop) => `Hola ${shop}! ¿Llevan equipo de sonido propio o hay que contratarlo aparte?` },
+    { label: '¿Tocan en otras localidades?', text: (shop) => `Hola ${shop}! ¿Viajan a otras localidades para tocar?` },
+  ],
 }
 
 interface ProductVariant {
