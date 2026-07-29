@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
@@ -23,27 +23,54 @@ export default async function AdminReportsPage() {
   const pending = reports.filter((report) => report.status === 'pending')
   const reviewed = reports.filter((report) => report.status !== 'pending')
 
-  function renderReport(report: (typeof reports)[number]) {
-    const reporterName = report.reported_by_profile?.full_name ?? 'Anónimo'
+  function renderTable(list: typeof reports, emptyMessage: string) {
+    if (list.length === 0) {
+      return <EmptyState illustration={<EmptyBoxIllustration />} message={emptyMessage} />
+    }
 
     return (
-      <Card key={report.id}>
-        <CardContent className="flex items-start justify-between gap-4 py-4">
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="truncate font-medium">{report.shops?.name ?? 'Comercio'}</p>
-            <p className="text-sm text-muted-foreground">{REASON_LABEL[report.reason]}</p>
-            {report.comment && <p className="text-sm">{report.comment}</p>}
-            <p className="text-xs text-muted-foreground">
-              Reportado por {reporterName} el{' '}
-              {new Date(report.created_at).toLocaleDateString('es-AR')}
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <StatusBadge status={report.status} />
-            {report.status === 'pending' && <ReportActions reportId={report.id} />}
-          </div>
-        </CardContent>
-      </Card>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Comercio</TableHead>
+            <TableHead>Motivo</TableHead>
+            <TableHead>Reportado por</TableHead>
+            <TableHead>Fecha</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {list.map((report) => {
+            const reporterName = report.reported_by_profile?.full_name ?? 'Anónimo'
+            return (
+              <TableRow key={report.id}>
+                <TableCell className="font-medium">{report.shops?.name ?? 'Comercio'}</TableCell>
+                <TableCell>
+                  {REASON_LABEL[report.reason]}
+                  {report.comment && (
+                    <p className="mt-0.5 max-w-xs truncate text-xs text-muted-foreground">
+                      {report.comment}
+                    </p>
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  {reporterName}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                  {new Date(report.created_at).toLocaleDateString('es-AR')}
+                </TableCell>
+                <TableCell>
+                  <StatusBadge status={report.status} />
+                </TableCell>
+                <TableCell className="text-right">
+                  {report.status === 'pending' && <ReportActions reportId={report.id} />}
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     )
   }
 
@@ -61,19 +88,11 @@ export default async function AdminReportsPage() {
         </TabsList>
 
         <TabsContent value="pendientes" className="space-y-3 pt-2">
-          {pending.length === 0 ? (
-            <EmptyState illustration={<EmptyBoxIllustration />} message="No hay reportes pendientes." />
-          ) : (
-            <div className="space-y-3">{pending.map(renderReport)}</div>
-          )}
+          {renderTable(pending, 'No hay reportes pendientes.')}
         </TabsContent>
 
         <TabsContent value="revisados" className="space-y-3 pt-2">
-          {reviewed.length === 0 ? (
-            <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay reportes revisados." />
-          ) : (
-            <div className="space-y-3">{reviewed.map(renderReport)}</div>
-          )}
+          {renderTable(reviewed, 'Todavía no hay reportes revisados.')}
         </TabsContent>
       </Tabs>
     </div>

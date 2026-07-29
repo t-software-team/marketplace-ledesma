@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
@@ -61,37 +61,24 @@ export default async function AdminSubscriptionsPage() {
           {withProofUrls.length === 0 ? (
             <EmptyState message="No hay solicitudes de suscripción." />
           ) : (
-            <div className="space-y-3">
-              {withProofUrls.map((subscription) => (
-                <Card key={subscription.id}>
-                  <CardContent className="flex items-center justify-between gap-4 py-4">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="truncate font-medium">
-                        {subscription.shops?.name ?? 'Comercio'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {subscription.subscription_plans?.name ?? 'Plan'} ·{' '}
-                        <span className="font-mono">
-                          {formatMoney(subscription.subscription_plans?.price ?? 0)}
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Solicitado el {new Date(subscription.created_at).toLocaleDateString('es-AR')}
-                      </p>
-                      {subscription.proofUrl && (
-                        <a
-                          href={subscription.proofUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-primary underline"
-                        >
-                          Ver comprobante
-                        </a>
-                      )}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Comercio</TableHead>
+                  <TableHead>Plan</TableHead>
+                  <TableHead>Solicitado</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {withProofUrls.map((subscription) => (
+                  <TableRow key={subscription.id}>
+                    <TableCell>
+                      <p className="font-medium">{subscription.shops?.name ?? 'Comercio'}</p>
                       {subscription.galiopay_link_id && (
                         <p className="text-xs text-muted-foreground">
-                          Pago vía GalioPay — se activa solo en cuanto se confirme, no requiere
-                          aprobación manual.
+                          Pago vía GalioPay — se activa solo al confirmarse
                         </p>
                       )}
                       {subscription.rejection_reason && (
@@ -99,23 +86,47 @@ export default async function AdminSubscriptionsPage() {
                           Motivo: {subscription.rejection_reason}
                         </p>
                       )}
-                    </div>
-                    <StatusBadge status={subscription.status} />
-                    {subscription.status === 'pending' && subscription.galiopay_link_id ? (
-                      <GalioPayCheckButton
-                        subscriptionId={subscription.id}
-                        linkId={subscription.galiopay_link_id}
-                        proofToken={subscription.galiopay_proof_token ?? ''}
-                      />
-                    ) : (
-                      subscription.status === 'pending' && (
-                        <SubscriptionActions subscriptionId={subscription.id} />
-                      )
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      {subscription.proofUrl && (
+                        <a
+                          href={subscription.proofUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-primary underline"
+                        >
+                          Ver comprobante
+                        </a>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {subscription.subscription_plans?.name ?? 'Plan'}
+                      <br />
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {formatMoney(subscription.subscription_plans?.price ?? 0)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                      {new Date(subscription.created_at).toLocaleDateString('es-AR')}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={subscription.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {subscription.status === 'pending' && subscription.galiopay_link_id ? (
+                        <GalioPayCheckButton
+                          subscriptionId={subscription.id}
+                          linkId={subscription.galiopay_link_id}
+                          proofToken={subscription.galiopay_proof_token ?? ''}
+                        />
+                      ) : (
+                        subscription.status === 'pending' && (
+                          <SubscriptionActions subscriptionId={subscription.id} />
+                        )
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </TabsContent>
 
@@ -129,22 +140,37 @@ export default async function AdminSubscriptionsPage() {
           {plans.length === 0 ? (
             <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay planes." />
           ) : (
-            <div className="space-y-3">
-              {plans.map((plan) => (
-                <Card key={plan.id}>
-                  <CardContent className="flex items-center justify-between gap-4 py-4">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="truncate font-medium">{plan.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        <span className="font-mono">{formatMoney(plan.price)}</span> · {plan.duration_days} días
-                      </p>
-                      <StatusBadge status={plan.is_active ? 'active' : 'none'} label={plan.is_active ? 'Activo' : 'Inactivo'} />
-                    </div>
-                    <PlanRowActions planId={plan.id} isActive={plan.is_active} />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Duración</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {plans.map((plan) => (
+                  <TableRow key={plan.id}>
+                    <TableCell className="font-medium">{plan.name}</TableCell>
+                    <TableCell className="font-mono">{formatMoney(plan.price)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {plan.duration_days} días
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge
+                        status={plan.is_active ? 'active' : 'none'}
+                        label={plan.is_active ? 'Activo' : 'Inactivo'}
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <PlanRowActions planId={plan.id} isActive={plan.is_active} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </TabsContent>
       </Tabs>

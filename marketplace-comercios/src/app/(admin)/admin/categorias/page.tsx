@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
 import { SavedToast } from '@/components/shared/saved-toast'
@@ -29,39 +29,49 @@ export default async function AdminCategoriesPage() {
       {categories.length === 0 ? (
         <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay categorías." />
       ) : (
-        <div className="space-y-3">
-          {categories.map((category) => {
-            const Icon = getRubroIcon(category.slug)
-            return (
-              <Card key={category.id}>
-                <CardContent className="flex items-center justify-between gap-4 py-4">
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
-                    {!category.parent_id && (
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                        <Icon className="size-4" aria-hidden />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{category.name}</p>
-                      <p className="text-sm text-muted-foreground">/{category.slug}</p>
-                      {category.parent_id && (
-                        <p className="text-xs text-muted-foreground">
-                          Subcategoría de {categoryById.get(category.parent_id)?.name ?? '—'}
-                        </p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Slug</TableHead>
+              <TableHead>Padre</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {categories.map((category) => {
+              const Icon = getRubroIcon(category.slug)
+              return (
+                <TableRow key={category.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2 font-medium">
+                      {!category.parent_id && (
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                          <Icon className="size-3.5" aria-hidden />
+                        </span>
                       )}
-                      <StatusBadge
-                        status={category.is_active ? 'active' : 'none'}
-                        label={category.is_active ? 'Activa' : 'Inactiva'}
-                        className="mt-1"
-                      />
+                      {category.name}
                     </div>
-                  </div>
-                  <CategoryRowActions categoryId={category.id} isActive={category.is_active} />
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">/{category.slug}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {category.parent_id ? (categoryById.get(category.parent_id)?.name ?? '—') : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge
+                      status={category.is_active ? 'active' : 'none'}
+                      label={category.is_active ? 'Activa' : 'Inactiva'}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <CategoryRowActions categoryId={category.id} isActive={category.is_active} />
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       )}
     </div>
   )

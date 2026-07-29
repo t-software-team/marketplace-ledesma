@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
 import { getAuditLog } from '@/lib/admin/queries'
@@ -40,31 +40,40 @@ export default async function AdminAuditLogPage() {
           message="Todavía no hay acciones registradas."
         />
       ) : (
-        <div className="space-y-3">
-          {entries.map((entry) => (
-            <Card key={entry.id}>
-              <CardContent className="flex items-start justify-between gap-4 py-4">
-                <div className="min-w-0 flex-1 space-y-1">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Acción</TableHead>
+              <TableHead>Actor</TableHead>
+              <TableHead>Objetivo</TableHead>
+              <TableHead>Detalle</TableHead>
+              <TableHead className="text-right">Fecha</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {entries.map((entry) => (
+              <TableRow key={entry.id}>
+                <TableCell>
                   <Badge variant={ACTION_VARIANT[entry.action] ?? 'outline'}>
                     {ACTION_LABEL[entry.action] ?? entry.action}
                   </Badge>
-                  <p className="text-sm text-muted-foreground">
-                    {entry.actor?.full_name ?? 'Usuario desconocido'} · {entry.target_table} ·{' '}
-                    {entry.target_id}
-                  </p>
-                  {entry.metadata != null && (
-                    <p className="truncate text-xs text-muted-foreground">
-                      {JSON.stringify(entry.metadata)}
-                    </p>
-                  )}
-                </div>
-                <p className="shrink-0 text-xs text-muted-foreground">
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  {entry.actor?.full_name ?? 'Usuario desconocido'}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  {entry.target_table} · {entry.target_id}
+                </TableCell>
+                <TableCell className="max-w-xs truncate text-xs text-muted-foreground">
+                  {entry.metadata != null ? JSON.stringify(entry.metadata) : '—'}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right text-xs text-muted-foreground">
                   {new Date(entry.created_at).toLocaleString('es-AR')}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   )

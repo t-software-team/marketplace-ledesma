@@ -99,7 +99,6 @@ export function PublicHeader({
           </span>
         </Link>
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <ThemeToggle className="hidden sm:inline-flex" />
           {user ? (
             <>
               {profileRole === 'shop_admin' && (
@@ -107,6 +106,7 @@ export function PublicHeader({
                   Mi tienda
                 </Button>
               )}
+              <ThemeToggle />
               {profileRole === 'superadmin' && (
                 <Button variant="outline" size="sm" render={<Link href="/admin/shops" />} nativeButton={false}>
                   Admin
@@ -192,6 +192,7 @@ export function PublicHeader({
               <Button size="sm" render={<Link href="/registro" />} nativeButton={false}>
                 Registrarse
               </Button>
+              <ThemeToggle />
             </>
           )}
         </nav>
