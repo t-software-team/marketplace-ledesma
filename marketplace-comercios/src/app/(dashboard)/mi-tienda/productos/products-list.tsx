@@ -1,13 +1,20 @@
 'use client'
 
 import Image from 'next/image'
-import { Search, Star } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { Search, Star, Trash2 } from 'lucide-react'
+import { useMemo, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
+import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { toast } from '@/components/ui/toast'
+import { useRowSelection } from '@/hooks/use-row-selection'
+import { bulkDeleteProducts, bulkToggleProductActive } from '@/lib/shops/actions'
 import { ProductRowActions } from './product-row-actions'
 
 interface Product {
@@ -43,6 +50,7 @@ export function ProductsList({
 }) {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
+  const [isPending, startTransition] = useTransition()
 
   const activeCount = products.filter((product) => product.is_active).length
 
@@ -56,6 +64,37 @@ export function ProductsList({
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageProducts = filtered.slice(start, start + PAGE_SIZE)
+
+  const { selected, selectedIds, isAllSelected, toggle, toggleAll, clear } = useRowSelection(
+    pageProducts.map((product) => product.id)
+  )
+
+  function handleBulkToggle(isActive: boolean) {
+    startTransition(async () => {
+      try {
+        await bulkToggleProductActive(selectedIds, isActive)
+        toast.add({
+          title: isActive ? `${selectedIds.length} ${noun}s activados` : `${selectedIds.length} ${noun}s desactivados`,
+          type: 'success',
+        })
+        clear()
+      } catch {
+        toast.add({ title: `No pudimos actualizar los ${noun}s`, type: 'error' })
+      }
+    })
+  }
+
+  function handleBulkDelete() {
+    startTransition(async () => {
+      try {
+        await bulkDeleteProducts(selectedIds)
+        toast.add({ title: `${selectedIds.length} ${noun}s eliminados`, type: 'success' })
+        clear()
+      } catch {
+        toast.add({ title: `No pudimos eliminar los ${noun}s`, type: 'error' })
+      }
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -80,6 +119,29 @@ export function ProductsList({
         </div>
       </div>
 
+      <BulkActionsBar count={selected.size} onClear={clear}>
+        <Button variant="outline" size="sm" disabled={isPending} onClick={() => handleBulkToggle(true)}>
+          Activar
+        </Button>
+        <Button variant="outline" size="sm" disabled={isPending} onClick={() => handleBulkToggle(false)}>
+          Desactivar
+        </Button>
+        <ConfirmDialog
+          trigger={<Button variant="outline" size="sm" className="gap-1.5 text-destructive" />}
+          triggerLabel={
+            <>
+              <Trash2 className="size-3.5" aria-hidden />
+              Borrar
+            </>
+          }
+          title={`¿Eliminar ${selected.size} ${noun}${selected.size === 1 ? '' : 's'}?`}
+          description="Esta acción no se puede deshacer."
+          confirmLabel="Eliminar"
+          isConfirming={isPending}
+          onConfirm={handleBulkDelete}
+        />
+      </BulkActionsBar>
+
       {filtered.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           No encontramos {noun}s que coincidan con &quot;{query}&quot;.
@@ -89,6 +151,13 @@ export function ProductsList({
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={toggleAll}
+                    aria-label={`Seleccionar todos los ${noun}s de esta página`}
+                  />
+                </TableHead>
                 <TableHead>{noun.charAt(0).toUpperCase() + noun.slice(1)}</TableHead>
                 <TableHead>Precio</TableHead>
                 <TableHead>Estado</TableHead>
@@ -98,6 +167,13 @@ export function ProductsList({
             <TableBody>
               {pageProducts.map((product) => (
                 <TableRow key={product.id} className={!product.is_active ? 'opacity-60' : undefined}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(product.id)}
+                      onCheckedChange={() => toggle(product.id)}
+                      aria-label={`Seleccionar ${product.name}`}
+                    />
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">

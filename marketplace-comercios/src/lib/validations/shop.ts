@@ -28,7 +28,7 @@ export const shopSettingsSchema = z.object({
     .min(3, 'La URL debe tener al menos 3 caracteres')
     .max(60)
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Usá solo minúsculas, números y guiones'),
-  description: z.string().max(1000).optional().or(z.literal('')),
+  description: z.string().max(4000).optional().or(z.literal('')),
   whatsapp_number: whatsappNumberSchema,
   email: z.string().email('Ingresá un email válido').optional().or(z.literal('')),
   address: z.string().max(200).optional().or(z.literal('')),
@@ -109,6 +109,23 @@ export const productSchema = z.object({
 })
 
 export type ProductFormValues = z.infer<typeof productSchema>
+
+const hexColor = z
+  .string()
+  .regex(/^#[0-9a-fA-F]{6}$/, 'Color inválido')
+
+export const promotionSchema = z.object({
+  image_url: z.string().min(1, 'Subí una imagen para la promoción'),
+  text: z.string().max(300).optional().or(z.literal('')),
+  product_id: uuidLike('Elegí un producto válido').optional().or(z.literal('')),
+  duration_days: z.coerce.number().int().min(1).max(3),
+  text_position: z.enum(['top', 'center', 'bottom']).default('bottom'),
+  text_size: z.enum(['sm', 'md', 'lg']).default('md'),
+  text_color: hexColor.default('#ffffff'),
+  bg_color: hexColor.default('#000000'),
+})
+
+export type PromotionFormValues = z.infer<typeof promotionSchema>
 
 export const reportShopSchema = z.object({
   reason: z.enum(['fake_product', 'scam', 'inappropriate', 'closed_permanently', 'other']),

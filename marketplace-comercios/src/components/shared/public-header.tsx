@@ -139,7 +139,7 @@ export function PublicHeader({
                 <>
                   <DropdownMenu>
                     <DropdownMenuTrigger
-                      render={<Button variant="outline" size="icon" className="relative" />}
+                      render={<Button variant="ghost" size="icon" className="relative" />}
                       nativeButton={true}
                     >
                       <Bell className="size-4" aria-hidden />
@@ -186,7 +186,7 @@ export function PublicHeader({
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
                     render={<Link href="/favoritos" aria-label="Favoritos" />}
                     nativeButton={false}

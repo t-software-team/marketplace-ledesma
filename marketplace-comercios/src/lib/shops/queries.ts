@@ -31,6 +31,47 @@ export async function getMyShop() {
   return shop
 }
 
+export async function getMyPromotions(shopId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('shop_promotions')
+    .select(
+      'id, image_url, text, created_at, expires_at, text_position, text_size, text_color, bg_color, products ( id, name )'
+    )
+    .eq('shop_id', shopId)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+
+  return data
+}
+
+export const getActivePromotions = unstable_cache(
+  async () => {
+    const supabase = createPublicClient()
+
+    const { data, error } = await supabase
+      .from('shop_promotions')
+      .select(
+        `
+        id, image_url, text, expires_at, text_position, text_size, text_color, bg_color,
+        shops ( id, name, slug, logo_url, whatsapp_number, verification_status ),
+        products ( id, name )
+      `
+      )
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (error || !data) return []
+
+    return data.filter((promo) => promo.shops !== null)
+  },
+  ['active-promotions'],
+  { revalidate: 30 }
+)
+
 export async function getMyShopProducts(shopId: string) {
   const supabase = await createClient()
 
@@ -67,6 +108,7 @@ export async function getMyShopProducts(shopId: string) {
       is_active: product.is_active,
       is_featured: product.is_featured,
       mainImage: images[0]?.url ?? null,
+      imageUrls: images.map((image) => image.url),
       categoryName: product.categories?.name ?? null,
     }
   })
@@ -289,11 +331,21 @@ export async function getMyContactHistory() {
     )
     .eq('client_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(100)
+    .limit(200)
 
   if (error || !data) return []
 
-  return data.filter((row) => row.shops !== null)
+  const seenShopIds = new Set<string>()
+  const deduped = []
+
+  for (const row of data) {
+    if (!row.shops) continue
+    if (seenShopIds.has(row.shops.id)) continue
+    seenShopIds.add(row.shops.id)
+    deduped.push(row)
+  }
+
+  return deduped
 }
 
 export async function getActiveSubscriptionPlans() {

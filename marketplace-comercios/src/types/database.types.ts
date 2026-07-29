@@ -214,6 +214,63 @@ export type Database = {
           },
         ]
       }
+      shop_promotions: {
+        Row: {
+          bg_color: string
+          created_at: string
+          expires_at: string
+          id: string
+          image_url: string
+          product_id: string | null
+          shop_id: string
+          text: string | null
+          text_color: string
+          text_position: string
+          text_size: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          image_url: string
+          product_id?: string | null
+          shop_id: string
+          text?: string | null
+          text_color?: string
+          text_position?: string
+          text_size?: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_url?: string
+          product_id?: string | null
+          shop_id?: string
+          text?: string | null
+          text_color?: string
+          text_position?: string
+          text_size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_promotions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_promotions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           created_at: string

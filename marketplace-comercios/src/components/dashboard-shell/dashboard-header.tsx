@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bell, FileCheck, Flag, Menu, ReceiptText } from 'lucide-react'
+import { ArrowLeft, Bell, FileCheck, Flag, Heart, Menu, ReceiptText } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -176,12 +176,20 @@ export function DashboardHeader({
           <Button
             render={<Link href="/" />}
             nativeButton={false}
-            variant="outline"
+            variant="ghost"
             size="sm"
             className="gap-1.5"
           >
             <ArrowLeft className="size-4" aria-hidden />
             <span>Volver al sitio</span>
+          </Button>
+          <Button
+            render={<Link href="/favoritos" aria-label="Favoritos" />}
+            nativeButton={false}
+            variant="ghost"
+            size="icon"
+          >
+            <Heart className="size-4" aria-hidden />
           </Button>
           <ThemeToggle />
           {notificationList && (

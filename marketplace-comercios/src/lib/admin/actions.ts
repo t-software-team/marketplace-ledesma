@@ -200,6 +200,62 @@ export async function unsuspendShop(shopId: string) {
   revalidatePath(`/admin/shops/${shopId}`)
 }
 
+export async function bulkApproveShopVerification(
+  shopIds: string[]
+): Promise<{ approved: number; failed: number }> {
+  const supabase = await createClient()
+  let approved = 0
+  let failed = 0
+
+  for (const shopId of shopIds) {
+    const { error } = await supabase.rpc('approve_shop_verification', { p_shop_id: shopId })
+    if (error) {
+      console.error('bulkApproveShopVerification: fallo al aprobar', { shopId, error })
+      failed += 1
+      continue
+    }
+    approved += 1
+    await logAdminAction(supabase, 'shop_verified', 'shops', shopId)
+    await notifyShopOwner(shopId, shopVerificationApprovedEmail)
+  }
+
+  revalidatePath('/admin/shops')
+  return { approved, failed }
+}
+
+export async function bulkSuspendShops(
+  shopIds: string[],
+  reason: string
+): Promise<{ suspended: number; failed: number }> {
+  const parsed = rejectionReasonSchema.safeParse({ reason })
+  if (!parsed.success) {
+    return { suspended: 0, failed: shopIds.length }
+  }
+
+  const supabase = await createClient()
+  let suspended = 0
+  let failed = 0
+
+  for (const shopId of shopIds) {
+    const { error } = await supabase.rpc('suspend_shop', {
+      p_shop_id: shopId,
+      p_reason: parsed.data.reason,
+    })
+    if (error) {
+      console.error('bulkSuspendShops: fallo al suspender', { shopId, error })
+      failed += 1
+      continue
+    }
+    suspended += 1
+    await notifyShopOwner(shopId, (shopName) => shopSuspendedEmail(shopName, parsed.data.reason))
+    await logAdminAction(supabase, 'shop_suspended', 'shops', shopId, { reason: parsed.data.reason })
+  }
+
+  revalidatePath('/')
+  revalidatePath('/admin/shops')
+  return { suspended, failed }
+}
+
 export async function createCategory(
   _prevState: ActionState,
   formData: FormData
@@ -307,6 +363,43 @@ export async function toggleCategoryActive(categoryId: string, isActive: boolean
   }
 
   revalidatePath('/admin/categorias')
+}
+
+export async function bulkToggleCategoryActive(categoryIds: string[], isActive: boolean) {
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from('categories')
+    .update({ is_active: isActive })
+    .in('id', categoryIds)
+
+  if (error) {
+    console.error('bulkToggleCategoryActive: fallo al actualizar categorías', { categoryIds, error })
+    throw new Error('No pudimos actualizar las categorías seleccionadas')
+  }
+
+  revalidatePath('/admin/categorias')
+}
+
+export async function bulkDeleteCategories(
+  categoryIds: string[]
+): Promise<{ deleted: number; failed: number }> {
+  const supabase = await createClient()
+  let deleted = 0
+  let failed = 0
+
+  for (const categoryId of categoryIds) {
+    const { error } = await supabase.from('categories').delete().eq('id', categoryId)
+    if (error) {
+      console.error('bulkDeleteCategories: fallo al borrar categoría', { categoryId, error })
+      failed += 1
+    } else {
+      deleted += 1
+    }
+  }
+
+  revalidatePath('/admin/categorias')
+  return { deleted, failed }
 }
 
 export async function checkGalioPaySubscription(
@@ -539,6 +632,42 @@ export async function dismissReport(reportId: string) {
   await logAdminAction(supabase, 'report_dismissed', 'shop_reports', reportId)
 
   revalidatePath('/admin/reportes')
+}
+
+async function bulkUpdateReportStatus(
+  reportIds: string[],
+  status: 'reviewed' | 'dismissed'
+) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { error } = await supabase
+    .from('shop_reports')
+    .update({ status, reviewed_by: user?.id ?? null })
+    .in('id', reportIds)
+
+  if (error) {
+    console.error('bulkUpdateReportStatus: fallo al actualizar reportes', { reportIds, status, error })
+    throw new Error('No pudimos actualizar los reportes seleccionados')
+  }
+
+  const action = status === 'reviewed' ? 'report_reviewed' : 'report_dismissed'
+  for (const reportId of reportIds) {
+    await logAdminAction(supabase, action, 'shop_reports', reportId)
+  }
+
+  revalidatePath('/admin/reportes')
+}
+
+export async function bulkMarkReportsReviewed(reportIds: string[]) {
+  await bulkUpdateReportStatus(reportIds, 'reviewed')
+}
+
+export async function bulkDismissReports(reportIds: string[]) {
+  await bulkUpdateReportStatus(reportIds, 'dismissed')
 }
 
 export async function markAllNotificationsRead() {

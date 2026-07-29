@@ -30,6 +30,7 @@ import {
 } from '@/lib/shops/queries'
 import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/site-url'
+import { stripHtml } from '@/lib/strip-html'
 
 interface ShopPageProps {
   params: Promise<{ slug: string }>
@@ -57,7 +58,9 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
     return { title: 'Tienda no encontrada' }
   }
 
-  const description = shop.description ?? `Productos de ${shop.name} en Todo Marketplace`
+  const description = shop.description
+    ? stripHtml(shop.description)
+    : `Productos de ${shop.name} en Todo Marketplace`
 
   return {
     title: shop.name,
@@ -102,7 +105,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: shop.name,
-    description: shop.description ?? undefined,
+    description: shop.description ? stripHtml(shop.description) : undefined,
     image: shop.logo_url ?? undefined,
     url: `${baseUrl}/tienda/${shop.slug}`,
     telephone: shop.whatsapp_number ?? undefined,
@@ -218,9 +221,12 @@ export default async function ShopPage({ params }: ShopPageProps) {
           )}
 
           {shop.description && (
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              {shop.description}
-            </p>
+            <div
+              className="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline"
+              // shop.description is sanitized server-side (sanitizeRichText) before it's ever
+              // persisted, so it's safe to render here without re-sanitizing on every request.
+              dangerouslySetInnerHTML={{ __html: shop.description }}
+            />
           )}
 
           <div className="mt-4 hidden items-center gap-2 sm:flex">

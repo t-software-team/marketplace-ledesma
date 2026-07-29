@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { IBM_Plex_Mono, Inter, Sora } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/query-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
 import { getBaseUrl } from '@/lib/site-url'
+import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script'
 
 import './globals.css'
 
@@ -60,6 +62,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <ThemeProvider>
           <Toaster>
             <AuthListener />

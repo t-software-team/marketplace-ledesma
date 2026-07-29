@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { User } from 'lucide-react'
+import { BookUser, User, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -56,8 +56,14 @@ export function UserMenu({ userEmail, userFullName, userAvatarUrl }: UserMenuPro
           <User className="size-4" aria-hidden />
           Mi perfil
         </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/siguiendo" />}>Siguiendo</DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/contactos" />}>Mis contactos</DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/siguiendo" />}>
+        <Users className="size-4" aria-hidden />
+        Siguiendo
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/contactos" />}>
+        <BookUser className="size-4" aria-hidden />
+        Mis contactos
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           render={

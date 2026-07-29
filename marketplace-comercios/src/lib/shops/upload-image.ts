@@ -2,10 +2,11 @@ import { createClient } from '@/lib/supabase/client'
 
 const IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
-const BUCKET_LIMITS: Record<'shop-logos' | 'shop-covers' | 'product-images', number> = {
+const BUCKET_LIMITS: Record<'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions', number> = {
   'shop-logos': 5 * 1024 * 1024,
   'shop-covers': 10 * 1024 * 1024,
   'product-images': 5 * 1024 * 1024,
+  'shop-promotions': 5 * 1024 * 1024,
 }
 
 function assertValidImage(bucket: keyof typeof BUCKET_LIMITS, file: File) {
@@ -19,18 +20,72 @@ function assertValidImage(bucket: keyof typeof BUCKET_LIMITS, file: File) {
   }
 }
 
+const COMPRESS_MAX_DIMENSION = 1600
+const COMPRESS_JPEG_QUALITY = 0.82
+const COMPRESS_SKIP_BELOW_BYTES = 800 * 1024
+
+/**
+ * Downscales and re-encodes an image client-side before upload. Phone
+ * photos routinely come in at 4-5MB / 4000px+, which is wasted bandwidth
+ * and storage for anything shown at a few hundred px. GIFs are left alone
+ * to keep animation; if compression doesn't actually shrink the file
+ * (already-optimized images), the original is kept.
+ */
+async function compressImage(file: File): Promise<File> {
+  if (file.type === 'image/gif') return file
+
+  let bitmap: ImageBitmap
+  try {
+    bitmap = await createImageBitmap(file)
+  } catch (error) {
+    console.error('compressImage: no pudimos leer la imagen, se sube sin comprimir', { error })
+    return file
+  }
+
+  const scale = Math.min(1, COMPRESS_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height))
+  if (scale === 1 && file.size <= COMPRESS_SKIP_BELOW_BYTES) {
+    bitmap.close()
+    return file
+  }
+
+  const width = Math.round(bitmap.width * scale)
+  const height = Math.round(bitmap.height * scale)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    bitmap.close()
+    return file
+  }
+  ctx.drawImage(bitmap, 0, 0, width, height)
+  bitmap.close()
+
+  const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg'
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, outputType, outputType === 'image/jpeg' ? COMPRESS_JPEG_QUALITY : undefined)
+  )
+
+  if (!blob || blob.size >= file.size) return file
+
+  const newName = file.name.replace(/\.\w+$/, outputType === 'image/png' ? '.png' : '.jpg')
+  return new File([blob], newName, { type: outputType })
+}
+
 export async function uploadShopImage(
-  bucket: 'shop-logos' | 'shop-covers' | 'product-images',
+  bucket: 'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions',
   shopId: string,
   file: File
 ) {
   assertValidImage(bucket, file)
+  const processedFile = await compressImage(file)
 
   const supabase = createClient()
-  const extension = file.name.split('.').pop() ?? 'jpg'
+  const extension = processedFile.name.split('.').pop() ?? 'jpg'
   const path = `${shopId}/${crypto.randomUUID()}.${extension}`
 
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
+  const { error } = await supabase.storage.from(bucket).upload(path, processedFile, {
     upsert: false,
   })
 
@@ -167,11 +222,13 @@ export async function uploadAvatar(userId: string, file: File) {
     throw new Error('La imagen no puede pesar más de 3MB')
   }
 
+  const processedFile = await compressImage(file)
+
   const supabase = createClient()
-  const extension = file.name.split('.').pop() ?? 'jpg'
+  const extension = processedFile.name.split('.').pop() ?? 'jpg'
   const path = `${userId}/${crypto.randomUUID()}.${extension}`
 
-  const { error } = await supabase.storage.from('avatars').upload(path, file, {
+  const { error } = await supabase.storage.from('avatars').upload(path, processedFile, {
     upsert: false,
   })
 

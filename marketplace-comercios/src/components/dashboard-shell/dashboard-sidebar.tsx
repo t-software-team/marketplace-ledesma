@@ -2,7 +2,17 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CreditCard, Flag, History, Package, Settings, ShieldCheck, Store, Tag } from 'lucide-react'
+import {
+  CreditCard,
+  Flag,
+  History,
+  Megaphone,
+  Package,
+  Settings,
+  ShieldCheck,
+  Store,
+  Tag,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const ICONS = {
@@ -14,6 +24,7 @@ const ICONS = {
   'credit-card': CreditCard,
   flag: Flag,
   clock: History,
+  megaphone: Megaphone,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

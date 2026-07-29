@@ -9,9 +9,11 @@ import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { getProductLimitInfo } from '@/lib/shops/queries'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 import {
   createShopSchema,
   productSchema,
+  promotionSchema,
   reportShopSchema,
   shopReviewSchema,
   shopSettingsSchema,
@@ -164,7 +166,7 @@ export async function updateShopSettings(
     .update({
       name: parsed.data.name,
       slug: parsed.data.slug,
-      description: parsed.data.description || null,
+      description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       whatsapp_number: parsed.data.whatsapp_number,
       email: parsed.data.email || null,
       address: parsed.data.address || null,
@@ -489,6 +491,79 @@ export async function updateProduct(
   redirect('/mi-tienda/productos?saved=updated')
 }
 
+export async function createPromotion(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await requireUser()
+
+  const { data: shop } = await supabase
+    .from('shops')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (!shop) return { error: 'No tenés una tienda creada' }
+
+  const parsed = promotionSchema.safeParse({
+    image_url: formData.get('image_url'),
+    text: formData.get('text') ?? '',
+    product_id: formData.get('product_id') ?? '',
+    duration_days: formData.get('duration_days'),
+    text_position: formData.get('text_position') || 'bottom',
+    text_size: formData.get('text_size') || 'md',
+    text_color: formData.get('text_color') || '#ffffff',
+    bg_color: formData.get('bg_color') || '#000000',
+  })
+
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? 'Revisá los campos marcados',
+      fieldErrors: buildFieldErrors(parsed.error),
+    }
+  }
+
+  const expiresAt = new Date(Date.now() + parsed.data.duration_days * 24 * 60 * 60 * 1000)
+
+  const { error } = await supabase.from('shop_promotions').insert({
+    shop_id: shop.id,
+    image_url: parsed.data.image_url,
+    text: parsed.data.text || null,
+    product_id: parsed.data.product_id || null,
+    expires_at: expiresAt.toISOString(),
+    text_position: parsed.data.text_position,
+    text_size: parsed.data.text_size,
+    text_color: parsed.data.text_color,
+    bg_color: parsed.data.bg_color,
+  })
+
+  if (error) {
+    console.error('createPromotion: fallo al crear la promoción', { error })
+    return {
+      error:
+        error.code === 'P0001'
+          ? 'Necesitás una suscripción activa para crear promociones.'
+          : 'No pudimos crear la promoción',
+    }
+  }
+
+  revalidatePath('/mi-tienda/promociones')
+  redirect('/mi-tienda/promociones?saved=created')
+}
+
+export async function deletePromotion(promotionId: string) {
+  const { supabase } = await requireUser()
+
+  const { error } = await supabase.from('shop_promotions').delete().eq('id', promotionId)
+
+  if (error) {
+    console.error('deletePromotion: fallo al borrar la promoción', { promotionId, error })
+    throw new Error('No pudimos eliminar la promoción')
+  }
+
+  revalidatePath('/mi-tienda/promociones')
+}
+
 export async function deleteProduct(productId: string) {
   const { supabase } = await requireUser()
 
@@ -513,6 +588,35 @@ export async function toggleProductActive(productId: string, isActive: boolean) 
   if (error) {
     console.error('toggleProductActive: fallo al actualizar producto', { productId, error })
     throw new Error('No pudimos actualizar el producto')
+  }
+
+  revalidatePath('/mi-tienda/productos')
+}
+
+export async function bulkToggleProductActive(productIds: string[], isActive: boolean) {
+  const { supabase } = await requireUser()
+
+  const { error } = await supabase
+    .from('products')
+    .update({ is_active: isActive })
+    .in('id', productIds)
+
+  if (error) {
+    console.error('bulkToggleProductActive: fallo al actualizar productos', { productIds, error })
+    throw new Error('No pudimos actualizar los productos seleccionados')
+  }
+
+  revalidatePath('/mi-tienda/productos')
+}
+
+export async function bulkDeleteProducts(productIds: string[]) {
+  const { supabase } = await requireUser()
+
+  const { error } = await supabase.from('products').delete().in('id', productIds)
+
+  if (error) {
+    console.error('bulkDeleteProducts: fallo al borrar productos', { productIds, error })
+    throw new Error('No pudimos eliminar los productos seleccionados')
   }
 
   revalidatePath('/mi-tienda/productos')

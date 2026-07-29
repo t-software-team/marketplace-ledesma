@@ -41,6 +41,7 @@ export default async function MiTiendaLayout({
   const navItems: DashboardNavItem[] = [
     { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
     { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
+    { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
     { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
   ]
 

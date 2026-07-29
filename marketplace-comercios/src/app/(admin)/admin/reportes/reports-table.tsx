@@ -1,9 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { toast } from '@/components/ui/toast'
+import { useRowSelection } from '@/hooks/use-row-selection'
+import { bulkDismissReports, bulkMarkReportsReviewed } from '@/lib/admin/actions'
 import type { getShopReports } from '@/lib/admin/queries'
 import type { Database } from '@/types/database.types'
 import { ReportActions } from './report-actions'
@@ -23,16 +29,66 @@ const PAGE_SIZE = 10
 
 export function ReportsTable({ reports }: { reports: Report[] }) {
   const [page, setPage] = useState(1)
+  const [isPending, startTransition] = useTransition()
+  const isPendingTab = reports.every((report) => report.status === 'pending')
   const totalPages = Math.max(1, Math.ceil(reports.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
   const pageReports = reports.slice(start, start + PAGE_SIZE)
 
+  const { selected, selectedIds, isAllSelected, toggle, toggleAll, clear } = useRowSelection(
+    pageReports.map((report) => report.id)
+  )
+
+  function handleBulkReview() {
+    startTransition(async () => {
+      try {
+        await bulkMarkReportsReviewed(selectedIds)
+        toast.add({ title: `${selectedIds.length} reportes marcados como revisados`, type: 'success' })
+        clear()
+      } catch {
+        toast.add({ title: 'No pudimos actualizar los reportes', type: 'error' })
+      }
+    })
+  }
+
+  function handleBulkDismiss() {
+    startTransition(async () => {
+      try {
+        await bulkDismissReports(selectedIds)
+        toast.add({ title: `${selectedIds.length} reportes descartados`, type: 'success' })
+        clear()
+      } catch {
+        toast.add({ title: 'No pudimos descartar los reportes', type: 'error' })
+      }
+    })
+  }
+
   return (
     <div className="space-y-3">
+      {isPendingTab && (
+        <BulkActionsBar count={selected.size} onClear={clear}>
+          <Button variant="outline" size="sm" disabled={isPending} onClick={handleBulkReview}>
+            Marcar revisado
+          </Button>
+          <Button variant="outline" size="sm" disabled={isPending} onClick={handleBulkDismiss}>
+            Descartar
+          </Button>
+        </BulkActionsBar>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
+            {isPendingTab && (
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={isAllSelected}
+                  onCheckedChange={toggleAll}
+                  aria-label="Seleccionar todos los reportes de esta página"
+                />
+              </TableHead>
+            )}
             <TableHead>Comercio</TableHead>
             <TableHead>Motivo</TableHead>
             <TableHead>Reportado por</TableHead>
@@ -46,6 +102,15 @@ export function ReportsTable({ reports }: { reports: Report[] }) {
             const reporterName = report.reported_by_profile?.full_name ?? 'Anónimo'
             return (
               <TableRow key={report.id}>
+                {isPendingTab && (
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(report.id)}
+                      onCheckedChange={() => toggle(report.id)}
+                      aria-label={`Seleccionar reporte de ${report.shops?.name ?? 'comercio'}`}
+                    />
+                  </TableCell>
+                )}
                 <TableCell className="font-medium">{report.shops?.name ?? 'Comercio'}</TableCell>
                 <TableCell>
                   {REASON_LABEL[report.reason]}
