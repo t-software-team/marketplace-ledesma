@@ -47,6 +47,13 @@ function notificationHref(notification: ClientNotification) {
 
 const MINIMAL_HEADER_PREFIXES = ['/producto/', '/tienda/']
 
+// In-memory (not sessionStorage) on purpose: sessionStorage gets CLONED into
+// tabs opened via target="_blank" (e.g. "Ver tienda pública"), so a counter
+// stored there would wrongly say "navigated within app" in a brand-new tab
+// that has no real back history. A module-level variable starts fresh in
+// every tab/reload, since each gets its own JS execution context.
+let internalNavCount = 0
+
 export function PublicHeader({
   user,
   profileRole,
@@ -71,8 +78,7 @@ export function PublicHeader({
       isFirstPathname.current = false
       return
     }
-    const count = Number(sessionStorage.getItem('internal-nav-count') ?? '0')
-    sessionStorage.setItem('internal-nav-count', String(count + 1))
+    internalNavCount += 1
   }, [pathname])
 
   function handleMarkAllRead() {
@@ -87,7 +93,7 @@ export function PublicHeader({
       <button
         type="button"
         onClick={() => {
-          const navigatedWithinApp = Number(sessionStorage.getItem('internal-nav-count') ?? '0') > 0
+          const navigatedWithinApp = internalNavCount > 0
 
           if (navigatedWithinApp) {
             router.back()
