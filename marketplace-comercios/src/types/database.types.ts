@@ -152,67 +152,43 @@ export type Database = {
           },
         ]
       }
-      favorites: {
+      category_attributes: {
         Row: {
-          client_id: string
-          created_at: string
-          product_id: string
-        }
-        Insert: {
-          client_id: string
-          created_at?: string
-          product_id: string
-        }
-        Update: {
-          client_id?: string
-          created_at?: string
-          product_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "favorites_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "favorites_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      product_images: {
-        Row: {
+          category_id: string
           created_at: string
           id: string
-          product_id: string
+          key: string
+          label: string
+          options: Json | null
           sort_order: number
-          url: string
+          type: string
         }
         Insert: {
+          category_id: string
           created_at?: string
           id?: string
-          product_id: string
+          key: string
+          label: string
+          options?: Json | null
           sort_order?: number
-          url: string
+          type: string
         }
         Update: {
+          category_id?: string
           created_at?: string
           id?: string
-          product_id?: string
+          key?: string
+          label?: string
+          options?: Json | null
           sort_order?: number
-          url?: string
+          type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "product_images_product_id_fkey"
-            columns: ["product_id"]
+            foreignKeyName: "category_attributes_category_id_fkey"
+            columns: ["category_id"]
             isOneToOne: false
-            referencedRelation: "products"
+            referencedRelation: "categories"
             referencedColumns: ["id"]
           },
         ]
@@ -256,13 +232,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "category_suggestions_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "category_suggestions_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -276,45 +245,79 @@ export type Database = {
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "category_suggestions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      category_attributes: {
+      client_notifications: {
         Row: {
-          category_id: string
+          client_id: string
           created_at: string
           id: string
-          key: string
-          label: string
-          options: Json | null
-          sort_order: number
+          is_read: boolean
+          reference_id: string
           type: string
         }
         Insert: {
-          category_id: string
+          client_id: string
           created_at?: string
           id?: string
-          key: string
-          label: string
-          options?: Json | null
-          sort_order?: number
+          is_read?: boolean
+          reference_id: string
           type: string
         }
         Update: {
-          category_id?: string
+          client_id?: string
           created_at?: string
           id?: string
-          key?: string
-          label?: string
-          options?: Json | null
-          sort_order?: number
+          is_read?: boolean
+          reference_id?: string
           type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "category_attributes_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: "client_notifications_client_id_fkey"
+            columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "categories"
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      favorites: {
+        Row: {
+          client_id: string
+          created_at: string
+          product_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          product_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -355,56 +358,31 @@ export type Database = {
           },
         ]
       }
-      shop_promotions: {
+      product_images: {
         Row: {
-          bg_color: string
           created_at: string
-          expires_at: string
           id: string
-          image_url: string
-          product_id: string | null
-          shop_id: string
-          text: string | null
-          text_color: string
-          text_position: string
-          text_size: string
+          product_id: string
+          sort_order: number
+          url: string
         }
         Insert: {
-          bg_color?: string
           created_at?: string
-          expires_at: string
           id?: string
-          image_url: string
-          product_id?: string | null
-          shop_id: string
-          text?: string | null
-          text_color?: string
-          text_position?: string
-          text_size?: string
+          product_id: string
+          sort_order?: number
+          url: string
         }
         Update: {
-          bg_color?: string
           created_at?: string
-          expires_at?: string
           id?: string
-          image_url?: string
-          product_id?: string | null
-          shop_id?: string
-          text?: string | null
-          text_color?: string
-          text_position?: string
-          text_size?: string
+          product_id?: string
+          sort_order?: number
+          url?: string
         }
         Relationships: [
           {
-            foreignKeyName: "shop_promotions_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shop_promotions_product_id_fkey"
+            foreignKeyName: "product_images_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
@@ -510,41 +488,6 @@ export type Database = {
           },
         ]
       }
-      client_notifications: {
-        Row: {
-          client_id: string
-          created_at: string
-          id: string
-          is_read: boolean
-          reference_id: string
-          type: string
-        }
-        Insert: {
-          client_id: string
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          reference_id: string
-          type: string
-        }
-        Update: {
-          client_id?: string
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          reference_id?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_notifications_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -578,60 +521,26 @@ export type Database = {
         }
         Relationships: []
       }
-      shop_reports: {
+      rate_limit_events: {
         Row: {
-          comment: string | null
+          action: string
+          actor: string
           created_at: string
-          id: string
-          reason: Database["public"]["Enums"]["report_reason"]
-          reported_by: string | null
-          reviewed_by: string | null
-          shop_id: string
-          status: Database["public"]["Enums"]["report_status"]
+          id: number
         }
         Insert: {
-          comment?: string | null
+          action: string
+          actor: string
           created_at?: string
-          id?: string
-          reason: Database["public"]["Enums"]["report_reason"]
-          reported_by?: string | null
-          reviewed_by?: string | null
-          shop_id: string
-          status?: Database["public"]["Enums"]["report_status"]
+          id?: never
         }
         Update: {
-          comment?: string | null
+          action?: string
+          actor?: string
           created_at?: string
-          id?: string
-          reason?: Database["public"]["Enums"]["report_reason"]
-          reported_by?: string | null
-          reviewed_by?: string | null
-          shop_id?: string
-          status?: Database["public"]["Enums"]["report_status"]
+          id?: never
         }
-        Relationships: [
-          {
-            foreignKeyName: "shop_reports_reported_by_fkey"
-            columns: ["reported_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shop_reports_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "shop_reports_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       shop_contacts: {
         Row: {
@@ -715,6 +624,118 @@ export type Database = {
           },
         ]
       }
+      shop_promotions: {
+        Row: {
+          bg_color: string
+          created_at: string
+          expires_at: string
+          id: string
+          image_url: string
+          product_id: string | null
+          shop_id: string
+          text: string | null
+          text_color: string
+          text_position: string
+          text_size: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          image_url: string
+          product_id?: string | null
+          shop_id: string
+          text?: string | null
+          text_color?: string
+          text_position?: string
+          text_size?: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_url?: string
+          product_id?: string | null
+          shop_id?: string
+          text?: string | null
+          text_color?: string
+          text_position?: string
+          text_size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_promotions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_promotions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_reports: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reported_by: string | null
+          reviewed_by: string | null
+          shop_id: string
+          status: Database["public"]["Enums"]["report_status"]
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reported_by?: string | null
+          reviewed_by?: string | null
+          shop_id: string
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          reason?: Database["public"]["Enums"]["report_reason"]
+          reported_by?: string | null
+          reviewed_by?: string | null
+          shop_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_reports_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_reports_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_reviews: {
         Row: {
           client_id: string
@@ -762,6 +783,7 @@ export type Database = {
       }
       shops: {
         Row: {
+          accent_color: string | null
           address: string | null
           business_hours: Json | null
           category_id: string | null
@@ -776,6 +798,9 @@ export type Database = {
           instagram_url: string | null
           is_active: boolean
           is_paused: boolean
+          landing_banner: Json | null
+          landing_services: Json | null
+          landing_video_url: string | null
           location: unknown
           logo_url: string | null
           name: string
@@ -783,9 +808,9 @@ export type Database = {
           paused_reason: string | null
           profile_views: number
           slug: string
-          suspended_reason: string | null
           subscription_expires_at: string | null
           subscription_status: Database["public"]["Enums"]["subscription_status"]
+          suspended_reason: string | null
           updated_at: string
           verification_document_url: string | null
           verification_status: Database["public"]["Enums"]["verification_status"]
@@ -796,6 +821,7 @@ export type Database = {
           whatsapp_number: string
         }
         Insert: {
+          accent_color?: string | null
           address?: string | null
           business_hours?: Json | null
           category_id?: string | null
@@ -810,6 +836,9 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean
           is_paused?: boolean
+          landing_banner?: Json | null
+          landing_services?: Json | null
+          landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
           name: string
@@ -819,6 +848,7 @@ export type Database = {
           slug: string
           subscription_expires_at?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
+          suspended_reason?: string | null
           updated_at?: string
           verification_document_url?: string | null
           verification_status?: Database["public"]["Enums"]["verification_status"]
@@ -829,6 +859,7 @@ export type Database = {
           whatsapp_number: string
         }
         Update: {
+          accent_color?: string | null
           address?: string | null
           business_hours?: Json | null
           category_id?: string | null
@@ -843,6 +874,9 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean
           is_paused?: boolean
+          landing_banner?: Json | null
+          landing_services?: Json | null
+          landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
           name?: string
@@ -850,9 +884,9 @@ export type Database = {
           paused_reason?: string | null
           profile_views?: number
           slug?: string
-          suspended_reason?: string | null
           subscription_expires_at?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
+          suspended_reason?: string | null
           updated_at?: string
           verification_document_url?: string | null
           verification_status?: Database["public"]["Enums"]["verification_status"]
@@ -1199,20 +1233,12 @@ export type Database = {
             Returns: string
           }
       admin_set_shop_plan: {
-        Args: { p_plan_id: string | null; p_shop_id: string }
+        Args: { p_plan_id: string; p_shop_id: string }
         Returns: undefined
-      }
-      normalize_category_text: {
-        Args: { p_text: string }
-        Returns: string
       }
       approve_category_suggestion: {
         Args: { p_suggestion_id: string }
         Returns: string
-      }
-      reject_category_suggestion: {
-        Args: { p_reason: string; p_suggestion_id: string }
-        Returns: undefined
       }
       approve_shop_verification: {
         Args: { p_shop_id: string }
@@ -1225,6 +1251,15 @@ export type Database = {
       approve_subscription_by_payment: {
         Args: { p_subscription_id: string }
         Returns: undefined
+      }
+      check_rate_limit: {
+        Args: {
+          p_action: string
+          p_actor: string
+          p_max_count: number
+          p_window_seconds: number
+        }
+        Returns: boolean
       }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
@@ -1358,41 +1393,6 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
-      get_shop_rating: {
-        Args: { p_shop_id: string }
-        Returns: { avg_rating: number; review_count: number }[]
-      }
-      check_rate_limit: {
-        Args: { p_actor: string; p_action: string; p_max_count: number; p_window_seconds: number }
-        Returns: boolean
-      }
-      get_shop_reviews: {
-        Args: { p_shop_id: string }
-        Returns: {
-          id: string
-          rating: number
-          comment: string | null
-          created_at: string
-          client_id: string
-          client_name: string
-        }[]
-      }
-      suspend_shop: {
-        Args: { p_shop_id: string; p_reason?: string }
-        Returns: undefined
-      }
-      unsuspend_shop: {
-        Args: { p_shop_id: string }
-        Returns: undefined
-      }
-      get_shop_follow_stats: {
-        Args: { p_shop_id: string }
-        Returns: { follower_count: number }[]
-      }
-      mark_client_notifications_read: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       get_products_feed: {
         Args: {
           p_attribute_value?: string
@@ -1420,6 +1420,30 @@ export type Database = {
           shop_name: string
         }[]
       }
+      get_shop_follow_stats: {
+        Args: { p_shop_id: string }
+        Returns: {
+          follower_count: number
+        }[]
+      }
+      get_shop_rating: {
+        Args: { p_shop_id: string }
+        Returns: {
+          avg_rating: number
+          review_count: number
+        }[]
+      }
+      get_shop_reviews: {
+        Args: { p_shop_id: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          comment: string
+          created_at: string
+          id: string
+          rating: number
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
       immutable_unaccent: { Args: { "": string }; Returns: string }
       increment_shop_metric: {
@@ -1438,6 +1462,8 @@ export type Database = {
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
       mark_all_admin_notifications_read: { Args: never; Returns: undefined }
+      mark_client_notifications_read: { Args: never; Returns: undefined }
+      normalize_category_text: { Args: { p_text: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -1478,6 +1504,10 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      reject_category_suggestion: {
+        Args: { p_reason: string; p_suggestion_id: string }
+        Returns: undefined
+      }
       reject_shop_verification: {
         Args: { p_shop_id: string }
         Returns: undefined
@@ -2073,8 +2103,13 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      suspend_shop: {
+        Args: { p_reason?: string; p_shop_id: string }
+        Returns: undefined
+      }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }
+      unsuspend_shop: { Args: { p_shop_id: string }; Returns: undefined }
       updategeometrysrid: {
         Args: {
           catalogn_name: string

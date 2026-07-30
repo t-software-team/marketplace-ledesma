@@ -19,7 +19,8 @@ export async function getMyShop() {
       whatsapp_number, email, instagram_url, facebook_url, website_url, address, city,
       verification_status, verification_document_url, verified_by, verified_at,
       subscription_status, subscription_expires_at,
-      is_active, is_paused, paused_reason, business_hours,
+      is_active, is_paused, paused_reason, business_hours, accent_color,
+      landing_banner, landing_services, landing_video_url,
       profile_views, whatsapp_clicks, created_at, updated_at, deleted_at,
       categories ( slug )
     `
@@ -249,6 +250,10 @@ export const getShopBySlug = unstable_cache(
         subscription_status,
         is_paused,
         paused_reason,
+        accent_color,
+        landing_banner,
+        landing_services,
+        landing_video_url,
         categories ( name )
       `
       )
@@ -450,7 +455,7 @@ export async function getMyActiveSubscription(shopId: string) {
 
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('id, plan_id, end_date, subscription_plans ( name )')
+    .select('id, plan_id, end_date, subscription_plans ( name, benefits )')
     .eq('shop_id', shopId)
     .eq('status', 'active')
     .order('created_at', { ascending: false })
@@ -648,7 +653,9 @@ export async function getMyFavorites() {
     })
 }
 
-export async function getShopProducts(shopId: string) {
+export const SHOP_PRODUCTS_PAGE_SIZE = 24
+
+export async function getShopProducts(shopId: string, limit = SHOP_PRODUCTS_PAGE_SIZE, offset = 0) {
   const supabase = await createClient()
 
   const { data: products, error } = await supabase
@@ -665,7 +672,7 @@ export async function getShopProducts(shopId: string) {
     .eq('shop_id', shopId)
     .eq('is_active', true)
     .order('created_at', { ascending: false })
-    .limit(200)
+    .range(offset, offset + limit - 1)
 
   if (error || !products) return []
 

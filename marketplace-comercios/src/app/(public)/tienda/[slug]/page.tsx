@@ -10,6 +10,8 @@ import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { FollowShopButton } from '@/components/shop/follow-shop-button'
+import { LandingBannerSection, LandingServicesSection } from '@/components/shop/landing-sections'
+import { LandingVideoSection } from '@/components/shop/landing-video-section'
 import { RelatedShops } from '@/components/shop/related-shops'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
@@ -32,7 +34,9 @@ import {
   getShopReviews,
 } from '@/lib/shops/queries'
 import { createClient } from '@/lib/supabase/server'
+import { getAccentColor } from '@/lib/accent-colors'
 import { getBaseUrl } from '@/lib/site-url'
+import { cn } from '@/lib/utils'
 import { stripHtml } from '@/lib/strip-html'
 
 interface ShopPageProps {
@@ -105,6 +109,8 @@ export default async function ShopPage({ params }: ShopPageProps) {
   const isVerified = shop.verification_status === 'verified'
   const isFeatured = shop.subscription_status === 'active'
   const baseUrl = getBaseUrl()
+  const accentColor = shop.accent_color ? getAccentColor(shop.accent_color) : null
+  const themeClass = accentColor ? `shop-theme-${shop.id}` : ''
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -127,11 +133,21 @@ export default async function ShopPage({ params }: ShopPageProps) {
   }
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className={cn('space-y-6 pb-24', themeClass)}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
+      {accentColor && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              .${themeClass} { --primary: ${accentColor.light.primary}; --primary-foreground: ${accentColor.light.primaryForeground}; }
+              .dark .${themeClass} { --primary: ${accentColor.dark.primary}; --primary-foreground: ${accentColor.dark.primaryForeground}; }
+            `,
+          }}
+        />
+      )}
       <ShopViewTracker shopId={shop.id} />
 
       <div className="-mx-4 overflow-hidden rounded-xl bg-surface md:-mx-6">
@@ -297,9 +313,14 @@ export default async function ShopPage({ params }: ShopPageProps) {
         </div>
       </div>
 
+      <LandingBannerSection data={shop.landing_banner} />
+
+      <LandingServicesSection data={shop.landing_services} />
+      <LandingVideoSection url={shop.landing_video_url} />
+
       <section className="space-y-4">
         <h2 className="text-lg font-heading">Productos</h2>
-        <ShopProductGrid products={products} shopName={shop.name} />
+        <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
       </section>
 
       {isFeatured && (

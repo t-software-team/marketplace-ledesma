@@ -600,7 +600,10 @@ export async function adminSetShopPlan(shopId: string, planId: string | null) {
 
   const { error } = await supabase.rpc('admin_set_shop_plan', {
     p_shop_id: shopId,
-    p_plan_id: planId,
+    // admin_set_shop_plan's SQL body explicitly handles p_plan_id is null
+    // (unassigns the plan), but Supabase's type generator doesn't infer
+    // nullability for RPC args from the Postgres function signature.
+    p_plan_id: planId as string,
   })
 
   if (error) {

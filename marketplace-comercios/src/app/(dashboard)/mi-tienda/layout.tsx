@@ -18,6 +18,7 @@ export default async function MiTiendaLayout({
   let avatarUrl: string | null = null
   let rubroSlug: string | null = null
   let planName = 'Free'
+  let hasCustomBranding = false
 
   if (user) {
     const { data: profile } = await supabase
@@ -40,6 +41,10 @@ export default async function MiTiendaLayout({
     if (shop) {
       const activeSubscription = await getMyActiveSubscription(shop.id)
       planName = activeSubscription?.subscription_plans?.name ?? 'Free'
+      hasCustomBranding = Boolean(
+        (activeSubscription?.subscription_plans?.benefits as { custom_branding?: boolean } | null)
+          ?.custom_branding
+      )
     }
   }
 
@@ -49,6 +54,12 @@ export default async function MiTiendaLayout({
     { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
     { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
     { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
+    {
+      href: '/mi-tienda/personalizar',
+      label: 'Personalizar',
+      icon: 'sparkles',
+      badge: hasCustomBranding ? undefined : 'PRO',
+    },
     { href: '/mi-tienda/suscripcion', label: 'Planes', icon: 'credit-card', badge: planName },
     { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
   ]

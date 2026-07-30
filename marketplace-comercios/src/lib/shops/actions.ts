@@ -7,13 +7,17 @@ import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
-import { getProductLimitInfo } from '@/lib/shops/queries'
+import { getMyActiveSubscription, getProductLimitInfo } from '@/lib/shops/queries'
+import { ACCENT_COLORS } from '@/lib/accent-colors'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sanitizeRichText } from '@/lib/sanitize-html'
 import { containsProfanity } from '@/lib/profanity-filter'
 import {
   categorySuggestionSchema,
   createShopSchema,
+  landingBannerSchema,
+  landingServicesSchema,
+  personalizationSchema,
   productSchema,
   promotionSchema,
   reportShopSchema,
@@ -323,6 +327,107 @@ export async function updateShopSettings(
   revalidatePath('/mi-tienda')
   revalidatePath('/mi-tienda/productos')
   return { error: null, warning }
+}
+
+export async function updateShopPersonalization(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await requireUser()
+
+  const parsed = personalizationSchema.safeParse({
+    accent_color: formData.get('accent_color') ?? '',
+    landing_banner_text: formData.get('landing_banner_text') ?? '',
+    landing_services_text: formData.get('landing_services_text') ?? '',
+    landing_video_url: formData.get('landing_video_url') ?? '',
+  })
+
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? 'Revisá los campos marcados',
+      fieldErrors: buildFieldErrors(parsed.error),
+    }
+  }
+
+  const { data: currentShop } = await supabase
+    .from('shops')
+    .select('id, slug')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (!currentShop) {
+    return { error: 'No encontramos tu comercio' }
+  }
+
+  // Personalization is a Plan Ilimitado benefit — re-check server-side
+  // rather than trust the client, since the form is only hidden in the UI
+  // for shops without the plan, not blocked at the network layer.
+  const activeSubscription = await getMyActiveSubscription(currentShop.id)
+  const hasCustomBranding = Boolean(
+    (activeSubscription?.subscription_plans?.benefits as { custom_branding?: boolean } | null)
+      ?.custom_branding
+  )
+
+  if (!hasCustomBranding) {
+    return { error: 'Necesitás el Plan Ilimitado para personalizar tu tienda' }
+  }
+
+  let accentColor: string | null = null
+  if (parsed.data.accent_color) {
+    const isValidColor = ACCENT_COLORS.some((color) => color.key === parsed.data.accent_color)
+    accentColor = isValidColor ? parsed.data.accent_color : null
+  }
+
+  let landingBanner: unknown = null
+  if (parsed.data.landing_banner_text) {
+    try {
+      const rawBanner = JSON.parse(parsed.data.landing_banner_text)
+      const bannerResult = landingBannerSchema.safeParse(rawBanner)
+      if (bannerResult.success) {
+        landingBanner = {
+          title: bannerResult.data.title,
+          subtitle: bannerResult.data.subtitle || null,
+          image_url: bannerResult.data.image_url || null,
+          cta_label: bannerResult.data.cta_label || null,
+          cta_url: bannerResult.data.cta_url || null,
+        }
+      }
+    } catch (error) {
+      console.error('updateShopPersonalization: landing_banner_text inválido', { error })
+    }
+  }
+
+  let landingServices: unknown = null
+  if (parsed.data.landing_services_text) {
+    try {
+      const rawServices = JSON.parse(parsed.data.landing_services_text)
+      const servicesResult = landingServicesSchema.safeParse(rawServices)
+      if (servicesResult.success && servicesResult.data.length > 0) {
+        landingServices = servicesResult.data
+      }
+    } catch (error) {
+      console.error('updateShopPersonalization: landing_services_text inválido', { error })
+    }
+  }
+
+  const { error } = await supabase
+    .from('shops')
+    .update({
+      accent_color: accentColor,
+      landing_banner: landingBanner as never,
+      landing_services: landingServices as never,
+      landing_video_url: parsed.data.landing_video_url || null,
+    })
+    .eq('owner_id', user.id)
+
+  if (error) {
+    console.error('updateShopPersonalization: fallo al guardar cambios', { error })
+    return { error: 'No pudimos guardar los cambios' }
+  }
+
+  revalidatePath('/mi-tienda/personalizar')
+  revalidatePath(`/tienda/${currentShop.slug}`)
+  return { error: null }
 }
 
 export async function updateVerificationDocument(documentPath: string): Promise<ActionState> {
@@ -673,6 +778,16 @@ export async function createPromotion(
     .maybeSingle()
 
   if (!shop) return { error: 'No tenés una tienda creada' }
+
+  const activeSubscription = await getMyActiveSubscription(shop.id)
+  const hasPromotions = Boolean(
+    (activeSubscription?.subscription_plans?.benefits as { promotions?: boolean } | null)
+      ?.promotions
+  )
+
+  if (!hasPromotions) {
+    return { error: 'Necesitás el Plan 50 o el Plan Ilimitado para crear promociones' }
+  }
 
   const parsed = promotionSchema.safeParse({
     image_url: formData.get('image_url'),

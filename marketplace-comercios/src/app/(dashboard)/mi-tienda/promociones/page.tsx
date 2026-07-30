@@ -26,6 +26,10 @@ export default async function PromotionsPage() {
 
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
+  const hasPromotions = Boolean(
+    (activeSubscription?.subscription_plans?.benefits as { promotions?: boolean } | null)
+      ?.promotions
+  )
 
   const headersList = await headers()
   const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
@@ -41,7 +45,7 @@ export default async function PromotionsPage() {
         </p>
       </div>
 
-      {!activeSubscription ? (
+      {!hasPromotions ? (
         <PromotionsUpsell noun={noun} />
       ) : (
         <Card>

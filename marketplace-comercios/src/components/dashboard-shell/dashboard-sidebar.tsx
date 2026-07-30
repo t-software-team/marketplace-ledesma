@@ -11,6 +11,7 @@ import {
   Package,
   Settings,
   ShieldCheck,
+  Sparkles,
   Store,
   Tag,
 } from 'lucide-react'
@@ -27,6 +28,7 @@ const ICONS = {
   clock: History,
   megaphone: Megaphone,
   dashboard: LayoutDashboard,
+  sparkles: Sparkles,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

@@ -4,6 +4,46 @@ import { createClient } from '@/lib/supabase/client'
 import { useFiltersStore } from '@/stores/use-filters-store'
 
 const FEED_PAGE_SIZE = 20
+const SHOP_PRODUCTS_PAGE_SIZE = 24
+
+export function useShopProductsPaged(shopId: string, searchQuery = '') {
+  const supabase = createClient()
+
+  return useInfiniteQuery({
+    queryKey: ['shop-products', shopId, searchQuery],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      let query = supabase
+        .from('products')
+        .select('id, name, price, currency, product_images ( url, sort_order )')
+        .eq('shop_id', shopId)
+        .eq('is_active', true)
+
+      if (searchQuery.trim()) {
+        query = query.ilike('name', `%${searchQuery.trim()}%`)
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + SHOP_PRODUCTS_PAGE_SIZE - 1)
+
+      if (error) throw error
+
+      return (data ?? []).map((product) => {
+        const images = [...(product.product_images ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+        return {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          currency: product.currency,
+          mainImage: images[0]?.url ?? null,
+        }
+      })
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < SHOP_PRODUCTS_PAGE_SIZE ? undefined : allPages.length * SHOP_PRODUCTS_PAGE_SIZE,
+  })
+}
 
 export function useProductsFeed() {
   const { categoryId, searchQuery, userLocation, attributeValue } = useFiltersStore()

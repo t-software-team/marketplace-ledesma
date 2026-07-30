@@ -35,6 +35,8 @@ function getBenefitLabels(noun: string, nounPlural: string): Record<string, (val
     featured: (value) => (value ? `Destacá tus ${noun}s en el feed` : null),
     analytics: (value) => (value ? 'Estadísticas de tu tienda' : null),
     priority_support: (value) => (value ? 'Soporte prioritario' : null),
+    custom_branding: (value) => (value ? 'Personalizá tu tienda pública (color, banner, servicios, video)' : null),
+    promotions: (value) => (value ? 'Creá promociones destacadas en el feed' : null),
   }
 }
 

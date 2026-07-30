@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -357,6 +358,20 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
             </div>
           </div>
           {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
+        </CardContent>
+      </Card>
+
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+          <div>
+            <p className="text-sm font-medium">Personalizá tu tienda pública</p>
+            <p className="text-xs text-muted-foreground">
+              Color de acento, banner promocional, servicios destacados y video.
+            </p>
+          </div>
+          <Button render={<Link href="/mi-tienda/personalizar" />} nativeButton={false} variant="outline" size="sm">
+            Ir a Personalizar
+          </Button>
         </CardContent>
       </Card>
 
