@@ -25,6 +25,16 @@ export async function GET(request: Request) {
         if (!profile?.role) {
           return NextResponse.redirect(`${origin}/onboarding`)
         }
+
+        if (next === '/') {
+          const roleDestination =
+            profile.role === 'shop_admin'
+              ? '/mi-tienda'
+              : profile.role === 'superadmin'
+                ? '/admin/shops'
+                : '/'
+          return NextResponse.redirect(`${origin}${roleDestination}`)
+        }
       }
 
       return NextResponse.redirect(`${origin}${next}`)

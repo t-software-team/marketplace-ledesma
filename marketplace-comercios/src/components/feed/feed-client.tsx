@@ -117,6 +117,23 @@ export function FeedClient({
 
   return (
     <div className="space-y-4">
+      {!isLoggedIn && (
+        <Link
+          href="/login"
+          className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
+        >
+          <div>
+            <p className="text-sm font-semibold">Vendé tus productos en Ledesma</p>
+            <p className="text-xs text-muted-foreground">
+              Creá tu cuenta gratis, abrí tu tienda y empezá a vender hoy mismo.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
+            Crear cuenta gratis
+          </span>
+        </Link>
+      )}
+
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />

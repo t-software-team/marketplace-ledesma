@@ -66,7 +66,13 @@ export default function LoginForm() {
 
     toast.add({ title: `¡Bienvenido de nuevo!`, type: 'success' })
     const next = searchParams.get('next')
-    router.push(next ?? '/')
+    const roleDestination =
+      profile.role === 'shop_admin'
+        ? '/mi-tienda'
+        : profile.role === 'superadmin'
+          ? '/admin/shops'
+          : '/'
+    router.push(next ?? roleDestination)
     router.refresh()
   }
 
