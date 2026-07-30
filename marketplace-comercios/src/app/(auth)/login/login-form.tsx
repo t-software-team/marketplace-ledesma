@@ -70,7 +70,7 @@ export default function LoginForm() {
       profile.role === 'shop_admin'
         ? '/mi-tienda'
         : profile.role === 'superadmin'
-          ? '/admin/shops'
+          ? '/admin/dashboard'
           : '/'
     router.push(next ?? roleDestination)
     router.refresh()

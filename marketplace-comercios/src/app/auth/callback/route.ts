@@ -31,7 +31,7 @@ export async function GET(request: Request) {
             profile.role === 'shop_admin'
               ? '/mi-tienda'
               : profile.role === 'superadmin'
-                ? '/admin/shops'
+                ? '/admin/dashboard'
                 : '/'
           return NextResponse.redirect(`${origin}${roleDestination}`)
         }

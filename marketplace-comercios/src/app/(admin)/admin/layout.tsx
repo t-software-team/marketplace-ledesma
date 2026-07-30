@@ -4,6 +4,7 @@ import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-si
 import { getUnreadNotifications, getUnreadNotificationsCount } from '@/lib/admin/queries'
 
 const navItems: DashboardNavItem[] = [
+  { href: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/admin/shops', label: 'Comercios', icon: 'store' },
   { href: '/admin/categorias', label: 'Categorías', icon: 'tag' },
   { href: '/admin/subscripciones', label: 'Suscripciones', icon: 'credit-card' },

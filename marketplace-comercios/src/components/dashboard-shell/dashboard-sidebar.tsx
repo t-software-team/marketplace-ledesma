@@ -6,6 +6,7 @@ import {
   CreditCard,
   Flag,
   History,
+  LayoutDashboard,
   Megaphone,
   Package,
   Settings,
@@ -25,6 +26,7 @@ const ICONS = {
   flag: Flag,
   clock: History,
   megaphone: Megaphone,
+  dashboard: LayoutDashboard,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

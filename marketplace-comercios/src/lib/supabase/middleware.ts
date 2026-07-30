@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
         profile.role === 'shop_admin'
           ? '/mi-tienda'
           : profile.role === 'superadmin'
-            ? '/admin/shops'
+            ? '/admin/dashboard'
             : '/'
       return NextResponse.redirect(new URL(destination, request.url))
     }
