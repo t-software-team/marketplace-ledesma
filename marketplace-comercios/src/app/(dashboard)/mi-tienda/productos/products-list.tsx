@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Search, Star, Trash2 } from 'lucide-react'
+import { AlertTriangle, Search, Star, Trash2 } from 'lucide-react'
 import { useMemo, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -198,9 +198,14 @@ export function ProductsList({
                       </div>
                       <div className="min-w-0">
                         <p className="truncate font-medium">{product.name}</p>
-                        {product.categoryName && (
+                        {product.categoryName ? (
                           <p className="truncate text-xs text-muted-foreground">
                             {product.categoryName}
+                          </p>
+                        ) : (
+                          <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
+                            <AlertTriangle className="size-3 shrink-0" aria-hidden />
+                            Sin subcategoría
                           </p>
                         )}
                       </div>

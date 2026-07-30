@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
 import { uploadShopImage } from '@/lib/shops/upload-image'
+import { slugify } from '@/lib/slugify'
 import { updateShopSettings, type ActionState } from '@/lib/shops/actions'
 import { BusinessHoursEditor } from './business-hours-editor'
 import type { getMyShop } from '@/lib/shops/queries'
@@ -47,6 +48,11 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [categoryId, setCategoryId] = useState(shop.category_id ?? '')
+  const [slug, setSlug] = useState(shop.slug)
+  // If the current slug doesn't match what auto-slugifying the name would
+  // produce, the shop already has a manually customized URL — don't
+  // silently overwrite it just because they tweaked the name.
+  const [slugTouched, setSlugTouched] = useState(shop.slug !== slugify(shop.name))
 
   async function handleUpload(
     bucket: 'shop-logos' | 'shop-covers',
@@ -88,6 +94,9 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               defaultValue={shop.name}
               required
               aria-invalid={Boolean(fieldErrors.name)}
+              onChange={(event) => {
+                if (!slugTouched) setSlug(slugify(event.target.value))
+              }}
             />
             <FieldError message={fieldErrors.name} />
           </div>
@@ -99,19 +108,21 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
             <Input
               id="slug"
               name="slug"
-              defaultValue={shop.slug}
+              value={slug}
               required
               aria-invalid={Boolean(fieldErrors.slug)}
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
               onChange={(event) => {
-                event.target.value = event.target.value.toLowerCase()
+                setSlugTouched(true)
+                setSlug(event.target.value.toLowerCase())
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Es la dirección de tu tienda pública: marketplace-ledesma.com/tienda/tu-slug. Si la
-              cambiás, los links que ya compartiste van a dejar de funcionar.
+              Se genera solo a partir del nombre — podés editarlo. Es la dirección de tu tienda
+              pública: marketplace-ledesma.com/tienda/tu-slug. Si la cambiás, los links que ya
+              compartiste van a dejar de funcionar.
             </p>
             <FieldError message={fieldErrors.slug} />
           </div>
