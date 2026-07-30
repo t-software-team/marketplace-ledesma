@@ -391,7 +391,7 @@ export async function getMyActiveSubscription(shopId: string) {
 
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('id, plan_id, end_date')
+    .select('id, plan_id, end_date, subscription_plans ( name )')
     .eq('shop_id', shopId)
     .eq('status', 'active')
     .order('created_at', { ascending: false })

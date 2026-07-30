@@ -33,6 +33,7 @@ export interface DashboardNavItem {
   href: string
   label: string
   icon: DashboardNavIcon
+  badge?: string
 }
 
 interface SidebarNavProps {
@@ -70,7 +71,19 @@ export function SidebarNav({ navItems, onNavigate }: SidebarNavProps) {
               <span className="absolute top-1/2 left-0 h-5 w-1 -translate-y-1/2 rounded-full bg-primary" />
             )}
             <Icon className={cn('size-4', isActive && 'text-primary')} aria-hidden />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.badge && (
+              <span
+                className={cn(
+                  'rounded-full px-2 py-0.5 text-[10px] font-medium',
+                  isActive
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {item.badge}
+              </span>
+            )}
           </Link>
         )
       })}

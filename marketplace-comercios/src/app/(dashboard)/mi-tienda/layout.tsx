@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
 import { isServiceRubro } from '@/lib/category-icons'
+import { getMyActiveSubscription } from '@/lib/shops/queries'
 
 export default async function MiTiendaLayout({
   children,
@@ -16,6 +17,7 @@ export default async function MiTiendaLayout({
   let fullName: string | null = null
   let avatarUrl: string | null = null
   let rubroSlug: string | null = null
+  let planName = 'Free'
 
   if (user) {
     const { data: profile } = await supabase
@@ -29,11 +31,16 @@ export default async function MiTiendaLayout({
 
     const { data: shop } = await supabase
       .from('shops')
-      .select('categories ( slug )')
+      .select('id, categories ( slug )')
       .eq('owner_id', user.id)
       .maybeSingle()
 
     rubroSlug = shop?.categories?.slug ?? null
+
+    if (shop) {
+      const activeSubscription = await getMyActiveSubscription(shop.id)
+      planName = activeSubscription?.subscription_plans?.name ?? 'Free'
+    }
   }
 
   const isService = isServiceRubro(rubroSlug)
@@ -42,6 +49,7 @@ export default async function MiTiendaLayout({
     { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
     { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
     { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
+    { href: '/mi-tienda/suscripcion', label: 'Planes', icon: 'credit-card', badge: planName },
     { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
   ]
 
