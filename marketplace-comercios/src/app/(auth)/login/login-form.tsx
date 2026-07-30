@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -73,14 +73,14 @@ export default function LoginForm() {
   return (
     <Card className="border-border/60 shadow-lg shadow-black/[0.03]">
       <CardHeader>
-        <button
+        {/* <button
           type="button"
           onClick={() => router.back()}
           className="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" aria-hidden />
           Volver
-        </button>
+        </button> */}
         <CardTitle className="text-2xl">Ingresar</CardTitle>
         <CardDescription>Accedé a tu cuenta del marketplace</CardDescription>
       </CardHeader>
