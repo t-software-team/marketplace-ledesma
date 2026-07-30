@@ -4,6 +4,7 @@ import { useActionState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/shared/rich-text-editor'
 import { toast } from '@/components/ui/toast'
 import type { ActionState } from '@/lib/admin/actions'
 
@@ -48,10 +49,8 @@ export function PlanForm({ action, defaultValues, submitLabel }: PlanFormProps) 
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="description" className="text-sm font-medium">
-          Descripción
-        </label>
-        <Textarea id="description" name="description" defaultValue={defaultValues?.description ?? ''} rows={3} />
+        <label className="text-sm font-medium">Descripción</label>
+        <RichTextEditor name="description" initialValue={defaultValues?.description ?? ''} />
       </div>
 
       <div className="grid grid-cols-2 gap-4">

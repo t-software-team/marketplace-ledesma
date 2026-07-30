@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { RichTextEditor } from '@/components/shared/rich-text-editor'
 import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
 import { ProductVariantsField } from '@/components/shared/product-variants-field'
@@ -76,15 +76,8 @@ export function ProductForm({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="description" className="text-sm font-medium">
-          Descripción
-        </label>
-        <Textarea
-          id="description"
-          name="description"
-          rows={4}
-          defaultValue={defaultValues?.description ?? ''}
-        />
+        <label className="text-sm font-medium">Descripción</label>
+        <RichTextEditor name="description" initialValue={defaultValues?.description ?? ''} />
         <FieldError message={fieldErrors.description} />
       </div>
 

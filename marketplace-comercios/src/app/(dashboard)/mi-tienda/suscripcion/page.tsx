@@ -257,7 +257,12 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
                   </div>
 
                   {plan.description && (
-                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                    // plan.description is sanitized server-side (sanitizeRichText) before
+                    // it's ever persisted, so this is safe against stored XSS.
+                    <div
+                      className="prose prose-sm max-w-none text-sm text-muted-foreground [&_p]:my-1"
+                      dangerouslySetInnerHTML={{ __html: plan.description }}
+                    />
                   )}
 
                   {benefitLines.length > 0 && (

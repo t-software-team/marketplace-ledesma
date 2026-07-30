@@ -12,6 +12,7 @@ import { formatPrice } from '@/lib/format'
 import { getProductDetail } from '@/lib/shops/queries'
 import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/site-url'
+import { stripHtml } from '@/lib/strip-html'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
@@ -25,7 +26,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     return { title: 'Producto no encontrado' }
   }
 
-  const description = product.description ?? `${product.name} en ${product.shop.name}`
+  const description = product.description
+    ? stripHtml(product.description)
+    : `${product.name} en ${product.shop.name}`
   const image = product.images[0]?.url
 
   return {
@@ -72,7 +75,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.description ?? undefined,
+    description: product.description ? stripHtml(product.description) : undefined,
     image: product.images.map((image) => image.url),
     url: `${baseUrl}/producto/${product.id}`,
     offers: {
@@ -144,9 +147,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
 
           {product.description && (
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {product.description}
-            </p>
+            // product.description is sanitized server-side (sanitizeRichText) before it's
+            // ever persisted, so this is safe against stored XSS.
+            <div
+              className="prose prose-sm max-w-none text-sm leading-relaxed text-muted-foreground [&_p]:my-1"
+              dangerouslySetInnerHTML={{ __html: product.description }}
+            />
           )}
 
           {product.attributes.length > 0 && (
@@ -180,22 +186,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           <Link
             href={`/tienda/${shop.slug}`}
-            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <div className="relative size-6 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border">
+            <div className="relative size-10 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border">
               {shop.logo_url ? (
-                <Image src={shop.logo_url} alt="" fill className="object-cover" sizes="24px" />
+                <Image src={shop.logo_url} alt="" fill className="object-cover" sizes="40px" />
               ) : (
-                <div className="flex h-full items-center justify-center text-[10px] font-heading text-muted-foreground">
+                <div className="flex h-full items-center justify-center text-sm font-heading text-muted-foreground">
                   {shop.name.charAt(0)}
                 </div>
               )}
             </div>
-            <span className="flex min-w-0 items-center gap-1 truncate font-medium text-foreground">
-              {shop.name}
-              {isVerified && <VerifiedStamp className="size-4 shrink-0" />}
-            </span>
-            <ChevronRight className="size-3.5 shrink-0" aria-hidden />
+            <div className="min-w-0">
+              <span className="flex min-w-0 items-center gap-1.5 truncate text-base font-medium text-foreground">
+                {shop.name}
+                {isVerified && <VerifiedStamp className="size-4 shrink-0" />}
+              </span>
+              <span className="text-xs text-muted-foreground">Ir a la tienda</span>
+            </div>
+            <ChevronRight className="size-4 shrink-0" aria-hidden />
           </Link>
 
           <ProductContact

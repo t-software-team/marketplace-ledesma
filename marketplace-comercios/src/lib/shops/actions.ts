@@ -393,7 +393,7 @@ export async function createProduct(
     .insert({
       shop_id: shop.id,
       name: parsed.data.name,
-      description: parsed.data.description || null,
+      description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
@@ -500,7 +500,7 @@ export async function updateProduct(
     .from('products')
     .update({
       name: parsed.data.name,
-      description: parsed.data.description || null,
+      description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,

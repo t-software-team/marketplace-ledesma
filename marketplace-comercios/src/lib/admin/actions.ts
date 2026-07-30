@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
+import { sanitizeRichText } from '@/lib/sanitize-html'
 import { sendEmail } from '@/lib/email/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import {
@@ -507,7 +508,7 @@ export async function createSubscriptionPlan(
 
   const { error } = await supabase.from('subscription_plans').insert({
     name: parsed.data.name,
-    description: parsed.data.description || null,
+    description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
     price: Number(parsed.data.price),
     duration_days: Number(parsed.data.duration_days),
     benefits: benefits as never,
@@ -560,7 +561,7 @@ export async function updateSubscriptionPlan(
     .from('subscription_plans')
     .update({
       name: parsed.data.name,
-      description: parsed.data.description || null,
+      description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: Number(parsed.data.price),
       duration_days: Number(parsed.data.duration_days),
       benefits: benefits as never,
