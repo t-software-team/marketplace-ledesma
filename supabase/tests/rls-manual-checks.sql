@@ -207,3 +207,38 @@ FROM public.get_products_feed(p_search => 'Farmacia', p_limit => 10);
 -- ESPERADO: OK — get_products_feed con filtro de categoría retorna resultados
 SELECT product_name, product_id
 FROM public.get_products_feed(p_category_id => 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', p_limit => 10);
+
+-- ============================================================
+-- category_attributes / product_attribute_values / category_suggestions / shop_promotions
+-- ============================================================
+
+-- ESPERADO: OK — cualquiera ve los atributos de categoría (SELECT público)
+SELECT id, category_id, key, label, type FROM public.category_attributes LIMIT 5;
+
+-- ESPERADO: 0 filas (ERROR) — shop_admin/client NO puede escribir category_attributes directo
+INSERT INTO public.category_attributes (category_id, key, label, type)
+VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'test_attr', 'Test', 'text');
+
+-- ESPERADO: OK — superadmin sí puede escribir category_attributes
+-- (ejecutar autenticado como superadmin)
+
+-- ESPERADO: OK — shop_admin puede insertar valores de atributo en sus propios productos
+-- (requiere producto propio existente; ver product_attribute_values_insert_shop_owner)
+
+-- ESPERADO: OK — shop_admin puede crear una sugerencia de categoría propia
+INSERT INTO public.category_suggestions (shop_id, name, status)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', 'Rubro de prueba', 'pending');
+
+-- ESPERADO: 0 filas (ERROR) — shop_admin NO puede aprobar/rechazar sugerencias (solo UPDATE superadmin)
+UPDATE public.category_suggestions SET status = 'approved' WHERE status = 'pending';
+
+-- ESPERADO: OK — approve_category_suggestion/reject_category_suggestion validan is_superadmin() en el body
+-- (confirmado en pg_get_functiondef; ver AGENTS.md § RPC security definer)
+
+-- ESPERADO: OK — shop_admin puede crear/borrar sus propias promociones (stories)
+-- (ver shop_promotions_insert_shop_owner / shop_promotions_delete_shop_owner)
+
+-- ESPERADO: 0 filas (ERROR) — shop_admin NO puede cambiar el plan de un comercio directo en subscriptions
+-- (solo vía admin_set_shop_plan, que valida is_superadmin() en el body)
+INSERT INTO public.subscriptions (shop_id, plan_id, status, start_date, end_date)
+VALUES ('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '11111111-1111-1111-1111-111111111111', 'active', now(), now() + interval '30 days');
