@@ -40,7 +40,8 @@ export function WhatsAppButton({
 
   return (
     <Button
-      className={cn('gap-2', className)}
+      size="lg"
+      className={cn('h-12 gap-2 px-5 text-base', className)}
       render={
         <a
           href={url}
@@ -52,7 +53,7 @@ export function WhatsAppButton({
       nativeButton={false}
       aria-label="Contactar por WhatsApp"
     >
-      <MessageCircle className="size-4" />
+      <MessageCircle className="size-5" />
       Contactar por WhatsApp
     </Button>
   )

@@ -1,7 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { Search } from 'lucide-react'
+import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/shared/field-error'
 import { Card, CardContent } from '@/components/ui/card'
@@ -48,6 +49,12 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [categoryId, setCategoryId] = useState(shop.category_id ?? '')
+  const [categorySearch, setCategorySearch] = useState('')
+  const filteredCategories = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase()
+    if (!query) return categories
+    return categories.filter((category) => category.name.toLowerCase().includes(query))
+  }, [categories, categorySearch])
   const [slug, setSlug] = useState(shop.slug)
   // If the current slug doesn't match what auto-slugifying the name would
   // produce, the shop already has a manually customized URL — don't
@@ -98,12 +105,15 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
                 if (!slugTouched) setSlug(slugify(event.target.value))
               }}
             />
+            <p className="text-xs text-muted-foreground">
+              El nombre de tu comercio tal como lo conocen tus clientes.
+            </p>
             <FieldError message={fieldErrors.name} />
           </div>
 
           <div className="space-y-2">
             <label htmlFor="slug" className="text-sm font-medium">
-              URL (slug)
+              Link de tu tienda
             </label>
             <Input
               id="slug"
@@ -120,8 +130,8 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Se genera solo a partir del nombre — podés editarlo. Es la dirección de tu tienda
-              pública: marketplace-ledesma.com/tienda/tu-slug. Si la cambiás, los links que ya
+              Así te van a encontrar tus clientes: marketplace-ledesma.com/tienda/{slug || 'tu-tienda'}.
+              Se completa solo con el nombre, pero podés editarlo. Ojo: si la cambiás, los links que ya
               compartiste van a dejar de funcionar.
             </p>
             <FieldError message={fieldErrors.slug} />
@@ -130,6 +140,9 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">Descripción</label>
             <RichTextEditor name="description" initialValue={shop.description ?? ''} />
+            <p className="text-xs text-muted-foreground">
+              Contales a tus clientes qué vendés, hace cuánto existís y qué te distingue.
+            </p>
             <FieldError message={fieldErrors.description} />
           </div>
         </CardContent>
@@ -241,8 +254,22 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">Rubro</label>
             <input type="hidden" name="category_id" value={categoryId} />
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar rubro..."
+                value={categorySearch}
+                onChange={(event) => setCategorySearch(event.target.value)}
+                className="h-10 pl-9"
+                aria-label="Buscar rubro"
+              />
+            </div>
             <div className="flex flex-wrap gap-2">
-              {categories.map((category) => {
+              {filteredCategories.length === 0 && (
+                <p className="text-xs text-muted-foreground">No encontramos ningún rubro con ese nombre.</p>
+              )}
+              {filteredCategories.map((category) => {
                 const Icon = getRubroIcon(category.slug)
                 const isSelected = categoryId === category.id
                 return (
@@ -347,6 +374,10 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
             />
             Pausar tienda
           </label>
+          <p className="pl-6 text-xs text-muted-foreground">
+            Tu tienda deja de verse en el feed y no se puede comprar mientras esté en pausa. Usalo si
+            te vas de vacaciones o te quedaste sin stock — podés reactivarla cuando quieras.
+          </p>
           {isPaused && (
             <Input
               name="paused_reason"

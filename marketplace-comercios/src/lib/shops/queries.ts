@@ -626,7 +626,7 @@ export async function getShopProducts(shopId: string) {
 }
 
 const FREE_PLAN_MAX_PRODUCTS_SERVICE = 3
-const FREE_PLAN_MAX_PRODUCTS_PRODUCT = 20
+const FREE_PLAN_MAX_PRODUCTS_PRODUCT = 15
 
 export async function getProductLimitInfo(shopId: string) {
   const supabase = await createClient()

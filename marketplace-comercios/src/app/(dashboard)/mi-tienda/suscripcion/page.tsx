@@ -107,7 +107,7 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
-  const freeMaxForShop = isService ? 3 : 20
+  const freeMaxForShop = isService ? 3 : 15
 
   const activePlanId = activeSubscription?.plan_id ?? null
 

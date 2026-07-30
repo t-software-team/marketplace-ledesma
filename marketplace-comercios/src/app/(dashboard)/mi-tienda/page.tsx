@@ -49,11 +49,12 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         <h1 className="text-2xl font-heading">Mi tienda</h1>
         <Card>
           <CardHeader>
-            <CardTitle>Todavía no creaste tu tienda</CardTitle>
+            <CardTitle>¡Bienvenido! Vamos a crear tu tienda</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="mb-4 text-sm text-muted-foreground">
-              Creá tu tienda para empezar a publicar productos en el marketplace.
+              Son solo 3 datos para arrancar. No te preocupes si no queda perfecto — podés
+              cambiar todo después.
             </p>
             <CreateShopForm />
           </CardContent>

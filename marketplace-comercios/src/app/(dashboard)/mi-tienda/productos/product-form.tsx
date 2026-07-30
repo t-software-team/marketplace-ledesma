@@ -1,6 +1,7 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { Search } from 'lucide-react'
+import { useActionState, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RichTextEditor } from '@/components/shared/rich-text-editor'
@@ -51,6 +52,12 @@ export function ProductForm({
   const noun = isService ? 'servicio' : 'producto'
   const [state, formAction, isPending] = useActionState(action, initialState)
   const [categoryId, setCategoryId] = useState(defaultValues?.category_id ?? '')
+  const [categorySearch, setCategorySearch] = useState('')
+  const filteredCategories = useMemo(() => {
+    const query = categorySearch.trim().toLowerCase()
+    if (!query) return categories
+    return categories.filter((category) => category.name.toLowerCase().includes(query))
+  }, [categories, categorySearch])
   const fieldErrors = state.fieldErrors ?? {}
 
   useEffect(() => {
@@ -72,12 +79,20 @@ export function ProductForm({
           required
           aria-invalid={Boolean(fieldErrors.name)}
         />
+        <p className="text-xs text-muted-foreground">
+          Usá un nombre claro y concreto — así tus clientes lo encuentran más fácil. Ej: &quot;Zapatillas
+          urbanas talle 42&quot;.
+        </p>
         <FieldError message={fieldErrors.name} />
       </div>
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Descripción</label>
         <RichTextEditor name="description" initialValue={defaultValues?.description ?? ''} />
+        <p className="text-xs text-muted-foreground">
+          Contá lo que a tu cliente le sirve saber: material, talles o colores disponibles, tiempo de
+          entrega, etc.
+        </p>
         <FieldError message={fieldErrors.description} />
       </div>
 
@@ -94,6 +109,7 @@ export function ProductForm({
             defaultValue={defaultValues?.price ?? ''}
             aria-invalid={Boolean(fieldErrors.price)}
           />
+          <p className="text-xs text-muted-foreground">Dejalo vacío si preferís que digan &quot;Consultar precio&quot;.</p>
           <FieldError message={fieldErrors.price} />
         </div>
         <div className="space-y-2">
@@ -106,6 +122,7 @@ export function ProductForm({
             defaultValue={defaultValues?.currency ?? 'ARS'}
             aria-invalid={Boolean(fieldErrors.currency)}
           />
+          <p className="text-xs text-muted-foreground">Normalmente ARS (pesos argentinos).</p>
           <FieldError message={fieldErrors.currency} />
         </div>
       </div>
@@ -118,8 +135,24 @@ export function ProductForm({
       <div className="space-y-2">
         <label className="text-sm font-medium">Subcategoría</label>
         <input type="hidden" name="category_id" value={categoryId} />
+        {categories.length > 0 && (
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar subcategoría..."
+              value={categorySearch}
+              onChange={(event) => setCategorySearch(event.target.value)}
+              className="h-10 pl-9"
+              aria-label="Buscar subcategoría"
+            />
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
-          {categories.map((category) => (
+          {categories.length > 0 && filteredCategories.length === 0 && (
+            <p className="text-xs text-muted-foreground">No encontramos ninguna subcategoría con ese nombre.</p>
+          )}
+          {filteredCategories.map((category) => (
             <button
               key={category.id}
               type="button"
@@ -154,15 +187,21 @@ export function ProductForm({
       <ProductVideoField shopId={shopId} initialVideoUrl={defaultValues?.videoUrl} noun={noun} />
 
 
-      <label className="flex items-center gap-2 text-sm font-medium">
-        <input
-          type="checkbox"
-          name="is_active"
-          defaultChecked={defaultValues?.is_active ?? true}
-          className="size-4"
-        />
-        {isService ? 'Servicio activo' : 'Producto activo'}
-      </label>
+      <div className="space-y-1">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="is_active"
+            defaultChecked={defaultValues?.is_active ?? true}
+            className="size-4"
+          />
+          {isService ? 'Servicio activo' : 'Producto activo'}
+        </label>
+        <p className="pl-6 text-xs text-muted-foreground">
+          Si lo desmarcás, dejás de mostrarlo en el feed y en tu tienda pública, pero no lo borrás —
+          podés volver a activarlo cuando quieras.
+        </p>
+      </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
 

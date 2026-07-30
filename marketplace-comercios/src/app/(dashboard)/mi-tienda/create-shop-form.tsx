@@ -31,7 +31,7 @@ export function CreateShopForm() {
 
       <div className="space-y-2">
         <label htmlFor="slug" className="text-sm font-medium">
-          URL (slug)
+          Link de tu tienda
         </label>
         <Input
           id="slug"
@@ -48,8 +48,8 @@ export function CreateShopForm() {
           }}
         />
         <p className="text-xs text-muted-foreground">
-          Se genera solo a partir del nombre — podés editarlo. Se usará como
-          marketplace-ledesma.com/tienda/tu-slug
+          Así te van a encontrar tus clientes: marketplace-ledesma.com/tienda/{slug || 'tu-tienda'}. Se
+          completa solo con el nombre, pero podés editarlo.
         </p>
       </div>
 
@@ -58,6 +58,9 @@ export function CreateShopForm() {
           WhatsApp
         </label>
         <Input id="whatsapp_number" name="whatsapp_number" placeholder="5493886000000" required />
+        <p className="text-xs text-muted-foreground">
+          Código de país + 9 + número, sin 0 ni 15. Ej: 5493886000000
+        </p>
       </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
@@ -65,6 +68,10 @@ export function CreateShopForm() {
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? 'Creando...' : 'Crear mi tienda'}
       </Button>
+
+      <p className="text-center text-xs text-muted-foreground">
+        Tranquilo, podés cambiar todo esto más adelante desde la configuración de tu tienda.
+      </p>
     </form>
   )
 }

@@ -62,112 +62,126 @@ export function ProductImagesField({
     })
   }
 
+  const remaining = MAX_IMAGES - images.length
+
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">
-        Fotos del {noun}{' '}
-        <span className="font-normal text-muted-foreground">
-          ({images.length}/{MAX_IMAGES})
+      <div className="flex items-baseline justify-between">
+        <label className="text-sm font-medium">Fotos del {noun}</label>
+        <span
+          className={`text-xs font-medium ${
+            images.length === 0 ? 'text-muted-foreground' : 'text-primary'
+          }`}
+        >
+          {images.length}/{MAX_IMAGES} fotos
         </span>
-      </label>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Subí al menos 1 foto — con buena luz y fondo prolijo se ve mucho mejor. La primera va a ser
+        la foto principal que se muestra en el feed; podés cambiar el orden después.
+      </p>
       <input type="hidden" name="image_urls" value={JSON.stringify(images)} />
 
-      <div className="flex flex-wrap gap-2">
-        {images.map((url, index) => (
-          <div
-            key={url}
-            className="relative size-24 shrink-0 overflow-hidden rounded-xl border border-border bg-muted"
-          >
-            <Image src={url} alt={`Foto ${index + 1}`} fill className="object-cover" sizes="96px" />
-            {index === 0 && (
-              <span className="absolute bottom-1 left-1 rounded-full bg-background/90 px-1.5 py-0.5 text-[10px] font-medium text-foreground">
-                Principal
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => removeImage(index)}
-              aria-label="Quitar foto"
-              className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
+      {images.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {images.map((url, index) => (
+            <div
+              key={url}
+              className="relative size-28 shrink-0 overflow-hidden rounded-xl border border-border bg-muted"
             >
-              <X className="size-3.5" aria-hidden />
-            </button>
-            <div className="absolute bottom-1 right-1 flex gap-0.5">
-              {index > 0 && (
-                <button
-                  type="button"
-                  onClick={() => moveImage(index, -1)}
-                  aria-label="Mover a la izquierda"
-                  className="flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
-                >
-                  <ChevronLeft className="size-3.5" aria-hidden />
-                </button>
+              <Image src={url} alt={`Foto ${index + 1}`} fill className="object-cover" sizes="112px" />
+              {index === 0 && (
+                <span className="absolute top-1 left-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                  Principal
+                </span>
               )}
-              {index < images.length - 1 && (
-                <button
-                  type="button"
-                  onClick={() => moveImage(index, 1)}
-                  aria-label="Mover a la derecha"
-                  className="flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
-                >
-                  <ChevronRight className="size-3.5" aria-hidden />
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                aria-label="Quitar foto"
+                className="absolute top-1 right-1 flex size-7 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+              <div className="absolute bottom-1 right-1 flex gap-0.5">
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => moveImage(index, -1)}
+                    aria-label="Mover a la izquierda"
+                    className="flex size-7 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
+                  >
+                    <ChevronLeft className="size-4" aria-hidden />
+                  </button>
+                )}
+                {index < images.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={() => moveImage(index, 1)}
+                    aria-label="Mover a la derecha"
+                    className="flex size-7 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm hover:bg-background"
+                  >
+                    <ChevronRight className="size-4" aria-hidden />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+      )}
 
-        {images.length < MAX_IMAGES && (
-          <div className="flex size-24 shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border bg-muted">
-            {isUploading ? (
-              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
-            ) : (
-              <>
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  multiple
-                  className="hidden"
-                  onChange={handleFiles}
-                />
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFiles}
-                />
-                <button
-                  type="button"
-                  onClick={() => cameraInputRef.current?.click()}
-                  aria-label="Tomar foto"
-                  className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-                >
-                  <Camera className="size-4" aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => galleryInputRef.current?.click()}
-                  aria-label="Elegir de galería"
-                  className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
-                >
-                  <ImagePlus className="size-4" aria-hidden />
-                </button>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      {remaining > 0 && (
+        <div className="rounded-xl border border-dashed border-border bg-muted/50 p-3">
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            className="hidden"
+            onChange={handleFiles}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleFiles}
+          />
+
+          {isUploading ? (
+            <div className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Subiendo foto...
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Camera className="size-4" aria-hidden />
+                Sacar foto
+              </button>
+              <button
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <ImagePlus className="size-4" aria-hidden />
+                Elegir de la galería
+              </button>
+            </div>
+          )}
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Podés subir {remaining} foto{remaining === 1 ? '' : 's'} más
+          </p>
+        </div>
+      )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
-      {images.length === 0 && !error && (
-        <p className="text-xs text-muted-foreground">
-          La primera foto que subas va a ser la principal en el feed.
-        </p>
-      )}
     </div>
   )
 }
