@@ -8,6 +8,7 @@ import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
 import { ProductVariantsField } from '@/components/shared/product-variants-field'
 import { ProductAttributesFields, type AttributeDef } from '@/components/shared/product-attributes-fields'
+import { SuggestCategoryDialog } from '@/components/shared/suggest-category-dialog'
 import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
@@ -15,6 +16,7 @@ import type { ActionState } from '@/lib/shops/actions'
 
 interface ProductFormProps {
   shopId: string
+  shopRubroId?: string | null
   categories: { id: string; name: string }[]
   attributeDefs?: AttributeDef[]
   action: (state: ActionState, formData: FormData) => Promise<ActionState>
@@ -38,6 +40,7 @@ const initialState: ActionState = { error: null }
 
 export function ProductForm({
   shopId,
+  shopRubroId = null,
   categories,
   attributeDefs = [],
   action,
@@ -122,7 +125,7 @@ export function ProductForm({
       <div className="space-y-2">
         <label className="text-sm font-medium">Subcategoría</label>
         <input type="hidden" name="category_id" value={categoryId} />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {categories.map((category) => (
             <button
               key={category.id}
@@ -138,6 +141,10 @@ export function ProductForm({
               {category.name}
             </button>
           ))}
+          <SuggestCategoryDialog
+            parentId={shopRubroId}
+            existingNames={categories.map((category) => category.name)}
+          />
         </div>
         {categories.length === 0 && (
           <p className="text-xs text-muted-foreground">

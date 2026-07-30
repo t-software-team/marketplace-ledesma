@@ -609,6 +609,58 @@ export async function adminSetShopPlan(shopId: string, planId: string | null) {
   revalidatePath(`/admin/shops/${shopId}`)
 }
 
+export async function approveCategorySuggestion(suggestionId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.rpc('approve_category_suggestion', {
+    p_suggestion_id: suggestionId,
+  })
+
+  if (error) {
+    console.error('approveCategorySuggestion: fallo al aprobar', { suggestionId, error })
+    throw new Error('No pudimos aprobar la categoría')
+  }
+
+  await logAdminAction(supabase, 'category_suggestion_approved', 'category_suggestions', suggestionId, {
+    resultingCategoryId: data,
+  })
+
+  revalidatePath('/admin/categorias')
+}
+
+export async function rejectCategorySuggestion(
+  suggestionId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const supabase = await createClient()
+
+  const parsed = rejectionReasonSchema.safeParse({
+    reason: formData.get('reason'),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+
+  const { error } = await supabase.rpc('reject_category_suggestion', {
+    p_suggestion_id: suggestionId,
+    p_reason: parsed.data.reason,
+  })
+
+  if (error) {
+    console.error('rejectCategorySuggestion: fallo al rechazar', { suggestionId, error })
+    return { error: 'No pudimos rechazar la sugerencia' }
+  }
+
+  await logAdminAction(supabase, 'category_suggestion_rejected', 'category_suggestions', suggestionId, {
+    reason: parsed.data.reason,
+  })
+
+  revalidatePath('/admin/categorias')
+  return { error: null }
+}
+
 export async function markReportReviewed(reportId: string) {
   const supabase = await createClient()
 

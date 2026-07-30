@@ -73,6 +73,20 @@ export async function getCategoriesList() {
   return categories ?? []
 }
 
+export async function getCategorySuggestions() {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('category_suggestions')
+    .select(
+      'id, name, status, rejection_reason, created_at, shops ( name ), parent:categories!category_suggestions_parent_id_fkey ( name )'
+    )
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  return data ?? []
+}
+
 export async function getCategoryById(categoryId: string) {
   const supabase = await createClient()
 

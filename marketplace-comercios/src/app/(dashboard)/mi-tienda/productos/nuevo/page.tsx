@@ -60,6 +60,7 @@ export default async function NewProductPage() {
       <h1 className="text-2xl font-heading">Nuevo {noun}</h1>
       <ProductForm
         shopId={shop.id}
+        shopRubroId={shop.category_id}
         categories={categories}
         attributeDefs={attributeDefs}
         action={createProduct}

@@ -16,6 +16,8 @@ const ACTION_LABEL: Record<string, string> = {
   report_reviewed: 'Reporte revisado',
   report_dismissed: 'Reporte descartado',
   shop_plan_changed: 'Plan del comercio cambiado',
+  category_suggestion_approved: 'Categoría sugerida aprobada',
+  category_suggestion_rejected: 'Categoría sugerida rechazada',
 }
 
 const ACTION_VARIANT: Record<string, 'success' | 'destructive' | 'warning'> = {
@@ -26,6 +28,8 @@ const ACTION_VARIANT: Record<string, 'success' | 'destructive' | 'warning'> = {
   report_reviewed: 'success',
   report_dismissed: 'warning',
   shop_plan_changed: 'success',
+  category_suggestion_approved: 'success',
+  category_suggestion_rejected: 'destructive',
 }
 
 const PAGE_SIZE = 15

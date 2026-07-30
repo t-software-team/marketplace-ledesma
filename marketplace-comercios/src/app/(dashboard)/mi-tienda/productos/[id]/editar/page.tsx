@@ -65,6 +65,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
       <h1 className="text-2xl font-heading">Editar {noun}</h1>
       <ProductForm
         shopId={shop.id}
+        shopRubroId={shop.category_id}
         categories={categories}
         attributeDefs={attributeDefs}
         action={updateProductWithId}

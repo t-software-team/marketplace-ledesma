@@ -10,7 +10,9 @@ import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { getProductLimitInfo } from '@/lib/shops/queries'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sanitizeRichText } from '@/lib/sanitize-html'
+import { containsProfanity } from '@/lib/profanity-filter'
 import {
+  categorySuggestionSchema,
   createShopSchema,
   productSchema,
   promotionSchema,
@@ -18,6 +20,15 @@ import {
   shopReviewSchema,
   shopSettingsSchema,
 } from '@/lib/validations/shop'
+
+function normalizeCategoryText(text: string) {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
 
 export type ActionState = {
   error: string | null
@@ -571,6 +582,82 @@ export async function updateProduct(
 
   revalidatePath('/mi-tienda/productos')
   redirect('/mi-tienda/productos?saved=updated')
+}
+
+export async function suggestCategory(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await requireUser()
+
+  const { data: shop } = await supabase
+    .from('shops')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (!shop) return { error: 'No tenés una tienda creada' }
+
+  const parsed = categorySuggestionSchema.safeParse({
+    name: formData.get('name'),
+    parent_id: formData.get('parent_id') ?? '',
+  })
+
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? 'Revisá los campos marcados',
+      fieldErrors: buildFieldErrors(parsed.error),
+    }
+  }
+
+  if (containsProfanity(parsed.data.name)) {
+    return { error: 'Ese nombre no está permitido' }
+  }
+
+  const parentId = parsed.data.parent_id || null
+  const normalized = normalizeCategoryText(parsed.data.name)
+
+  let categoriesQuery = supabase.from('categories').select('id, name')
+  categoriesQuery = parentId
+    ? categoriesQuery.eq('parent_id', parentId)
+    : categoriesQuery.is('parent_id', null)
+  const { data: existingCategories } = await categoriesQuery
+
+  const duplicateCategory = existingCategories?.find(
+    (category) => normalizeCategoryText(category.name) === normalized
+  )
+  if (duplicateCategory) {
+    return { error: `Ya existe "${duplicateCategory.name}" — usá esa opción en vez de crear una nueva` }
+  }
+
+  let suggestionsQuery = supabase
+    .from('category_suggestions')
+    .select('id, name')
+    .eq('status', 'pending')
+  suggestionsQuery = parentId
+    ? suggestionsQuery.eq('parent_id', parentId)
+    : suggestionsQuery.is('parent_id', null)
+  const { data: pendingSuggestions } = await suggestionsQuery
+
+  const duplicateSuggestion = pendingSuggestions?.find(
+    (suggestion) => normalizeCategoryText(suggestion.name) === normalized
+  )
+  if (duplicateSuggestion) {
+    return { error: `Ya hay una sugerencia pendiente para "${duplicateSuggestion.name}"` }
+  }
+
+  const { error } = await supabase.from('category_suggestions').insert({
+    shop_id: shop.id,
+    name: parsed.data.name,
+    parent_id: parentId,
+  })
+
+  if (error) {
+    console.error('suggestCategory: fallo al crear sugerencia', { error })
+    return { error: 'No pudimos enviar la sugerencia' }
+  }
+
+  return { error: null, warning: 'Enviamos tu sugerencia, la va a revisar el equipo de Todo Marketplace' }
 }
 
 export async function createPromotion(

@@ -129,6 +129,14 @@ const hexColor = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, 'Color inválido')
 
+export const categorySuggestionSchema = z.object({
+  name: z
+    .string()
+    .min(2, 'Ingresá al menos 2 caracteres')
+    .max(60, 'Máximo 60 caracteres'),
+  parent_id: uuidLike('Rubro inválido').optional().or(z.literal('')),
+})
+
 export const promotionSchema = z.object({
   image_url: z.string().min(1, 'Subí una imagen para la promoción'),
   text: z.string().max(300).optional().or(z.literal('')),

@@ -7,6 +7,7 @@ import { FieldError } from '@/components/shared/field-error'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { RichTextEditor } from '@/components/shared/rich-text-editor'
+import { SuggestCategoryDialog } from '@/components/shared/suggest-category-dialog'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
@@ -262,9 +263,15 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
                   </button>
                 )
               })}
+              <SuggestCategoryDialog
+                parentId={null}
+                existingNames={categories.map((category) => category.name)}
+                noun="rubro"
+              />
             </div>
             <p className="text-xs text-muted-foreground">
-              Define qué subcategorías vas a poder elegir al cargar productos.
+              Define qué subcategorías vas a poder elegir al cargar productos. ¿No encontrás el tuyo?
+              Sugerí uno nuevo.
             </p>
             <FieldError message={fieldErrors.category_id} />
           </div>

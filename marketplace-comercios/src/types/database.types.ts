@@ -214,6 +214,67 @@ export type Database = {
           },
         ]
       }
+      category_suggestions: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          rejection_reason: string | null
+          resulting_category_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shop_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          rejection_reason?: string | null
+          resulting_category_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          rejection_reason?: string | null
+          resulting_category_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shop_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_suggestions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_suggestions_resulting_category_id_fkey"
+            columns: ["resulting_category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       category_attributes: {
         Row: {
           category_id: string
@@ -1133,6 +1194,18 @@ export type Database = {
           }
       admin_set_shop_plan: {
         Args: { p_plan_id: string | null; p_shop_id: string }
+        Returns: undefined
+      }
+      normalize_category_text: {
+        Args: { p_text: string }
+        Returns: string
+      }
+      approve_category_suggestion: {
+        Args: { p_suggestion_id: string }
+        Returns: string
+      }
+      reject_category_suggestion: {
+        Args: { p_reason: string; p_suggestion_id: string }
         Returns: undefined
       }
       approve_shop_verification: {
