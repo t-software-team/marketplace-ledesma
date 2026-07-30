@@ -5,6 +5,7 @@ import { QueryProvider } from '@/components/providers/query-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
+import { ScrollToTopOnNavigate } from '@/components/shared/scroll-to-top-on-navigate'
 import { getBaseUrl } from '@/lib/site-url'
 import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script'
 
@@ -69,6 +70,7 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <Toaster>
+            <ScrollToTopOnNavigate />
             <AuthListener />
             <QueryProvider>{children}</QueryProvider>
           </Toaster>
