@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
 import { ProductVariantsField } from '@/components/shared/product-variants-field'
+import { ProductAttributesFields, type AttributeDef } from '@/components/shared/product-attributes-fields'
 import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
@@ -15,6 +16,7 @@ import type { ActionState } from '@/lib/shops/actions'
 interface ProductFormProps {
   shopId: string
   categories: { id: string; name: string }[]
+  attributeDefs?: AttributeDef[]
   action: (state: ActionState, formData: FormData) => Promise<ActionState>
   defaultValues?: {
     name: string
@@ -26,6 +28,7 @@ interface ProductFormProps {
     imageUrls: string[]
     videoUrl?: string | null
     variants?: { name: string; price: number }[]
+    attributes?: Record<string, string | string[]>
   }
   submitLabel: string
   isService?: boolean
@@ -36,6 +39,7 @@ const initialState: ActionState = { error: null }
 export function ProductForm({
   shopId,
   categories,
+  attributeDefs = [],
   action,
   defaultValues,
   submitLabel,
@@ -142,6 +146,8 @@ export function ProductForm({
         )}
         <FieldError message={fieldErrors.category_id} />
       </div>
+
+      <ProductAttributesFields attributeDefs={attributeDefs} initialValues={defaultValues?.attributes} />
 
       <ProductImagesField shopId={shopId} initialImages={defaultValues?.imageUrls} noun={noun} />
 

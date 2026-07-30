@@ -590,6 +590,25 @@ export async function toggleSubscriptionPlanActive(planId: string, isActive: boo
   revalidatePath('/admin/subscripciones')
 }
 
+export async function adminSetShopPlan(shopId: string, planId: string | null) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.rpc('admin_set_shop_plan', {
+    p_shop_id: shopId,
+    p_plan_id: planId,
+  })
+
+  if (error) {
+    console.error('adminSetShopPlan: fallo al cambiar el plan', { shopId, planId, error })
+    throw new Error('No pudimos cambiar el plan del comercio')
+  }
+
+  await logAdminAction(supabase, 'shop_plan_changed', 'shops', shopId, { planId })
+
+  revalidatePath('/admin/shops')
+  revalidatePath(`/admin/shops/${shopId}`)
+}
+
 export async function markReportReviewed(reportId: string) {
   const supabase = await createClient()
 

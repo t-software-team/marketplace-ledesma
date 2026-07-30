@@ -128,6 +128,31 @@ export async function getActiveCategories() {
   return categories ?? []
 }
 
+export async function getCategoryAttributes(categoryId: string | null) {
+  if (!categoryId) return []
+
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('category_attributes')
+    .select('id, key, label, type, options')
+    .eq('category_id', categoryId)
+    .order('sort_order', { ascending: true })
+
+  return data ?? []
+}
+
+export async function getProductAttributeValues(productId: string) {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('product_attribute_values')
+    .select('attribute_id, value, category_attributes ( key, label, type )')
+    .eq('product_id', productId)
+
+  return data ?? []
+}
+
 export async function getSubcategories(parentId: string | null) {
   if (!parentId) return []
 
@@ -413,6 +438,7 @@ export const getProductDetail = unstable_cache(
         categories ( id, name, slug, parent_id ),
         product_images ( id, url, sort_order ),
         product_variants ( id, name, price, sort_order ),
+        product_attribute_values ( value, category_attributes ( key, label, type ) ),
         shops ( id, name, slug, whatsapp_number, verification_status, subscription_status, logo_url )
       `
       )
@@ -441,6 +467,20 @@ export const getProductDetail = unstable_cache(
       (a, b) => a.sort_order - b.sort_order
     )
 
+    const attributesByLabel = new Map<string, { type: string; values: string[] }>()
+    for (const row of product.product_attribute_values ?? []) {
+      const label = row.category_attributes?.label
+      if (!label) continue
+      const group = attributesByLabel.get(label) ?? { type: row.category_attributes?.type ?? 'text', values: [] }
+      group.values.push(row.value)
+      attributesByLabel.set(label, group)
+    }
+    const attributes = Array.from(attributesByLabel, ([label, group]) => ({
+      label,
+      type: group.type,
+      values: group.values,
+    }))
+
     return {
       id: product.id,
       shopId: product.shop_id,
@@ -455,6 +495,7 @@ export const getProductDetail = unstable_cache(
       videoUrl: product.video_url,
       images,
       variants,
+      attributes,
       shop: product.shops,
     }
   },

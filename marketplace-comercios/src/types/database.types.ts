@@ -214,6 +214,83 @@ export type Database = {
           },
         ]
       }
+      category_attributes: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          key: string
+          label: string
+          options: Json | null
+          sort_order: number
+          type: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          key: string
+          label: string
+          options?: Json | null
+          sort_order?: number
+          type: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          key?: string
+          label?: string
+          options?: Json | null
+          sort_order?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_attributes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_attribute_values: {
+        Row: {
+          attribute_id: string
+          id: string
+          product_id: string
+          value: string
+        }
+        Insert: {
+          attribute_id: string
+          id?: string
+          product_id: string
+          value: string
+        }
+        Update: {
+          attribute_id?: string
+          id?: string
+          product_id?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_attribute_values_attribute_id_fkey"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "category_attributes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_attribute_values_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_promotions: {
         Row: {
           bg_color: string
@@ -1054,6 +1131,10 @@ export type Database = {
             }
             Returns: string
           }
+      admin_set_shop_plan: {
+        Args: { p_plan_id: string | null; p_shop_id: string }
+        Returns: undefined
+      }
       approve_shop_verification: {
         Args: { p_shop_id: string }
         Returns: undefined
@@ -1235,6 +1316,7 @@ export type Database = {
       }
       get_products_feed: {
         Args: {
+          p_attribute_value?: string
           p_category_id?: string
           p_limit?: number
           p_offset?: number
@@ -1244,6 +1326,7 @@ export type Database = {
           user_lng?: number
         }
         Returns: {
+          attributes: Json
           category_name: string
           distance_km: number
           main_image: string
@@ -1252,6 +1335,7 @@ export type Database = {
           product_id: string
           product_is_featured: boolean
           product_name: string
+          rubro_slug: string
           shop_id: string
           shop_is_featured: boolean
           shop_name: string

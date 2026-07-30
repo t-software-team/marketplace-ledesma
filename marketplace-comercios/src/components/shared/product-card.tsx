@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Store } from 'lucide-react'
+import { createElement } from 'react'
+import { MapPin } from 'lucide-react'
 import { FavoriteButton } from '@/components/shared/favorite-button'
 import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { Card, CardContent } from '@/components/ui/card'
+import { getRubroIcon } from '@/lib/category-icons'
 import { cn } from '@/lib/utils'
 
 export interface ProductFeedItem {
@@ -19,6 +21,14 @@ export interface ProductFeedItem {
   main_image: string | null
   category_name?: string | null
   parent_category_name?: string | null
+  attributes?: unknown
+  rubro_slug?: string | null
+}
+
+const HEX_COLOR_REGEX = /^#[0-9a-f]{6}$/i
+
+function ShopRubroIcon({ rubroSlug, className }: { rubroSlug?: string | null; className?: string }) {
+  return createElement(getRubroIcon(rubroSlug ?? ''), { className, 'aria-hidden': true })
 }
 
 interface ProductCardProps {
@@ -59,6 +69,9 @@ export function ProductCard({
     : null
 
   const isFeatured = Boolean(product.product_is_featured)
+  const attributeBadges = Array.isArray(product.attributes)
+    ? (product.attributes as unknown[]).filter((v): v is string => typeof v === 'string')
+    : []
 
   return (
     <Link href={`/producto/${product.product_id}`} className={cn('block', className)}>
@@ -107,9 +120,29 @@ export function ProductCard({
           <p className="font-mono text-base font-semibold text-foreground">
             {formatPrice(product.price)}
           </p>
+          {attributeBadges.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              {attributeBadges.slice(0, 4).map((value) =>
+                HEX_COLOR_REGEX.test(value) ? (
+                  <span
+                    key={value}
+                    style={{ backgroundColor: value }}
+                    className="size-3 rounded-full border border-border"
+                  />
+                ) : (
+                  <span
+                    key={value}
+                    className="rounded-full border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                  >
+                    {value}
+                  </span>
+                )
+              )}
+            </div>
+          )}
           <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span className="flex min-w-0 items-center gap-1">
-              <Store className="size-3 shrink-0" aria-hidden />
+              <ShopRubroIcon rubroSlug={product.rubro_slug} className="size-3 shrink-0" />
               <span className="truncate">{product.shop_name}</span>
             </span>
             {distance && (

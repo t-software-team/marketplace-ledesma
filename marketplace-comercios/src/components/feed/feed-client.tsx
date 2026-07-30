@@ -6,13 +6,14 @@ import { MapPin, Search, Store } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { CategoryGrid } from './category-grid'
 import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
+import { AttributeFilterSheet } from './attribute-filter-sheet'
 import { ProductCard, type ProductFeedItem } from '@/components/shared/product-card'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useProductsFeed, useShopSearch } from '@/hooks/use-products'
+import { useCategoryAttributes, useProductsFeed, useShopSearch } from '@/hooks/use-products'
 import { useFiltersStore } from '@/stores/use-filters-store'
 
 interface Category {
@@ -41,8 +42,16 @@ export function FeedClient({
   favoriteIds = [],
 }: FeedClientProps) {
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
-  const { categoryId, searchQuery, userLocation, setCategory, setSearch, setLocation } =
-    useFiltersStore()
+  const {
+    categoryId,
+    searchQuery,
+    userLocation,
+    attributeValue,
+    setCategory,
+    setSearch,
+    setLocation,
+    setAttributeValue,
+  } = useFiltersStore()
 
   const activeRubroId = useMemo(() => {
     if (!categoryId) return null
@@ -57,6 +66,7 @@ export function FeedClient({
 
   const { data: products, isLoading, isFetching } = useProductsFeed()
   const { data: matchingShops } = useShopSearch()
+  const { data: rubroAttributes } = useCategoryAttributes(activeRubroId)
 
   useEffect(() => {
     if (userLocation || !navigator.geolocation) return
@@ -122,13 +132,22 @@ export function FeedClient({
         onSelect={(id) => setCategory(id)}
       />
 
-      {visibleSubcategories.length > 0 && (
-        <SubcategoryFilterSheet
-          subcategories={visibleSubcategories}
-          selectedId={categoryId === activeRubroId ? null : categoryId}
-          onSelect={(id) => setCategory(id ?? activeRubroId)}
-        />
-      )}
+      <div className="flex flex-wrap gap-2">
+        {visibleSubcategories.length > 0 && (
+          <SubcategoryFilterSheet
+            subcategories={visibleSubcategories}
+            selectedId={categoryId === activeRubroId ? null : categoryId}
+            onSelect={(id) => setCategory(id ?? activeRubroId)}
+          />
+        )}
+        {rubroAttributes && rubroAttributes.length > 0 && (
+          <AttributeFilterSheet
+            attributes={rubroAttributes}
+            selectedValue={attributeValue}
+            onSelect={setAttributeValue}
+          />
+        )}
+      </div>
 
       {matchingShops && matchingShops.length > 0 && (
         <div className="space-y-2">

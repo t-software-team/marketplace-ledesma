@@ -1,6 +1,12 @@
 import { notFound, redirect } from 'next/navigation'
 import { isServiceRubro } from '@/lib/category-icons'
-import { getMyProduct, getMyShop, getSubcategories } from '@/lib/shops/queries'
+import {
+  getCategoryAttributes,
+  getMyProduct,
+  getMyShop,
+  getProductAttributeValues,
+  getSubcategories,
+} from '@/lib/shops/queries'
 import { updateProduct } from '@/lib/shops/actions'
 import { BackLink } from '@/components/shared/back-link'
 import { ProductForm } from '../../product-form'
@@ -23,7 +29,11 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     notFound()
   }
 
-  const categories = await getSubcategories(shop.category_id)
+  const [categories, attributeDefs, attributeValues] = await Promise.all([
+    getSubcategories(shop.category_id),
+    getCategoryAttributes(shop.category_id),
+    getProductAttributeValues(product.id),
+  ])
   const images = [...(product.product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order
   )
@@ -35,6 +45,20 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
 
+  const defaultAttributes: Record<string, string | string[]> = {}
+  for (const row of attributeValues) {
+    const key = row.category_attributes?.key
+    if (!key) continue
+    const isMultiselect =
+      row.category_attributes?.type === 'multiselect' || row.category_attributes?.type === 'multicolor'
+    if (isMultiselect) {
+      const current = defaultAttributes[key]
+      defaultAttributes[key] = Array.isArray(current) ? [...current, row.value] : [row.value]
+    } else {
+      defaultAttributes[key] = row.value
+    }
+  }
+
   return (
     <div className="max-w-2xl space-y-4">
       <BackLink href="/mi-tienda/productos" />
@@ -42,6 +66,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
       <ProductForm
         shopId={shop.id}
         categories={categories}
+        attributeDefs={attributeDefs}
         action={updateProductWithId}
         submitLabel="Guardar cambios"
         isService={isService}
@@ -55,6 +80,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
           imageUrls: images.map((image) => image.url),
           videoUrl: product.video_url,
           variants: variants.map((v) => ({ name: v.name, price: v.price })),
+          attributes: defaultAttributes,
         }}
       />
     </div>

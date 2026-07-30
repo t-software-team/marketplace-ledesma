@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useFiltersStore } from '@/stores/use-filters-store'
 
 export function useProductsFeed() {
-  const { categoryId, searchQuery, userLocation } = useFiltersStore()
+  const { categoryId, searchQuery, userLocation, attributeValue } = useFiltersStore()
   const supabase = createClient()
   const seedRef = useRef<string | null>(null)
   if (seedRef.current === null) {
@@ -12,7 +12,7 @@ export function useProductsFeed() {
   }
 
   return useQuery({
-    queryKey: ['products-feed', categoryId, searchQuery, userLocation],
+    queryKey: ['products-feed', categoryId, searchQuery, userLocation, attributeValue],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_products_feed', {
         user_lat: userLocation?.lat,
@@ -20,10 +20,29 @@ export function useProductsFeed() {
         p_category_id: categoryId ?? undefined,
         p_search: searchQuery || undefined,
         p_seed: seedRef.current ?? undefined,
+        p_attribute_value: attributeValue ?? undefined,
       })
       if (error) throw error
       return data
     },
+  })
+}
+
+export function useCategoryAttributes(categoryId: string | null) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['category-attributes', categoryId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('category_attributes')
+        .select('id, key, label, type, options')
+        .eq('category_id', categoryId as string)
+        .order('sort_order', { ascending: true })
+      if (error) throw error
+      return data
+    },
+    enabled: Boolean(categoryId),
   })
 }
 

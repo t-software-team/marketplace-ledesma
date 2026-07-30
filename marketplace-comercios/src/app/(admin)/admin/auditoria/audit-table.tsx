@@ -15,6 +15,7 @@ const ACTION_LABEL: Record<string, string> = {
   subscription_rejected: 'Suscripción rechazada',
   report_reviewed: 'Reporte revisado',
   report_dismissed: 'Reporte descartado',
+  shop_plan_changed: 'Plan del comercio cambiado',
 }
 
 const ACTION_VARIANT: Record<string, 'success' | 'destructive' | 'warning'> = {
@@ -24,6 +25,7 @@ const ACTION_VARIANT: Record<string, 'success' | 'destructive' | 'warning'> = {
   subscription_rejected: 'destructive',
   report_reviewed: 'success',
   report_dismissed: 'warning',
+  shop_plan_changed: 'success',
 }
 
 const PAGE_SIZE = 15

@@ -36,6 +36,60 @@ function buildFieldErrors(error: ZodError): Record<string, string> {
   return fieldErrors
 }
 
+async function saveProductAttributes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryId: string | null,
+  productId: string,
+  attributes: Record<string, string | string[]>
+) {
+  const { error: deleteError } = await supabase
+    .from('product_attribute_values')
+    .delete()
+    .eq('product_id', productId)
+
+  if (deleteError) {
+    console.error('saveProductAttributes: fallo al borrar valores previos', {
+      productId,
+      error: deleteError,
+    })
+    return 'No pudimos actualizar los atributos del producto'
+  }
+
+  if (!categoryId || Object.keys(attributes).length === 0) return null
+
+  const { data: definitions } = await supabase
+    .from('category_attributes')
+    .select('id, key')
+    .eq('category_id', categoryId)
+
+  if (!definitions || definitions.length === 0) return null
+
+  const idByKey = new Map(definitions.map((def) => [def.key, def.id]))
+
+  const rows: { product_id: string; attribute_id: string; value: string }[] = []
+  for (const [key, value] of Object.entries(attributes)) {
+    const attributeId = idByKey.get(key)
+    if (!attributeId) continue
+    const values = Array.isArray(value) ? value : [value]
+    for (const v of values) {
+      if (typeof v === 'string' && v.trim()) {
+        rows.push({ product_id: productId, attribute_id: attributeId, value: v.trim() })
+      }
+    }
+  }
+
+  if (rows.length === 0) return null
+
+  const { error: insertError } = await supabase.from('product_attribute_values').insert(rows)
+
+  if (insertError) {
+    console.error('saveProductAttributes: fallo al guardar valores', { productId, error: insertError })
+    return 'No pudimos guardar los atributos del producto'
+  }
+
+  return null
+}
+
 async function requireUser() {
   const supabase = await createClient()
   const {
@@ -285,7 +339,7 @@ export async function createProduct(
 
   const { data: shop } = await supabase
     .from('shops')
-    .select('id')
+    .select('id, category_id')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -308,6 +362,7 @@ export async function createProduct(
     image_urls: formData.get('image_urls') ?? '',
     video_url: formData.get('video_url') ?? '',
     variants: formData.get('variants') ?? '',
+    attributes: formData.get('attributes') ?? '',
   })
 
   if (!parsed.success) {
@@ -378,6 +433,16 @@ export async function createProduct(
     }
   }
 
+  const attributesError = await saveProductAttributes(
+    supabase,
+    shop.category_id,
+    product.id,
+    parsed.data.attributes
+  )
+  if (attributesError) {
+    return { error: `El producto se creó, pero ${attributesError.charAt(0).toLowerCase()}${attributesError.slice(1)}` }
+  }
+
   revalidatePath('/mi-tienda/productos')
   redirect('/mi-tienda/productos?saved=created')
 }
@@ -399,6 +464,7 @@ export async function updateProduct(
     image_urls: formData.get('image_urls') ?? '',
     video_url: formData.get('video_url') ?? '',
     variants: formData.get('variants') ?? '',
+    attributes: formData.get('attributes') ?? '',
   })
 
   if (!parsed.success) {
@@ -407,6 +473,12 @@ export async function updateProduct(
       fieldErrors: buildFieldErrors(parsed.error),
     }
   }
+
+  const { data: existingProduct } = await supabase
+    .from('products')
+    .select('shops ( category_id )')
+    .eq('id', productId)
+    .maybeSingle()
 
   const minVariantPrice =
     parsed.data.variants.length > 0
@@ -485,6 +557,16 @@ export async function updateProduct(
       console.error('updateProduct: fallo al guardar opciones', { productId, error: variantsError })
       return { error: 'No pudimos guardar las opciones del producto' }
     }
+  }
+
+  const attributesError = await saveProductAttributes(
+    supabase,
+    existingProduct?.shops?.category_id ?? null,
+    productId,
+    parsed.data.attributes
+  )
+  if (attributesError) {
+    return { error: attributesError }
   }
 
   revalidatePath('/mi-tienda/productos')

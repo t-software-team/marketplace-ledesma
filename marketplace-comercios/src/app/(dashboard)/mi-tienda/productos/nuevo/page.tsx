@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { isServiceRubro } from '@/lib/category-icons'
-import { getMyShop, getProductLimitInfo, getSubcategories } from '@/lib/shops/queries'
+import { getCategoryAttributes, getMyShop, getProductLimitInfo, getSubcategories } from '@/lib/shops/queries'
 import { createProduct } from '@/lib/shops/actions'
 import { BackLink } from '@/components/shared/back-link'
 import { ProductForm } from '../product-form'
@@ -49,7 +49,10 @@ export default async function NewProductPage() {
     )
   }
 
-  const categories = await getSubcategories(shop.category_id)
+  const [categories, attributeDefs] = await Promise.all([
+    getSubcategories(shop.category_id),
+    getCategoryAttributes(shop.category_id),
+  ])
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -58,6 +61,7 @@ export default async function NewProductPage() {
       <ProductForm
         shopId={shop.id}
         categories={categories}
+        attributeDefs={attributeDefs}
         action={createProduct}
         submitLabel={`Crear ${noun}`}
         isService={isService}

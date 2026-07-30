@@ -149,6 +149,35 @@ export default async function ProductPage({ params }: ProductPageProps) {
             </p>
           )}
 
+          {product.attributes.length > 0 && (
+            <div className="space-y-2">
+              {product.attributes.map((attribute) => (
+                <div key={attribute.label} className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">{attribute.label}:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {attribute.values.map((value) =>
+                      attribute.type === 'multicolor' ? (
+                        <span
+                          key={value}
+                          title={value}
+                          style={{ backgroundColor: value }}
+                          className="size-5 rounded-full border border-border"
+                        />
+                      ) : (
+                        <span
+                          key={value}
+                          className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs font-medium"
+                        >
+                          {value}
+                        </span>
+                      )
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <Link
             href={`/tienda/${shop.slug}`}
             className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"

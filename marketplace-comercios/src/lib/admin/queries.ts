@@ -6,13 +6,21 @@ export async function getShopsForReview() {
   const { data: shops } = await supabase
     .from('shops')
     .select(
-      'id, name, city, whatsapp_number, verification_status, created_at, is_active'
+      `
+      id, name, city, whatsapp_number, verification_status, created_at, is_active,
+      subscriptions ( status, subscription_plans ( name ) )
+    `
     )
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
     .limit(200)
 
-  return shops ?? []
+  return (shops ?? []).map((shop) => {
+    const { subscriptions, ...rest } = shop
+    const activePlanName =
+      subscriptions?.find((sub) => sub.status === 'active')?.subscription_plans?.name ?? null
+    return { ...rest, activePlanName }
+  })
 }
 
 export async function getShopForReview(shopId: string) {
@@ -21,7 +29,11 @@ export async function getShopForReview(shopId: string) {
   const { data: shop } = await supabase
     .from('shops')
     .select(
-      'id, name, city, whatsapp_number, email, address, verification_status, verification_document_url, created_at, is_active, suspended_reason'
+      `
+      id, name, city, whatsapp_number, email, address, verification_status,
+      verification_document_url, created_at, is_active, suspended_reason,
+      subscriptions ( status, plan_id, subscription_plans ( name ) )
+    `
     )
     .eq('id', shopId)
     .maybeSingle()
@@ -38,7 +50,15 @@ export async function getShopForReview(shopId: string) {
     documentUrl = signed?.signedUrl ?? null
   }
 
-  return { ...shop, documentUrl }
+  const { subscriptions, ...rest } = shop
+  const activeSubscription = subscriptions?.find((sub) => sub.status === 'active') ?? null
+
+  return {
+    ...rest,
+    documentUrl,
+    activePlanId: activeSubscription?.plan_id ?? null,
+    activePlanName: activeSubscription?.subscription_plans?.name ?? null,
+  }
 }
 
 export async function getCategoriesList() {

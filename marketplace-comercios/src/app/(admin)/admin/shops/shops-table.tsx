@@ -129,6 +129,7 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
             <TableHead>Ciudad</TableHead>
             <TableHead>WhatsApp</TableHead>
             <TableHead>Registrado</TableHead>
+            <TableHead>Plan</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
@@ -150,6 +151,11 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
               </TableCell>
               <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
                 {formatDate(shop.created_at)}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                {shop.activePlanName ?? (
+                  <span className="text-muted-foreground">Free</span>
+                )}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5">

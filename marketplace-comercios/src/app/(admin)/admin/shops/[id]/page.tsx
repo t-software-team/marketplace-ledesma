@@ -4,9 +4,10 @@ import { FileText, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/shared/status-badge'
-import { getShopForReview } from '@/lib/admin/queries'
+import { getShopForReview, getSubscriptionPlans } from '@/lib/admin/queries'
 import { ShopVerificationActions } from './shop-verification-actions'
 import { ShopSuspensionActions } from './shop-suspension-actions'
+import { ShopPlanCard } from './shop-plan-card'
 
 interface ShopDetailPageProps {
   params: Promise<{ id: string }>
@@ -14,7 +15,7 @@ interface ShopDetailPageProps {
 
 export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
   const { id } = await params
-  const shop = await getShopForReview(id)
+  const [shop, plans] = await Promise.all([getShopForReview(id), getSubscriptionPlans()])
 
   if (!shop) notFound()
 
@@ -67,6 +68,12 @@ export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
           </p>
         </CardContent>
       </Card>
+
+      <ShopPlanCard
+        shopId={shop.id}
+        activePlanId={shop.activePlanId}
+        plans={plans.filter((plan) => plan.is_active).map((plan) => ({ id: plan.id, name: plan.name, price: plan.price }))}
+      />
 
       <Card>
         <CardHeader className="flex-row items-center gap-2 space-y-0">

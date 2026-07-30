@@ -106,6 +106,21 @@ export const productSchema = z.object({
         return []
       }
     }),
+  attributes: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .transform((val) => {
+      if (!val) return {} as Record<string, string | string[]>
+      try {
+        const parsed = JSON.parse(val)
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+        return parsed as Record<string, string | string[]>
+      } catch (error) {
+        console.error('productSchema: attributes inválido', { error })
+        return {}
+      }
+    }),
 })
 
 export type ProductFormValues = z.infer<typeof productSchema>
