@@ -31,6 +31,35 @@ export async function getMyShop() {
   return shop
 }
 
+export async function getShopContactsSeries(shopId: string, days = 14) {
+  const supabase = await createClient()
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+  since.setHours(0, 0, 0, 0)
+
+  const { data } = await supabase
+    .from('shop_contacts')
+    .select('created_at')
+    .eq('shop_id', shopId)
+    .gte('created_at', since.toISOString())
+
+  const counts = new Map<string, number>()
+  for (let i = 0; i < days; i++) {
+    const date = new Date(since)
+    date.setDate(date.getDate() + i)
+    counts.set(date.toISOString().slice(0, 10), 0)
+  }
+
+  for (const row of data ?? []) {
+    const day = row.created_at.slice(0, 10)
+    if (counts.has(day)) counts.set(day, (counts.get(day) ?? 0) + 1)
+  }
+
+  return Array.from(counts.entries()).map(([date, count]) => ({
+    date: new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: '2-digit' }).format(new Date(date)),
+    contactos: count,
+  }))
+}
+
 export async function getMyPromotions(shopId: string) {
   const supabase = await createClient()
 
@@ -215,6 +244,7 @@ export const getShopBySlug = unstable_cache(
         website_url,
         address,
         city,
+        category_id,
         verification_status,
         subscription_status,
         is_paused,
@@ -233,6 +263,35 @@ export const getShopBySlug = unstable_cache(
   },
   ['shop-by-slug'],
   { revalidate: 30 }
+)
+
+export const getRelatedShops = unstable_cache(
+  async (shopId: string, categoryId: string | null, city: string | null, limit = 8) => {
+    if (!categoryId && !city) return []
+
+    const supabase = createPublicClient()
+
+    const filters = [
+      categoryId ? `category_id.eq.${categoryId}` : null,
+      city ? `city.eq.${city}` : null,
+    ].filter(Boolean)
+
+    const { data } = await supabase
+      .from('shops')
+      .select('id, name, slug, logo_url, city, verification_status, subscription_status')
+      .neq('id', shopId)
+      .eq('is_active', true)
+      .eq('is_paused', false)
+      .is('deleted_at', null)
+      .or(filters.join(','))
+      .order('subscription_status', { ascending: false })
+      .order('verification_status', { ascending: false })
+      .limit(limit)
+
+    return data ?? []
+  },
+  ['related-shops'],
+  { revalidate: 60 }
 )
 
 export async function getShopRating(shopId: string) {

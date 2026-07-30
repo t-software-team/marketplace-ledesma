@@ -5,12 +5,14 @@ import { Eye, MessageCircle, Package, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ShopLinkCard } from '@/components/shop/shop-link-card'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { StatusBadge } from '@/components/shared/status-badge'
+import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isServiceRubro } from '@/lib/category-icons'
-import { getMyShop, getMyShopProducts } from '@/lib/shops/queries'
+import { getMyShop, getMyShopProducts, getShopContactsSeries } from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
 import { OnboardingChecklist } from './onboarding-checklist'
 
@@ -63,8 +65,12 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const products = await getMyShopProducts(shop.id)
+  const [products, contactsSeries] = await Promise.all([
+    getMyShopProducts(shop.id),
+    getShopContactsSeries(shop.id, 14),
+  ])
   const recentProducts = products.slice(0, 4)
+  const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
@@ -186,28 +192,60 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="space-y-3">
+        <div>
+          <h2 className="font-heading text-lg">Tu alcance</h2>
+          <p className="text-sm text-muted-foreground">
+            Cada vez que compartís tu link en redes o WhatsApp, esto crece. Es tu mejor forma de
+            conseguir clientes nuevos sin gastar en publicidad.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="space-y-1 pt-6">
+              <Package className="size-4 text-muted-foreground" aria-hidden />
+              <p className="text-xs text-muted-foreground">{nounPlural}</p>
+              <p className="text-2xl font-heading">{products.length}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-1 pt-6">
+              <Eye className="size-4 text-muted-foreground" aria-hidden />
+              <p className="text-xs text-muted-foreground">Vistas</p>
+              <p className="text-2xl font-heading font-mono">{shop.profile_views}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-1 pt-6">
+              <MessageCircle className="size-4 text-muted-foreground" aria-hidden />
+              <p className="text-xs text-muted-foreground">Clicks WhatsApp</p>
+              <p className="text-2xl font-heading font-mono">{shop.whatsapp_clicks}</p>
+            </CardContent>
+          </Card>
+        </div>
+
         <Card>
-          <CardContent className="space-y-1 pt-6">
-            <Package className="size-4 text-muted-foreground" aria-hidden />
-            <p className="text-xs text-muted-foreground">{nounPlural}</p>
-            <p className="text-2xl font-heading">{products.length}</p>
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Contactos por WhatsApp</p>
+                <p className="text-xs text-muted-foreground">Últimos 14 días</p>
+              </div>
+              <p className="font-mono text-lg font-semibold text-primary">
+                {contactsThisWeek} <span className="text-xs font-normal text-muted-foreground">esta semana</span>
+              </p>
+            </div>
+            <TrendAreaChart
+              data={contactsSeries}
+              dataKey="contactos"
+              label="Contactos"
+              gradientId="shopContacts"
+            />
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="space-y-1 pt-6">
-            <Eye className="size-4 text-muted-foreground" aria-hidden />
-            <p className="text-xs text-muted-foreground">Vistas</p>
-            <p className="text-2xl font-heading font-mono">{shop.profile_views}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-1 pt-6">
-            <MessageCircle className="size-4 text-muted-foreground" aria-hidden />
-            <p className="text-xs text-muted-foreground">Clicks WhatsApp</p>
-            <p className="text-2xl font-heading font-mono">{shop.whatsapp_clicks}</p>
-          </CardContent>
-        </Card>
+
+        <ShopLinkCard shopName={shop.name} shopUrl={shopUrl} />
       </div>
 
       <div className="space-y-3">

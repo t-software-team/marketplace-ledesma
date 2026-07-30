@@ -10,6 +10,7 @@ import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { FollowShopButton } from '@/components/shop/follow-shop-button'
+import { RelatedShops } from '@/components/shop/related-shops'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import {
   getMyShopFollow,
   getMyShopReview,
+  getRelatedShops,
   getShopBySlug,
   getShopFollowStats,
   getShopProducts,
@@ -87,15 +89,17 @@ export default async function ShopPage({ params }: ShopPageProps) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const [products, shopUrl, rating, reviews, myReview, followerCount, isFollowing] = await Promise.all([
-    getShopProducts(shop.id),
-    getShopUrl(slug),
-    getShopRating(shop.id),
-    getShopReviews(shop.id),
-    user ? getMyShopReview(shop.id) : Promise.resolve(null),
-    getShopFollowStats(shop.id),
-    user ? getMyShopFollow(shop.id) : Promise.resolve(false),
-  ])
+  const [products, shopUrl, rating, reviews, myReview, followerCount, isFollowing, relatedShops] =
+    await Promise.all([
+      getShopProducts(shop.id),
+      getShopUrl(slug),
+      getShopRating(shop.id),
+      getShopReviews(shop.id),
+      user ? getMyShopReview(shop.id) : Promise.resolve(null),
+      getShopFollowStats(shop.id),
+      user ? getMyShopFollow(shop.id) : Promise.resolve(false),
+      getRelatedShops(shop.id, shop.category_id, shop.city),
+    ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
   const isVerified = shop.verification_status === 'verified'
@@ -320,6 +324,8 @@ export default async function ShopPage({ params }: ShopPageProps) {
           <ShopReviewsList reviews={reviews} />
         </section>
       )}
+
+      <RelatedShops shops={relatedShops} />
 
       <div className="flex justify-center">
         <ReportShopDialog shopId={shop.id} />

@@ -1,8 +1,7 @@
 import Link from 'next/link'
-import { CheckCircle2, Circle, Sparkles } from 'lucide-react'
+import { Circle, Sparkles } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 interface OnboardingChecklistProps {
   hasCategory: boolean
@@ -90,22 +89,15 @@ export function OnboardingChecklist({
         </div>
 
         <ul className="space-y-3">
-          {steps.map((step) => (
-            <li key={step.id} className="flex items-start gap-3">
-              {step.done ? (
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
-              ) : (
+          {steps
+            .filter((step) => !step.done)
+            .map((step) => (
+              <li key={step.id} className="flex items-start gap-3">
                 <Circle className="mt-0.5 size-5 shrink-0 text-muted-foreground/40" aria-hidden />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className={cn('text-sm font-medium', step.done && 'text-muted-foreground line-through')}>
-                  {step.label}
-                </p>
-                {!step.done && (
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{step.label}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">{step.description}</p>
-                )}
-              </div>
-              {!step.done && (
+                </div>
                 <Button
                   render={<Link href={step.href} />}
                   nativeButton={false}
@@ -115,9 +107,8 @@ export function OnboardingChecklist({
                 >
                   {step.cta}
                 </Button>
-              )}
-            </li>
-          ))}
+              </li>
+            ))}
         </ul>
       </CardContent>
     </Card>

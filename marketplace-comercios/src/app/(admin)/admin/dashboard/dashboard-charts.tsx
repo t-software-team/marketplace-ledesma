@@ -1,16 +1,7 @@
 'use client'
 
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 
 const CHART_COLOR = 'var(--color-primary)'
 
@@ -24,48 +15,13 @@ function formatMoney(value: number) {
 
 export function ShopsGrowthChart({ data }: { data: { date: string; comercios: number }[] }) {
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-        <defs>
-          <linearGradient id="shopsGrowth" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_COLOR} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={CHART_COLOR} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-        <XAxis
-          dataKey="date"
-          tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-          axisLine={false}
-          tickLine={false}
-          interval="preserveStartEnd"
-        />
-        <YAxis
-          tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-          axisLine={false}
-          tickLine={false}
-          allowDecimals={false}
-          width={28}
-        />
-        <Tooltip
-          contentStyle={{
-            fontSize: 12,
-            borderRadius: 8,
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface)',
-          }}
-          labelFormatter={(label) => `Día ${label}`}
-          formatter={(value) => [value, 'Nuevos comercios']}
-        />
-        <Area
-          type="monotone"
-          dataKey="comercios"
-          stroke={CHART_COLOR}
-          strokeWidth={2}
-          fill="url(#shopsGrowth)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <TrendAreaChart
+      data={data}
+      dataKey="comercios"
+      label="Nuevos comercios"
+      gradientId="shopsGrowth"
+      height={220}
+    />
   )
 }
 
