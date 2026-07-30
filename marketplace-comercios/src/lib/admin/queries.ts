@@ -129,7 +129,7 @@ export async function getSubscriptionPlans() {
 
   const { data: plans } = await supabase
     .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active, created_at')
+    .select('id, name, description, price, duration_days, benefits, is_active, applies_to, created_at')
     .order('created_at', { ascending: true })
     .limit(200)
 
@@ -141,7 +141,7 @@ export async function getSubscriptionPlanById(planId: string) {
 
   const { data: plan } = await supabase
     .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active')
+    .select('id, name, description, price, duration_days, benefits, is_active, applies_to')
     .eq('id', planId)
     .maybeSingle()
 

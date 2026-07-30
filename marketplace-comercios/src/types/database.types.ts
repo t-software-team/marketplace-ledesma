@@ -108,6 +108,7 @@ export type Database = {
           icon_url: string | null
           id: string
           is_active: boolean
+          is_service: boolean
           name: string
           parent_id: string | null
           slug: string
@@ -118,6 +119,7 @@ export type Database = {
           icon_url?: string | null
           id?: string
           is_active?: boolean
+          is_service?: boolean
           name: string
           parent_id?: string | null
           slug: string
@@ -128,6 +130,7 @@ export type Database = {
           icon_url?: string | null
           id?: string
           is_active?: boolean
+          is_service?: boolean
           name?: string
           parent_id?: string | null
           slug?: string
@@ -909,6 +912,7 @@ export type Database = {
       }
       subscription_plans: {
         Row: {
+          applies_to: string
           benefits: Json | null
           created_at: string
           description: string | null
@@ -919,6 +923,7 @@ export type Database = {
           price: number
         }
         Insert: {
+          applies_to?: string
           benefits?: Json | null
           created_at?: string
           description?: string | null
@@ -929,6 +934,7 @@ export type Database = {
           price: number
         }
         Update: {
+          applies_to?: string
           benefits?: Json | null
           created_at?: string
           description?: string | null

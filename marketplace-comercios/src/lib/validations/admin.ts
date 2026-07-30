@@ -37,6 +37,7 @@ export const subscriptionPlanSchema = z.object({
     ),
   benefits_text: z.string().max(2000).optional().or(z.literal('')),
   is_active: z.boolean(),
+  applies_to: z.enum(['all', 'product', 'service']).default('all'),
 })
 
 export type SubscriptionPlanFormValues = z.infer<typeof subscriptionPlanSchema>

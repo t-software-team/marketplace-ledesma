@@ -99,19 +99,35 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
     }
   }
 
-  const [plans, activeSubscription] = await Promise.all([
+  const [allPlans, activeSubscription] = await Promise.all([
     getActiveSubscriptionPlans(),
     getMyActiveSubscription(shop.id),
   ])
 
+  const isService = isServiceRubro(shop.categories?.slug)
+  const noun = isService ? 'servicio' : 'producto'
+  const nounPlural = isService ? 'Servicios' : 'Productos'
+  const freeMaxForShop = isService ? 3 : 20
+
   const activePlanId = activeSubscription?.plan_id ?? null
+
+  const plans = allPlans
+    .filter(
+      (plan) =>
+        plan.id === activePlanId ||
+        plan.applies_to === 'all' ||
+        plan.applies_to === (isService ? 'service' : 'product')
+    )
+    .map((plan) =>
+      plan.price === 0
+        ? { ...plan, benefits: { ...(plan.benefits as object), max_products: freeMaxForShop } }
+        : plan
+    )
+
   const freePlanId = !activePlanId ? (plans.find((plan) => plan.price === 0)?.id ?? null) : null
   const currentPlanPrice = activePlanId
     ? (plans.find((plan) => plan.id === activePlanId)?.price ?? 0)
     : 0
-  const isService = isServiceRubro(shop.categories?.slug)
-  const noun = isService ? 'servicio' : 'producto'
-  const nounPlural = isService ? 'Servicios' : 'Productos'
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
@@ -127,10 +143,13 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
           <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           {isService ? (
             <p className="text-sm text-foreground">
-              <strong>Para un negocio de servicios, lo que más suma no es cuántos servicios cargues</strong>{' '}
-              — es que tus clientes puedan dejarte reseñas y que aparezcas mejor posicionado que la
-              competencia en el feed. Esos dos beneficios se activan con cualquier plan pago; con el
-              plan Free no están disponibles.
+              <strong>
+                Para un negocio de servicios, lo que suma no es cuántos servicios cargues, sino que
+                tus clientes te dejen reseñas y que aparezcas mejor posicionado que la competencia en
+                el feed.
+              </strong>{' '}
+              El plan Free te deja cargar hasta 3 servicios, sin reseñas ni mejor posicionamiento. Con
+              el Plan Plus sumás servicios ilimitados y esos dos beneficios activados.
             </p>
           ) : (
             <p className="text-sm text-foreground">

@@ -487,6 +487,7 @@ export async function createSubscriptionPlan(
     duration_days: formData.get('duration_days'),
     benefits_text: formData.get('benefits_text') ?? '',
     is_active: formData.get('is_active') === 'on',
+    applies_to: formData.get('applies_to') || 'all',
   })
 
   if (!parsed.success) {
@@ -511,6 +512,7 @@ export async function createSubscriptionPlan(
     duration_days: Number(parsed.data.duration_days),
     benefits: benefits as never,
     is_active: parsed.data.is_active,
+    applies_to: parsed.data.applies_to,
   })
 
   if (error) {
@@ -536,6 +538,7 @@ export async function updateSubscriptionPlan(
     duration_days: formData.get('duration_days'),
     benefits_text: formData.get('benefits_text') ?? '',
     is_active: formData.get('is_active') === 'on',
+    applies_to: formData.get('applies_to') || 'all',
   })
 
   if (!parsed.success) {
@@ -562,6 +565,7 @@ export async function updateSubscriptionPlan(
       duration_days: Number(parsed.data.duration_days),
       benefits: benefits as never,
       is_active: parsed.data.is_active,
+      applies_to: parsed.data.applies_to,
     })
     .eq('id', planId)
 

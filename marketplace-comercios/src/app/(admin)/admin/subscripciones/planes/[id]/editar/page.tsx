@@ -30,6 +30,7 @@ export default async function EditPlanPage({ params }: EditPlanPageProps) {
           duration_days: plan.duration_days,
           benefits: plan.benefits,
           is_active: plan.is_active,
+          applies_to: plan.applies_to,
         }}
       />
     </div>

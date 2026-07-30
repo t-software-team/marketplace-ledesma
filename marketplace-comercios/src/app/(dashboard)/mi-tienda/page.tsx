@@ -22,6 +22,10 @@ const subscriptionLabels: Record<string, string> = {
   rejected: 'Rechazada',
 }
 
+function daysUntil(dateString: string) {
+  return Math.ceil((new Date(dateString).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+}
+
 function formatPrice(price: number | null, currency: string) {
   if (price == null) return 'Consultar'
   return new Intl.NumberFormat('es-AR', {
@@ -69,12 +73,33 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   const protocol = headersList.get('x-forwarded-proto') ?? 'http'
   const shopUrl = `${protocol}://${host}/tienda/${shop.slug}`
 
+  const daysUntilExpiry = shop.subscription_expires_at ? daysUntil(shop.subscription_expires_at) : null
+
+  const isExpired = shop.subscription_status === 'expired'
+  const isExpiringSoon =
+    shop.subscription_status === 'active' && daysUntilExpiry !== null && daysUntilExpiry <= 7
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-8">
       {subscription === 'activada' && (
         <p className="rounded-lg border border-success bg-success/30 p-3 text-sm text-success-foreground">
           ¡Listo! Tu pago se acreditó y tu suscripción ya está activa.
         </p>
+      )}
+
+      {(isExpired || isExpiringSoon) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning bg-warning/10 p-3">
+          <p className="text-sm text-warning-foreground">
+            {isExpired
+              ? 'Tu suscripción venció. Volviste al plan Free hasta que renueves.'
+              : daysUntilExpiry === 0
+                ? 'Tu suscripción vence hoy.'
+                : `Tu suscripción vence en ${daysUntilExpiry} día${daysUntilExpiry === 1 ? '' : 's'}.`}
+          </p>
+          <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
+            {isExpired ? 'Renovar' : 'Ver planes'}
+          </Button>
+        </div>
       )}
 
       <OnboardingChecklist

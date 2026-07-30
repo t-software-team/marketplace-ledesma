@@ -3,11 +3,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Search, Store } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { CategoryGrid } from './category-grid'
 import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
 import { AttributeFilterSheet } from './attribute-filter-sheet'
 import { ProductCard, type ProductFeedItem } from '@/components/shared/product-card'
+import { BackToTopButton } from '@/components/shared/back-to-top-button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
@@ -64,9 +65,35 @@ export function FeedClient({
     [subcategories, activeRubroId]
   )
 
-  const { data: products, isLoading, isFetching } = useProductsFeed()
+  const {
+    data: products,
+    isLoading,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useProductsFeed()
   const { data: matchingShops } = useShopSearch()
   const { data: rubroAttributes } = useCategoryAttributes(activeRubroId)
+
+  const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      },
+      { rootMargin: '400px' }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   useEffect(() => {
     if (userLocation || !navigator.geolocation) return
@@ -85,8 +112,8 @@ export function FeedClient({
     )
   }, [userLocation, setLocation])
 
-  const displayProducts = products ?? initialProducts
-  const showLoading = isLoading || (isFetching && !products)
+  const displayProducts = products ? products.pages.flat() : initialProducts
+  const showLoading = isLoading || (isFetching && !isFetchingNextPage && !products)
 
   return (
     <div className="space-y-4">
@@ -193,22 +220,42 @@ export function FeedClient({
           message="No encontramos comercios en esta categoría. Probá con otra o ampliá la distancia."
         />
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {displayProducts.map((product, index) => (
-            <div
-              key={product.product_id}
-              className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both duration-300"
-              style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
-            >
-              <ProductCard
-                product={product}
-                isLoggedIn={isLoggedIn}
-                initialIsFavorite={favoriteIdSet.has(product.product_id)}
-              />
+        <>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {displayProducts.map((product, index) => (
+              <div
+                key={product.product_id}
+                className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both duration-300"
+                style={{ animationDelay: `${Math.min(index % 20, 8) * 40}ms` }}
+              >
+                <ProductCard
+                  product={product}
+                  isLoggedIn={isLoggedIn}
+                  initialIsFavorite={favoriteIdSet.has(product.product_id)}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div ref={loadMoreRef} aria-hidden className="h-1" />
+
+          {isFetchingNextPage && (
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+
+          {!hasNextPage && displayProducts.length > 0 && (
+            <p className="py-4 text-center text-xs text-muted-foreground">
+              Eso es todo por ahora
+            </p>
+          )}
+        </>
       )}
+
+      <BackToTopButton />
     </div>
   )
 }

@@ -170,7 +170,14 @@ values
   ('e2000002-0000-0000-0000-000000000000', 'Panadería y repostería', 'panaderia-reposteria', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
   ('e2000003-0000-0000-0000-000000000000', 'Rotisería', 'rotiseria', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
   ('e2000004-0000-0000-0000-000000000000', 'Bebidas', 'bebidas-comida', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
-  ('e2000005-0000-0000-0000-000000000000', 'Menú del día / Viandas', 'menu-viandas', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001')
+  ('e2000005-0000-0000-0000-000000000000', 'Menú del día / Viandas', 'menu-viandas', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000006-0000-0000-0000-000000000000', 'Pizzas', 'comida-pizzas', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000007-0000-0000-0000-000000000000', 'Empanadas', 'comida-empanadas', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000008-0000-0000-0000-000000000000', 'Parrilla / Asado', 'comida-parrilla', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000009-0000-0000-0000-000000000000', 'Comida saludable / vegetariana', 'comida-saludable', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000010-0000-0000-0000-000000000000', 'Postres y helados', 'comida-postres-helados', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000011-0000-0000-0000-000000000000', 'Sánguches / Fast food', 'comida-sanguches-fastfood', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001'),
+  ('e2000012-0000-0000-0000-000000000000', 'Catering / Eventos', 'comida-catering-eventos', true, 'e2222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001')
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
@@ -257,6 +264,68 @@ values
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
+-- 4.9 Rubro: Corralón
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f7777777-7777-7777-7777-777777777777', 'Corralón', 'corralon', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f7000001-0000-0000-0000-000000000000', 'Áridos y cemento', 'corralon-aridos-cemento', true, 'f7777777-7777-7777-7777-777777777777', '00000000-0000-0000-0000-000000000001'),
+  ('f7000002-0000-0000-0000-000000000000', 'Ladrillos y bloques', 'corralon-ladrillos-bloques', true, 'f7777777-7777-7777-7777-777777777777', '00000000-0000-0000-0000-000000000001'),
+  ('f7000003-0000-0000-0000-000000000000', 'Hierros y perfiles', 'corralon-hierros-perfiles', true, 'f7777777-7777-7777-7777-777777777777', '00000000-0000-0000-0000-000000000001'),
+  ('f7000004-0000-0000-0000-000000000000', 'Herramientas', 'corralon-herramientas', true, 'f7777777-7777-7777-7777-777777777777', '00000000-0000-0000-0000-000000000001'),
+  ('f7000005-0000-0000-0000-000000000000', 'Fletes y envíos', 'corralon-fletes-envios', true, 'f7777777-7777-7777-7777-777777777777', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
+-- 4.10 Rubro: Tecnología
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f8888888-8888-8888-8888-888888888888', 'Tecnología', 'tecnologia', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f8000001-0000-0000-0000-000000000000', 'Desarrollo web y apps', 'tecnologia-desarrollo-web', true, 'f8888888-8888-8888-8888-888888888888', '00000000-0000-0000-0000-000000000001'),
+  ('f8000002-0000-0000-0000-000000000000', 'Soporte técnico e instalaciones IT', 'tecnologia-soporte-it', true, 'f8888888-8888-8888-8888-888888888888', '00000000-0000-0000-0000-000000000001'),
+  ('f8000003-0000-0000-0000-000000000000', 'Redes y cámaras de seguridad', 'tecnologia-redes-camaras', true, 'f8888888-8888-8888-8888-888888888888', '00000000-0000-0000-0000-000000000001'),
+  ('f8000004-0000-0000-0000-000000000000', 'Diseño y marketing digital', 'tecnologia-diseno-marketing', true, 'f8888888-8888-8888-8888-888888888888', '00000000-0000-0000-0000-000000000001'),
+  ('f8000005-0000-0000-0000-000000000000', 'Clases de informática', 'tecnologia-clases', true, 'f8888888-8888-8888-8888-888888888888', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
+-- 4.11 Rubro: Bandas musicales
+-- -----------------------------------------------------------
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f9999999-9999-9999-9999-999999999999', 'Bandas musicales', 'bandas-musicales', true, null, '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
+-- 4.12 Marca de rubros de servicio (free tier de 3, plan Plus)
+-- -----------------------------------------------------------
+update public.categories
+set is_service = true
+where slug in (
+  'peluquerias', 'talleres', 'salud-y-bienestar', 'alquileres', 'lavadero',
+  'veterinaria', 'construccion', 'servicio-tecnico', 'tecnologia', 'bandas-musicales'
+) and parent_id is null;
+
+insert into public.categories (id, name, slug, is_active, parent_id, created_by)
+values
+  ('f9000001-0000-0000-0000-000000000000', 'Cumbia', 'bandas-cumbia', true, 'f9999999-9999-9999-9999-999999999999', '00000000-0000-0000-0000-000000000001'),
+  ('f9000002-0000-0000-0000-000000000000', 'Cuarteto', 'bandas-cuarteto', true, 'f9999999-9999-9999-9999-999999999999', '00000000-0000-0000-0000-000000000001'),
+  ('f9000003-0000-0000-0000-000000000000', 'Rock / Pop', 'bandas-rock-pop', true, 'f9999999-9999-9999-9999-999999999999', '00000000-0000-0000-0000-000000000001'),
+  ('f9000004-0000-0000-0000-000000000000', 'Folklore', 'bandas-folklore', true, 'f9999999-9999-9999-9999-999999999999', '00000000-0000-0000-0000-000000000001'),
+  ('f9000005-0000-0000-0000-000000000000', 'Tropical / Salsa', 'bandas-tropical-salsa', true, 'f9999999-9999-9999-9999-999999999999', '00000000-0000-0000-0000-000000000001'),
+  ('f9000006-0000-0000-0000-000000000000', 'Versiones y covers', 'bandas-versiones-covers', true, 'f9999999-9999-9999-9999-999999999999', '00000000-0000-0000-0000-000000000001')
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
 -- 5. Shop verificada y activa del shop_admin
 -- -----------------------------------------------------------
 insert into public.shops (
@@ -295,24 +364,25 @@ values (
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
--- 6. Plan de suscripción activo: Free (hasta 30 productos)
+-- 6. Plan de suscripción activo: Free (hasta 20 productos)
 -- -----------------------------------------------------------
-insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits)
+insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits, applies_to)
 values (
   '11111111-1111-1111-1111-111111111111',
   'Free',
-  'Hasta 30 productos o servicios.',
+  'Hasta 20 productos o servicios.',
   0,
   30,
   true,
-  '{"max_products": 30, "featured": false, "analytics": false}'::jsonb
+  '{"max_products": 20, "featured": false, "analytics": false}'::jsonb,
+  'all'
 )
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
 -- 7. Plan de suscripción activo: Plan 100 (hasta 100 productos, $3000)
 -- -----------------------------------------------------------
-insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits)
+insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits, applies_to)
 values (
   '22222222-2222-2222-2222-222222222222',
   'Plan 100',
@@ -320,14 +390,15 @@ values (
   3000,
   30,
   true,
-  '{"max_products": 100, "featured": true, "analytics": true}'::jsonb
+  '{"max_products": 100, "featured": true, "analytics": true}'::jsonb,
+  'product'
 )
 on conflict (id) do nothing;
 
 -- -----------------------------------------------------------
 -- 7.1 Plan de suscripción activo: Plan Ilimitado (más de 100 productos, $7000)
 -- -----------------------------------------------------------
-insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits)
+insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits, applies_to)
 values (
   '33333333-4444-4444-4444-444444444444',
   'Plan Ilimitado',
@@ -335,7 +406,24 @@ values (
   7000,
   30,
   true,
-  '{"max_products": null, "featured": true, "analytics": true, "priority_support": true}'::jsonb
+  '{"max_products": null, "featured": true, "analytics": true, "priority_support": true}'::jsonb,
+  'product'
+)
+on conflict (id) do nothing;
+
+-- -----------------------------------------------------------
+-- 7.2 Plan de suscripción activo: Plan Plus (rubros de servicio, $5000)
+-- -----------------------------------------------------------
+insert into public.subscription_plans (id, name, description, price, duration_days, is_active, benefits, applies_to)
+values (
+  '44444444-5555-5555-5555-555555555555',
+  'Plan Plus',
+  'Servicios ilimitados, reseñas de clientes y mejor posicionamiento en el feed.',
+  5000,
+  30,
+  true,
+  '{"max_products": null, "featured": true, "analytics": true}'::jsonb,
+  'service'
 )
 on conflict (id) do nothing;
 

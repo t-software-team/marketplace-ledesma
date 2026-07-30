@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useMemo, useState } from 'react'
+import { useActionState, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,7 +47,6 @@ export function SuggestCategoryDialog({
   if (state !== prevState) {
     setPrevState(state)
     if (state.error === null && state.warning) {
-      toast.add({ title: state.warning, type: 'success' })
       setOpen(false)
       setName('')
       setErrorShownForName(null)
@@ -55,6 +54,12 @@ export function SuggestCategoryDialog({
       setErrorShownForName(name)
     }
   }
+
+  useEffect(() => {
+    if (state.error === null && state.warning) {
+      toast.add({ title: state.warning, type: 'success' })
+    }
+  }, [state])
 
   // The error stays tied to the name that produced it — as soon as the user
   // edits the text, it no longer applies and shouldn't linger on screen.

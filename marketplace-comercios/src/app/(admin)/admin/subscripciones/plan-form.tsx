@@ -16,9 +16,16 @@ interface PlanFormProps {
     duration_days: number
     benefits: unknown
     is_active: boolean
+    applies_to?: string
   }
   submitLabel: string
 }
+
+const APPLIES_TO_OPTIONS = [
+  { value: 'all', label: 'Todos los rubros' },
+  { value: 'product', label: 'Solo productos' },
+  { value: 'service', label: 'Solo servicios' },
+]
 
 const initialState: ActionState = { error: null }
 
@@ -76,6 +83,28 @@ export function PlanForm({ action, defaultValues, submitLabel }: PlanFormProps) 
             required
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="applies_to" className="text-sm font-medium">
+          Aplica a
+        </label>
+        <select
+          id="applies_to"
+          name="applies_to"
+          defaultValue={defaultValues?.applies_to ?? 'all'}
+          className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {APPLIES_TO_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Los comercios de rubros de servicio solo ven planes &quot;Todos&quot; o &quot;Solo
+          servicios&quot;; el resto solo ve &quot;Todos&quot; o &quot;Solo productos&quot;.
+        </p>
       </div>
 
       <div className="space-y-2">

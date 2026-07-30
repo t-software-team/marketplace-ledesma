@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useFiltersStore } from '@/stores/use-filters-store'
+
+const FEED_PAGE_SIZE = 20
 
 export function useProductsFeed() {
   const { categoryId, searchQuery, userLocation, attributeValue } = useFiltersStore()
@@ -11,9 +13,10 @@ export function useProductsFeed() {
     seedRef.current = crypto.randomUUID()
   }
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['products-feed', categoryId, searchQuery, userLocation, attributeValue],
-    queryFn: async () => {
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc('get_products_feed', {
         user_lat: userLocation?.lat,
         user_lng: userLocation?.lng,
@@ -21,10 +24,14 @@ export function useProductsFeed() {
         p_search: searchQuery || undefined,
         p_seed: seedRef.current ?? undefined,
         p_attribute_value: attributeValue ?? undefined,
+        p_limit: FEED_PAGE_SIZE,
+        p_offset: pageParam,
       })
       if (error) throw error
-      return data
+      return data ?? []
     },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < FEED_PAGE_SIZE ? undefined : allPages.length * FEED_PAGE_SIZE,
   })
 }
 

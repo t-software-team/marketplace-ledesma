@@ -14,6 +14,7 @@ import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
+import Link from 'next/link'
 import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
 import { ShopReviewsList } from '@/components/shop/shop-reviews-list'
 import { ShopViewTracker } from '@/components/shop/shop-view-tracker'
@@ -108,7 +109,6 @@ export default async function ShopPage({ params }: ShopPageProps) {
     description: shop.description ? stripHtml(shop.description) : undefined,
     image: shop.logo_url ?? undefined,
     url: `${baseUrl}/tienda/${shop.slug}`,
-    telephone: shop.whatsapp_number ?? undefined,
     address: shop.city
       ? { '@type': 'PostalAddress', addressLocality: shop.city, streetAddress: shop.address ?? undefined }
       : undefined,
@@ -304,7 +304,18 @@ export default async function ShopPage({ params }: ShopPageProps) {
             <h2 className="text-lg font-heading">
               Reseñas {rating.reviewCount > 0 && `(${rating.reviewCount})`}
             </h2>
-            {user && <ShopReviewDialog shopId={shop.id} myReview={myReview} />}
+            {user ? (
+              <ShopReviewDialog shopId={shop.id} myReview={myReview} />
+            ) : (
+              <Button
+                render={<Link href={`/login?next=/tienda/${slug}`} />}
+                nativeButton={false}
+                variant="outline"
+                size="sm"
+              >
+                Iniciar sesión para dejar una reseña
+              </Button>
+            )}
           </div>
           <ShopReviewsList reviews={reviews} />
         </section>

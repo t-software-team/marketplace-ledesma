@@ -19,6 +19,12 @@ function formatMoney(price: number) {
   }).format(price)
 }
 
+const APPLIES_TO_LABEL: Record<string, string> = {
+  all: 'Todos',
+  product: 'Productos',
+  service: 'Servicios',
+}
+
 export function PlansTable({ plans }: { plans: Plan[] }) {
   const [page, setPage] = useState(1)
   const totalPages = Math.max(1, Math.ceil(plans.length / PAGE_SIZE))
@@ -34,6 +40,7 @@ export function PlansTable({ plans }: { plans: Plan[] }) {
             <TableHead>Nombre</TableHead>
             <TableHead>Precio</TableHead>
             <TableHead>Duración</TableHead>
+            <TableHead>Aplica a</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
@@ -45,6 +52,9 @@ export function PlansTable({ plans }: { plans: Plan[] }) {
               <TableCell className="font-mono">{formatMoney(plan.price)}</TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
                 {plan.duration_days} días
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {APPLIES_TO_LABEL[plan.applies_to] ?? plan.applies_to}
               </TableCell>
               <TableCell>
                 <StatusBadge

@@ -378,7 +378,7 @@ export async function getActiveSubscriptionPlans() {
 
   const { data: plans } = await supabase
     .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits')
+    .select('id, name, description, price, duration_days, benefits, applies_to')
     .eq('is_active', true)
     .order('price', { ascending: true })
     .limit(50)
@@ -625,12 +625,13 @@ export async function getShopProducts(shopId: string) {
   })
 }
 
-const FREE_PLAN_MAX_PRODUCTS = 20
+const FREE_PLAN_MAX_PRODUCTS_SERVICE = 3
+const FREE_PLAN_MAX_PRODUCTS_PRODUCT = 20
 
 export async function getProductLimitInfo(shopId: string) {
   const supabase = await createClient()
 
-  const [{ count }, { data: activeSubscription }] = await Promise.all([
+  const [{ count }, { data: activeSubscription }, { data: shop }] = await Promise.all([
     supabase
       .from('products')
       .select('id', { count: 'exact', head: true })
@@ -643,6 +644,7 @@ export async function getProductLimitInfo(shopId: string) {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase.from('shops').select('categories ( is_service )').eq('id', shopId).maybeSingle(),
   ])
 
   const used = count ?? 0
@@ -652,7 +654,10 @@ export async function getProductLimitInfo(shopId: string) {
     | undefined
 
   const hasActivePlan = Boolean(activeSubscription)
-  const max = hasActivePlan ? (benefits?.max_products ?? null) : FREE_PLAN_MAX_PRODUCTS
+  const freeMax = shop?.categories?.is_service
+    ? FREE_PLAN_MAX_PRODUCTS_SERVICE
+    : FREE_PLAN_MAX_PRODUCTS_PRODUCT
+  const max = hasActivePlan ? (benefits?.max_products ?? null) : freeMax
 
   return {
     used,
