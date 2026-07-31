@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Todo Marketplace',
-    short_name: 'Marketplace',
+    name: 'Proxi Marketplace',
+    short_name: 'Proxi Marketplace',
     description: 'Comercios locales de tu barrio',
     start_url: '/',
     display: 'standalone',

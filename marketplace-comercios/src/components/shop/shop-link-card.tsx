@@ -58,7 +58,7 @@ export function ShopLinkCard({ shopName, shopUrl }: ShopLinkCardProps) {
 
         <div className="flex gap-2">
           <ShopQrDialog shopName={shopName} shopUrl={shopUrl} />
-          <ShareButton title={shopName} text={`Mirá ${shopName} en Todo Marketplace`} url={shopUrl} />
+          <ShareButton title={shopName} text={`Mirá ${shopName} en Proxi Marketplace`} url={shopUrl} />
         </div>
       </CardContent>
     </Card>

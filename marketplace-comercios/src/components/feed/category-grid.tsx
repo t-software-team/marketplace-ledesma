@@ -39,7 +39,7 @@ export function CategoryGrid({ categories, selectedId, onSelect }: CategoryGridP
             selectedId === null ? 'font-medium text-foreground' : 'text-muted-foreground'
           )}
         >
-          Todo
+          Proxi
         </span>
       </button>
 

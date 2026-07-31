@@ -84,7 +84,7 @@ export function SuggestCategoryDialog({
         <DialogHeader>
           <DialogTitle>Sugerir {noun}</DialogTitle>
           <DialogDescription>
-            La va a revisar el equipo de Todo Marketplace antes de estar disponible.
+            La va a revisar el equipo de Proxi Marketplace antes de estar disponible.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="space-y-3">

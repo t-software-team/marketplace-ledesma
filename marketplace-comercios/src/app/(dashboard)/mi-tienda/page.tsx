@@ -159,7 +159,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
             <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
             <ShareButton
               title={shop.name}
-              text={`Mirá ${shop.name} en Todo Marketplace`}
+              text={`Mirá ${shop.name} en Proxi Marketplace`}
               url={shopUrl}
               variant="outline"
               size="icon"

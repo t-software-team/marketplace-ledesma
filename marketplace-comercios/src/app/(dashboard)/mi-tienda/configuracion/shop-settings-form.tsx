@@ -131,7 +131,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               }}
             />
             <p className="text-xs text-muted-foreground">
-              Así te van a encontrar tus clientes: marketplace-ledesma.com/tienda/{slug || 'tu-tienda'}.
+              Así te van a encontrar tus clientes: proxi.com/tienda/{slug || 'tu-tienda'}.
               Se completa solo con el nombre, pero podés editarlo. Ojo: si la cambiás, los links que ya
               compartiste van a dejar de funcionar.
             </p>

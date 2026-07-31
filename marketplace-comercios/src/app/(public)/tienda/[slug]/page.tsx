@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
 
   const description = shop.description
     ? stripHtml(shop.description)
-    : `Productos de ${shop.name} en Todo Marketplace`
+    : `Productos de ${shop.name} en Proxi Marketplace`
 
   return {
     title: shop.name,
@@ -253,7 +253,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
             <WhatsAppButton
               shopId={shop.id}
               phoneNumber={shop.whatsapp_number}
-              message={`Hola ${shop.name}, vi tu tienda en Todo Marketplace`}
+              message={`Hola ${shop.name}, vi tu tienda en Proxi Marketplace`}
               className="max-w-xs flex-1"
             />
             {mapsUrl && (
@@ -305,7 +305,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
             <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
             <ShareButton
               title={shop.name}
-              text={`Mirá ${shop.name} en Todo Marketplace`}
+              text={`Mirá ${shop.name} en Proxi Marketplace`}
               url={shopUrl}
               size="icon"
             />
@@ -357,7 +357,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
           <WhatsAppButton
             shopId={shop.id}
             phoneNumber={shop.whatsapp_number}
-            message={`Hola ${shop.name}, vi tu tienda en Todo Marketplace`}
+            message={`Hola ${shop.name}, vi tu tienda en Proxi Marketplace`}
             className="flex-1"
           />
           {mapsUrl && (
@@ -416,7 +416,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
           <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
           <ShareButton
             title={shop.name}
-            text={`Mirá ${shop.name} en Todo Marketplace`}
+            text={`Mirá ${shop.name} en Proxi Marketplace`}
             url={shopUrl}
             size="icon"
           />

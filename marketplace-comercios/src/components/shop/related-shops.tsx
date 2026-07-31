@@ -49,7 +49,7 @@ export function RelatedShops({ shops }: RelatedShopsProps) {
         ))}
       </div>
       <p className="text-center text-xs text-muted-foreground">
-        Descubrí más comercios como este en Todo Marketplace
+        Descubrí más comercios como este en Proxi Marketplace
       </p>
     </section>
   )

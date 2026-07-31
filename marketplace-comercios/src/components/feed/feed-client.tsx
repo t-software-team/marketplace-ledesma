@@ -123,7 +123,7 @@ export function FeedClient({
           className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
         >
           <div>
-            <p className="text-sm font-semibold">Vendé tus productos en Ledesma</p>
+            <p className="text-sm font-semibold">Vendé tus productos en Proxi</p>
             <p className="text-xs text-muted-foreground">
               Creá tu cuenta gratis, abrí tu tienda y empezá a vender hoy mismo.
             </p>

@@ -762,7 +762,7 @@ export async function suggestCategory(
     return { error: 'No pudimos enviar la sugerencia' }
   }
 
-  return { error: null, warning: 'Enviamos tu sugerencia, la va a revisar el equipo de Todo Marketplace' }
+  return { error: null, warning: 'Enviamos tu sugerencia, la va a revisar el equipo de Proxi Marketplace' }
 }
 
 export async function createPromotion(
@@ -1019,7 +1019,7 @@ export async function startSubscriptionCheckout(
     link = await createPaymentLink({
       items: [
         {
-          title: `Plan ${plan.name} — Todo Marketplace`,
+          title: `Plan ${plan.name} — Proxi Marketplace`,
           quantity: 1,
           unitPrice: plan.price,
           currencyId: 'ARS',

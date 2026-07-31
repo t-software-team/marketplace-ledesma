@@ -48,7 +48,7 @@ export function CreateShopForm() {
           }}
         />
         <p className="text-xs text-muted-foreground">
-          Así te van a encontrar tus clientes: marketplace-ledesma.com/tienda/{slug || 'tu-tienda'}. Se
+          Así te van a encontrar tus clientes: proxi.com/tienda/{slug || 'tu-tienda'}. Se
           completa solo con el nombre, pero podés editarlo.
         </p>
       </div>

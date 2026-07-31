@@ -4,7 +4,7 @@ function layout(title: string, bodyHtml: string, ctaHref?: string, ctaLabel?: st
   const baseUrl = getBaseUrl()
   return `
     <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #3a3550;">
-      <p style="font-size: 13px; color: #767296; margin-bottom: 24px;">Todo Marketplace</p>
+      <p style="font-size: 13px; color: #767296; margin-bottom: 24px;">Proxi Marketplace</p>
       <h1 style="font-size: 20px; margin-bottom: 12px;">${title}</h1>
       <div style="font-size: 14px; line-height: 1.6; color: #3a3550;">${bodyHtml}</div>
       ${
@@ -21,7 +21,7 @@ export function shopVerificationApprovedEmail(shopName: string) {
     subject: `¡${shopName} fue verificado! ✅`,
     html: layout(
       '¡Tu comercio ya está verificado!',
-      `<p>Buenas noticias: revisamos el documento que enviaste y <strong>${shopName}</strong> ya tiene el sello de verificado en Todo Marketplace.</p>
+      `<p>Buenas noticias: revisamos el documento que enviaste y <strong>${shopName}</strong> ya tiene el sello de verificado en Proxi Marketplace.</p>
        <p>Esto genera más confianza en tus clientes potenciales.</p>`,
       '/mi-tienda',
       'Ver mi tienda'

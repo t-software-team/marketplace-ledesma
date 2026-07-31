@@ -16,7 +16,7 @@ export default function AuthLayout({
         <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
           <Store className="size-4.5 text-primary" aria-hidden />
         </span>
-        Todo Marketplace
+        Proxi Marketplace
       </Link>
       <div className="w-full max-w-md">{children}</div>
     </div>

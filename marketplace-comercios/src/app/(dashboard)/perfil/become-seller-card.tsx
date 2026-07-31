@@ -38,7 +38,7 @@ export function BecomeSellerCard() {
             <Store className="size-4 text-primary" aria-hidden />
           </span>
           <div>
-            <p className="text-sm font-medium">¿Querés vender en Todo Marketplace?</p>
+            <p className="text-sm font-medium">¿Querés vender en Proxi Marketplace?</p>
             <p className="text-xs text-muted-foreground">
               Convertí tu cuenta en una cuenta de comercio y creá tu tienda gratis.
             </p>

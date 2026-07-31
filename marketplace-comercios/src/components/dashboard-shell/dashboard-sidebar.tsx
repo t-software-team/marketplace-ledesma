@@ -16,6 +16,7 @@ import {
   Tag,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 const ICONS = {
   store: Store,
@@ -103,8 +104,10 @@ export function DashboardSidebar({ navItems }: DashboardSidebarProps) {
   return (
     <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-border bg-surface md:flex">
       <div className="flex h-14 items-center gap-2 border-b border-border px-4 font-heading text-lg">
-        <Store className="size-5 text-primary" aria-hidden />
-        Todo Marketplace
+       <span className="relative hidden size-7 shrink-0 sm:block">
+            <Image src="/brand/logo.png" alt="" fill className="object-contain" />
+          </span>
+        Proxi Marketplace
       </div>
       <SidebarNav navItems={navItems} />
     </aside>

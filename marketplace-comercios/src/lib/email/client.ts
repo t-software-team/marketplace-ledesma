@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS ?? 'Todo Marketplace <onboarding@resend.dev>'
+const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS ?? 'Proxi Marketplace <onboarding@resend.dev>'
 
 export async function sendEmail(to: string, subject: string, html: string) {
   if (process.env.EMAILS_DISABLED === 'true') {

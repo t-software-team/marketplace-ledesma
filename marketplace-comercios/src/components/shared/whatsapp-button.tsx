@@ -17,7 +17,7 @@ interface WhatsAppButtonProps {
 
 export function WhatsAppButton({
   phoneNumber,
-  message = 'Hola, vi tu tienda en Todo Marketplace',
+  message = 'Hola, vi tu tienda en Proxi Marketplace',
   shopId,
   productId,
   className,

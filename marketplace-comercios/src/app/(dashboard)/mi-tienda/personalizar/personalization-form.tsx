@@ -58,7 +58,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           </div>
           <p className="text-xs text-muted-foreground">
             Este color se usa en los botones y acentos de tu tienda pública (
-            <span className="font-mono">marketplace-ledesma.com/tienda/{shop.slug}</span>).
+            <span className="font-mono">proxi.com/tienda/{shop.slug}</span>).
           </p>
         </CardContent>
       </Card>

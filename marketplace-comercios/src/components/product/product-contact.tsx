@@ -184,7 +184,7 @@ export function ProductContact({
   const quickMessages = (rubroSlug && MESSAGES_BY_RUBRO[rubroSlug]) || GENERIC_MESSAGES
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const effectiveName = selectedVariant ? `${productName} - ${selectedVariant.name}` : productName
-  const defaultMessage = `Hola ${shopName}, vi "${effectiveName}" en Todo Marketplace`
+  const defaultMessage = `Hola ${shopName}, vi "${effectiveName}" en Proxi Marketplace`
   const [message, setMessage] = useState(defaultMessage)
   const [selectedLabel, setSelectedLabel] = useState<string | null>(null)
 
@@ -192,7 +192,7 @@ export function ProductContact({
     setSelectedVariant(variant)
     setSelectedLabel(null)
     const name = variant ? `${productName} - ${variant.name}` : productName
-    setMessage(`Hola ${shopName}, vi "${name}" en Todo Marketplace`)
+    setMessage(`Hola ${shopName}, vi "${name}" en Proxi Marketplace`)
   }
 
   return (

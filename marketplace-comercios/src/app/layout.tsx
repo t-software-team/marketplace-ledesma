@@ -31,19 +31,19 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseUrl()),
   title: {
-    default: 'Todo Marketplace',
-    template: '%s | Todo Marketplace',
+    default: 'Proxi Marketplace',
+    template: '%s | Proxi Marketplace',
   },
   description: 'Comercios locales de tu barrio',
   openGraph: {
     type: 'website',
-    siteName: 'Todo Marketplace',
+    siteName: 'Proxi Marketplace',
     locale: 'es_AR',
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Todo Marketplace',
+    title: 'Proxi Marketplace',
   },
 }
 
