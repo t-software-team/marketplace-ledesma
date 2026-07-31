@@ -66,7 +66,13 @@ export function StoryPreview({
       )}
     >
       {imageUrl ? (
-        <Image src={imageUrl} alt="" fill className="object-cover" sizes="320px" />
+        <Image
+          src={imageUrl}
+          alt={productName ? `Promoción de ${productName}` : 'Imagen de la promoción'}
+          fill
+          className="object-cover"
+          sizes="320px"
+        />
       ) : (
         <div className="flex h-full items-center justify-center px-6 text-center text-xs text-muted-foreground">
           {emptyLabel}

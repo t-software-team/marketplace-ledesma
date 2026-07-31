@@ -49,6 +49,7 @@ export function ShopPlanCard({ shopId, activePlanId, plans }: ShopPlanCardProps)
         <select
           value={selectedPlanId}
           onChange={(event) => setSelectedPlanId(event.target.value)}
+          aria-label="Plan de suscripción"
           className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <option value="">Free (sin plan)</option>

@@ -79,6 +79,7 @@ export function SubscriptionActions({ subscriptionId }: SubscriptionActionsProps
               placeholder="Indicá el motivo del rechazo"
               rows={4}
               required
+              aria-label="Motivo del rechazo"
             />
             {state.error && <p className="text-sm text-destructive">{state.error}</p>}
             <DialogFooter>

@@ -69,14 +69,26 @@ export function ProductGallery({ images, productName, videoUrl }: ProductGallery
               {slide.type === 'video' ? (
                 <>
                   {images[0] && (
-                    <Image src={images[0].url} alt="" fill className="object-cover" sizes="64px" />
+                    <Image
+                      src={images[0].url}
+                      alt={`${productName} - imagen 1`}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
                   )}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/40">
                     <Play className="size-5 fill-white text-white" aria-hidden />
                   </span>
                 </>
               ) : (
-                <Image src={slide.url} alt="" fill className="object-cover" sizes="64px" />
+                <Image
+                  src={slide.url}
+                  alt={`${productName} - imagen ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="64px"
+                />
               )}
             </button>
           ))}

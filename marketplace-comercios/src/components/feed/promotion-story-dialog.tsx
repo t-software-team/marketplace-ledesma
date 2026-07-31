@@ -192,7 +192,13 @@ export function PromotionStoryDialog({
                 >
                   <div className="relative size-8 shrink-0 overflow-hidden rounded-full bg-white/20 ring-1 ring-white/40">
                     {promotion.shopLogoUrl ? (
-                      <Image src={promotion.shopLogoUrl} alt="" fill className="object-cover" sizes="32px" />
+                      <Image
+                        src={promotion.shopLogoUrl}
+                        alt={`Logo de ${promotion.shopName}`}
+                        fill
+                        className="object-cover"
+                        sizes="32px"
+                      />
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <Store className="size-4" aria-hidden />

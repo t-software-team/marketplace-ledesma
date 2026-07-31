@@ -121,7 +121,13 @@ export function CreatePromotionForm({ shopId, products, noun = 'producto' }: Cre
                     imageUrl === url ? 'border-primary' : 'border-transparent'
                   )}
                 >
-                  <Image src={url} alt="" fill className="object-cover" sizes="56px" />
+                  <Image
+                    src={url}
+                    alt="Vista previa de la promoción"
+                    fill
+                    className="object-cover"
+                    sizes="56px"
+                  />
                 </button>
               ))}
               <label
@@ -143,7 +149,13 @@ export function CreatePromotionForm({ shopId, products, noun = 'producto' }: Cre
           {(!selectedProduct || selectedProduct.imageUrls.length === 0) &&
             (imageUrl ? (
               <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
-                <Image src={imageUrl} alt="" fill className="object-cover" sizes="80px" />
+                <Image
+                  src={imageUrl}
+                  alt="Vista previa de la promoción"
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
                 <button
                   type="button"
                   onClick={() => setImageUrl('')}

@@ -258,8 +258,8 @@ export function BottomNav({ isLoggedIn }: BottomNavProps) {
   if (isMinimal) return null
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 backdrop-blur-sm sm:hidden [padding-bottom:env(safe-area-inset-bottom)]">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-around px-2">
+    <nav className="fixed inset-x-0 bottom-0 z-20 px-3 pb-3 sm:hidden [padding-bottom:calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <div className="mx-auto flex max-w-5xl items-center justify-around gap-1 rounded-2xl border border-border/60 bg-background/80 p-1.5 shadow-lg shadow-black/10 backdrop-blur-xl">
         {NAV_ITEMS.map((item) => {
           const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
           const href = isLoggedIn || item.href === '/' ? item.href : '/login'
@@ -270,12 +270,20 @@ export function BottomNav({ isLoggedIn }: BottomNavProps) {
               key={item.href}
               href={href}
               className={cn(
-                'flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground'
+                'group relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-[11px] font-medium transition-all duration-200',
+                isActive
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground active:scale-95 active:bg-muted'
               )}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className="size-5" aria-hidden />
+              <Icon
+                className={cn(
+                  'size-5 transition-transform duration-200',
+                  isActive ? 'scale-105' : 'group-active:scale-90'
+                )}
+                aria-hidden
+              />
               {item.label}
             </Link>
           )

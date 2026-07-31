@@ -69,7 +69,7 @@ export function ProductForm({
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium">
+        <label htmlFor="name" className="text-base font-medium sm:text-sm">
           Nombre
         </label>
         <Input
@@ -87,7 +87,7 @@ export function ProductForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Descripción</label>
+        <label className="text-base font-medium sm:text-sm">Descripción</label>
         <RichTextEditor name="description" initialValue={defaultValues?.description ?? ''} />
         <p className="text-xs text-muted-foreground">
           Contá lo que a tu cliente le sirve saber: material, talles o colores disponibles, tiempo de
@@ -98,7 +98,7 @@ export function ProductForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label htmlFor="price" className="text-sm font-medium">
+          <label htmlFor="price" className="text-base font-medium sm:text-sm">
             {isService ? 'Precio del servicio' : 'Precio'}
           </label>
           <Input
@@ -113,7 +113,7 @@ export function ProductForm({
           <FieldError message={fieldErrors.price} />
         </div>
         <div className="space-y-2">
-          <label htmlFor="currency" className="text-sm font-medium">
+          <label htmlFor="currency" className="text-base font-medium sm:text-sm">
             Moneda
           </label>
           <Input
@@ -126,6 +126,7 @@ export function ProductForm({
           <FieldError message={fieldErrors.currency} />
         </div>
       </div>
+
       <ProductVariantsField
         initialVariants={defaultValues?.variants}
         noun={noun}
@@ -133,7 +134,7 @@ export function ProductForm({
       />
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Subcategoría</label>
+        <label className="text-base font-medium sm:text-sm">Subcategoría</label>
         <input type="hidden" name="category_id" value={categoryId} />
         {categories.length > 0 && (
           <div className="relative">
@@ -188,7 +189,7 @@ export function ProductForm({
 
 
       <div className="space-y-1">
-        <label className="flex items-center gap-2 text-sm font-medium">
+        <label className="flex items-center gap-2 text-base font-medium sm:text-sm">
           <input
             type="checkbox"
             name="is_active"

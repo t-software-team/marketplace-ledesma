@@ -74,7 +74,13 @@ export function PromotionsRow({ promotions }: { promotions: Promotion[] }) {
             onClick={() => setActiveIndex(stories.findIndex((item) => item.shopId === story.shopId))}
             className="relative aspect-[9/16] w-28 shrink-0 overflow-hidden rounded-xl border border-border bg-muted text-left transition-transform hover:scale-[1.02]"
           >
-            <Image src={story.imageUrl} alt="" fill className="object-cover" sizes="112px" />
+            <Image
+              src={story.imageUrl}
+              alt={`Promoción de ${story.shopName}`}
+              fill
+              className="object-cover"
+              sizes="112px"
+            />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
               <p className="truncate text-xs font-medium text-white">{story.shopName}</p>
             </div>

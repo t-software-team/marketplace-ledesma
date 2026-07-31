@@ -90,10 +90,10 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <h2 className="text-sm font-medium text-muted-foreground">Datos generales</h2>
+          <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Datos generales</h2>
 
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium">
+            <label htmlFor="name" className="text-base font-medium sm:text-sm">
               Nombre
             </label>
             <Input
@@ -113,7 +113,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="slug" className="text-sm font-medium">
+            <label htmlFor="slug" className="text-base font-medium sm:text-sm">
               Link de tu tienda
             </label>
             <Input
@@ -139,7 +139,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Descripción</label>
+            <label className="text-base font-medium sm:text-sm">Descripción</label>
             <RichTextEditor name="description" initialValue={shop.description ?? ''} />
             <p className="text-xs text-muted-foreground">
               Contales a tus clientes qué vendés, hace cuánto existís y qué te distingue.
@@ -151,11 +151,11 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <h2 className="text-sm font-medium text-muted-foreground">Contacto y ubicación</h2>
+          <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Contacto y ubicación</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="whatsapp_number" className="text-sm font-medium">
+              <label htmlFor="whatsapp_number" className="text-base font-medium sm:text-sm">
                 WhatsApp
               </label>
               <Input
@@ -172,7 +172,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               <FieldError message={fieldErrors.whatsapp_number} />
             </div>
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
+              <label htmlFor="email" className="text-base font-medium sm:text-sm">
                 Email
               </label>
               <Input
@@ -188,14 +188,14 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="address" className="text-sm font-medium">
+              <label htmlFor="address" className="text-base font-medium sm:text-sm">
                 Dirección
               </label>
               <Input id="address" name="address" defaultValue={shop.address ?? ''} />
               <FieldError message={fieldErrors.address} />
             </div>
             <div className="space-y-2">
-              <label htmlFor="city" className="text-sm font-medium">
+              <label htmlFor="city" className="text-base font-medium sm:text-sm">
                 Ciudad
               </label>
               <Input id="city" name="city" defaultValue={shop.city ?? ''} />
@@ -205,7 +205,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label htmlFor="instagram_url" className="text-sm font-medium">
+              <label htmlFor="instagram_url" className="text-base font-medium sm:text-sm">
                 Instagram (URL)
               </label>
               <Input
@@ -218,7 +218,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               <FieldError message={fieldErrors.instagram_url} />
             </div>
             <div className="space-y-2">
-              <label htmlFor="facebook_url" className="text-sm font-medium">
+              <label htmlFor="facebook_url" className="text-base font-medium sm:text-sm">
                 Facebook (URL)
               </label>
               <Input
@@ -233,7 +233,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="website_url" className="text-sm font-medium">
+            <label htmlFor="website_url" className="text-base font-medium sm:text-sm">
               Sitio web
             </label>
             <Input
@@ -250,10 +250,10 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <h2 className="text-sm font-medium text-muted-foreground">Rubro y horario</h2>
+          <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Rubro y horario</h2>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Rubro</label>
+            <label className="text-base font-medium sm:text-sm">Rubro</label>
             <input type="hidden" name="category_id" value={categoryId} />
             <div className="relative">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -321,11 +321,11 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <h2 className="text-sm font-medium text-muted-foreground">Imágenes</h2>
+          <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Imágenes</h2>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="logo" className="text-sm font-medium">
+              <label htmlFor="logo" className="text-base font-medium sm:text-sm">
                 Logo
               </label>
               <Input
@@ -341,7 +341,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               )}
             </div>
             <div className="space-y-2">
-              <label htmlFor="cover" className="text-sm font-medium">
+              <label htmlFor="cover" className="text-base font-medium sm:text-sm">
                 Portada
               </label>
               <Input
@@ -364,7 +364,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
           <div>
-            <p className="text-sm font-medium">Personalizá tu tienda pública</p>
+            <p className="text-base font-medium sm:text-sm">Personalizá tu tienda pública</p>
             <p className="text-xs text-muted-foreground">
               Color de acento, banner promocional, servicios destacados y video.
             </p>
@@ -377,9 +377,9 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
 
       <Card>
         <CardContent className="space-y-2 pt-6">
-          <h2 className="text-sm font-medium text-muted-foreground">Estado</h2>
+          <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Estado</h2>
 
-          <label className="flex items-center gap-2 text-sm font-medium">
+          <label className="flex items-center gap-2 text-base font-medium sm:text-sm">
             <input
               type="checkbox"
               name="is_paused"
@@ -398,6 +398,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
               name="paused_reason"
               placeholder="Motivo de la pausa"
               defaultValue={shop.paused_reason ?? ''}
+              aria-label="Motivo de pausa"
             />
           )}
         </CardContent>

@@ -190,7 +190,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
           >
             <div className="relative size-10 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border">
               {shop.logo_url ? (
-                <Image src={shop.logo_url} alt="" fill className="object-cover" sizes="40px" />
+                <Image
+                  src={shop.logo_url}
+                  alt={`Logo de ${shop.name}`}
+                  fill
+                  className="object-cover"
+                  sizes="40px"
+                />
               ) : (
                 <div className="flex h-full items-center justify-center text-sm font-heading text-muted-foreground">
                   {shop.name.charAt(0)}

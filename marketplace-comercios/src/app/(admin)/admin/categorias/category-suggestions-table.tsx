@@ -49,7 +49,14 @@ function RejectDialog({ suggestionId }: { suggestionId: string }) {
           <DialogTitle>Rechazar sugerencia</DialogTitle>
         </DialogHeader>
         <form action={formAction} className="space-y-3">
-          <Textarea name="reason" placeholder="Motivo del rechazo" rows={3} required minLength={5} />
+          <Textarea
+            name="reason"
+            placeholder="Motivo del rechazo"
+            rows={3}
+            required
+            minLength={5}
+            aria-label="Motivo del rechazo"
+          />
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

@@ -76,6 +76,7 @@ export function ShopSuspensionActions({ shopId, isActive }: ShopSuspensionAction
                 placeholder="Motivo de la suspensión (se le informa al dueño por email)"
                 rows={4}
                 required
+                aria-label="Motivo de suspensión"
               />
               {state.error && <p className="text-sm text-destructive">{state.error}</p>}
               <DialogFooter>

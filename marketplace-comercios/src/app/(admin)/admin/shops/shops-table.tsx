@@ -98,6 +98,7 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               rows={3}
+              aria-label="Motivo de suspensión"
             />
             <DialogFooter>
               <Button variant="outline" onClick={() => setSuspendOpen(false)}>

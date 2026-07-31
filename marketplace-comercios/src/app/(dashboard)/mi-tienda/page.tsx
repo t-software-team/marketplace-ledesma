@@ -121,7 +121,13 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="relative h-28 bg-gradient-to-br from-primary/30 to-destacado/30 sm:h-36">
           {shop.cover_url && (
-            <Image src={shop.cover_url} alt="" fill className="object-cover" sizes="768px" />
+            <Image
+              src={shop.cover_url}
+              alt={`Portada de ${shop.name}`}
+              fill
+              className="object-cover"
+              sizes="768px"
+            />
           )}
         </div>
         <div className="flex flex-wrap items-end justify-between gap-3 px-4 pb-4">
