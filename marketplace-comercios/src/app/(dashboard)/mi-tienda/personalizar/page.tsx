@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { getMyActiveSubscription, getMyShop } from '@/lib/shops/queries'
 import { PersonalizationForm } from './personalization-form'
 
@@ -20,7 +21,7 @@ export default async function PersonalizarPage() {
   )
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className={cn('space-y-4', hasCustomBranding ? 'max-w-6xl' : 'max-w-2xl')}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-heading">Personalizar tienda</h1>

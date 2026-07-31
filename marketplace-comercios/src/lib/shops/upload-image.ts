@@ -155,6 +155,42 @@ export async function uploadProductVideo(shopId: string, file: File) {
   return publicUrl
 }
 
+const SHOP_LANDING_VIDEO_MAX_DURATION_SECONDS = 20
+
+export async function uploadShopLandingVideo(shopId: string, file: File) {
+  if (!VIDEO_MIME_TYPES.includes(file.type)) {
+    throw new Error('El video debe ser MP4, WEBM o MOV')
+  }
+
+  if (file.size > VIDEO_MAX_SIZE) {
+    throw new Error(`El video no puede pesar más de ${VIDEO_MAX_SIZE / (1024 * 1024)}MB`)
+  }
+
+  const duration = await readVideoDuration(file)
+  if (duration > SHOP_LANDING_VIDEO_MAX_DURATION_SECONDS) {
+    throw new Error(`El video no puede durar más de ${SHOP_LANDING_VIDEO_MAX_DURATION_SECONDS} segundos`)
+  }
+
+  const supabase = createClient()
+  const extension = file.name.split('.').pop() ?? 'mp4'
+  const path = `${shopId}/${crypto.randomUUID()}.${extension}`
+
+  const { error } = await supabase.storage.from('shop-landing-videos').upload(path, file, {
+    upsert: false,
+  })
+
+  if (error) {
+    console.error('uploadShopLandingVideo: fallo al subir a Storage', { shopId, error })
+    throw new Error('No pudimos subir el video')
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('shop-landing-videos').getPublicUrl(path)
+
+  return publicUrl
+}
+
 const PAYMENT_PROOF_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
 const PAYMENT_PROOF_MAX_SIZE = 10 * 1024 * 1024
 

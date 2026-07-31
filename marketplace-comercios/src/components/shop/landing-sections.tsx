@@ -108,10 +108,14 @@ export function LandingServicesSection({ data }: { data: unknown }) {
       <h2 className="text-lg font-heading">Servicios</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {services.map((service, index) => (
-          <div key={index} className="rounded-xl border border-border bg-surface p-3">
-            <p className="text-sm font-medium">{service.name}</p>
+          <div
+            key={index}
+            className="group relative overflow-hidden rounded-xl border border-border bg-surface p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+          >
+            <div className="absolute -right-4 -top-4 size-16 rounded-full bg-primary/5 transition-colors group-hover:bg-primary/10" aria-hidden />
+            <p className="relative text-sm font-medium leading-tight">{service.name}</p>
             {service.description && (
-              <p className="mt-1 text-xs text-muted-foreground">{service.description}</p>
+              <p className="relative mt-1 text-xs text-muted-foreground">{service.description}</p>
             )}
           </div>
         ))}

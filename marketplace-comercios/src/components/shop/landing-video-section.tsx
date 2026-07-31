@@ -4,18 +4,27 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { Play } from 'lucide-react'
 
+const DIRECT_VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov']
+
 interface ParsedVideo {
+  kind: 'embed'
   embedUrl: string
   thumbnailUrl: string | null
 }
 
-function parseVideo(url: string): ParsedVideo | null {
+interface ParsedDirectVideo {
+  kind: 'file'
+  fileUrl: string
+}
+
+function parseVideo(url: string): ParsedVideo | ParsedDirectVideo | null {
   try {
     const parsed = new URL(url)
     if (parsed.hostname.includes('youtube.com')) {
       const videoId = parsed.searchParams.get('v')
       if (!videoId) return null
       return {
+        kind: 'embed',
         embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1`,
         thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       }
@@ -24,6 +33,7 @@ function parseVideo(url: string): ParsedVideo | null {
       const videoId = parsed.pathname.slice(1)
       if (!videoId) return null
       return {
+        kind: 'embed',
         embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=1`,
         thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       }
@@ -32,9 +42,14 @@ function parseVideo(url: string): ParsedVideo | null {
       const videoId = parsed.pathname.split('/').filter(Boolean).pop()
       if (!videoId) return null
       return {
+        kind: 'embed',
         embedUrl: `https://player.vimeo.com/video/${videoId}?autoplay=1`,
         thumbnailUrl: null,
       }
+    }
+    const lowerPath = parsed.pathname.toLowerCase()
+    if (DIRECT_VIDEO_EXTENSIONS.some((extension) => lowerPath.endsWith(extension))) {
+      return { kind: 'file', fileUrl: url }
     }
     return null
   } catch {
@@ -51,7 +66,9 @@ export function LandingVideoSection({ url }: { url: string | null }) {
   return (
     <section className="space-y-3">
       <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
-        {isPlaying ? (
+        {video.kind === 'file' ? (
+          <video src={video.fileUrl} controls preload="metadata" className="size-full rounded-xl" />
+        ) : isPlaying ? (
           <iframe
             src={video.embedUrl}
             className="absolute inset-0 size-full"

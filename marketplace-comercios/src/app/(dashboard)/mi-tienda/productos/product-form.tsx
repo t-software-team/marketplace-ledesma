@@ -35,6 +35,7 @@ interface ProductFormProps {
   }
   submitLabel: string
   isService?: boolean
+  videoLimitReached?: boolean
 }
 
 const initialState: ActionState = { error: null }
@@ -48,6 +49,7 @@ export function ProductForm({
   defaultValues,
   submitLabel,
   isService = false,
+  videoLimitReached = false,
 }: ProductFormProps) {
   const noun = isService ? 'servicio' : 'producto'
   const [state, formAction, isPending] = useActionState(action, initialState)
@@ -185,7 +187,12 @@ export function ProductForm({
 
       <ProductImagesField shopId={shopId} initialImages={defaultValues?.imageUrls} noun={noun} />
 
-      <ProductVideoField shopId={shopId} initialVideoUrl={defaultValues?.videoUrl} noun={noun} />
+      <ProductVideoField
+        shopId={shopId}
+        initialVideoUrl={defaultValues?.videoUrl}
+        noun={noun}
+        videoLimitReached={videoLimitReached}
+      />
 
 
       <div className="space-y-1">

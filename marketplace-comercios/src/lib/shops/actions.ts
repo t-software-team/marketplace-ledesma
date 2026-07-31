@@ -7,7 +7,11 @@ import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
-import { getMyActiveSubscription, getProductLimitInfo } from '@/lib/shops/queries'
+import {
+  getMyActiveSubscription,
+  getProductLimitInfo,
+  getProductVideoLimitInfo,
+} from '@/lib/shops/queries'
 import { ACCENT_COLORS } from '@/lib/accent-colors'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sanitizeRichText } from '@/lib/sanitize-html'
@@ -488,6 +492,16 @@ export async function createProduct(
     }
   }
 
+  if (parsed.data.video_url) {
+    const videoLimitInfo = await getProductVideoLimitInfo(shop.id)
+    if (videoLimitInfo.reached) {
+      return {
+        error:
+          'Llegaste al límite de 3 productos con video de tu Plan Free. Mejorá a Plan Básico o Ilimitado para sumar más.',
+      }
+    }
+  }
+
   const minVariantPrice =
     parsed.data.variants.length > 0
       ? Math.min(...parsed.data.variants.map((v) => v.price))
@@ -592,9 +606,19 @@ export async function updateProduct(
 
   const { data: existingProduct } = await supabase
     .from('products')
-    .select('shops ( category_id )')
+    .select('shop_id, video_url, shops ( category_id )')
     .eq('id', productId)
     .maybeSingle()
+
+  if (!existingProduct?.video_url && parsed.data.video_url && existingProduct?.shop_id) {
+    const videoLimitInfo = await getProductVideoLimitInfo(existingProduct.shop_id)
+    if (videoLimitInfo.reached) {
+      return {
+        error:
+          'Llegaste al límite de 3 productos con video de tu Plan Free. Mejorá a Plan Básico o Ilimitado para sumar más.',
+      }
+    }
+  }
 
   const minVariantPrice =
     parsed.data.variants.length > 0

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { Loader2, Video, X } from 'lucide-react'
 import { uploadProductVideo } from '@/lib/shops/upload-image'
 
@@ -8,17 +9,20 @@ interface ProductVideoFieldProps {
   shopId: string
   initialVideoUrl?: string | null
   noun?: string
+  videoLimitReached?: boolean
 }
 
 export function ProductVideoField({
   shopId,
   initialVideoUrl = null,
   noun = 'producto',
+  videoLimitReached = false,
 }: ProductVideoFieldProps) {
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl ?? '')
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const blocked = videoLimitReached && !videoUrl
 
   async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -57,6 +61,16 @@ export function ProductVideoField({
           >
             <X className="size-4" aria-hidden />
           </button>
+        </div>
+      ) : blocked ? (
+        <div className="w-full max-w-xs rounded-xl border border-dashed border-border bg-muted px-4 py-3 text-center">
+          <p className="text-xs text-muted-foreground">
+            Llegaste al límite de videos de tu plan.{' '}
+            <Link href="/mi-tienda/suscripcion" className="underline">
+              Mejorá a Plan Básico o Ilimitado
+            </Link>{' '}
+            para sumar más.
+          </p>
         </div>
       ) : (
         <div className="flex w-full max-w-xs flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted px-4 py-6 text-center">

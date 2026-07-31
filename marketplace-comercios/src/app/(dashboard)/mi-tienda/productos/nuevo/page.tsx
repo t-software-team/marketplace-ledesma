@@ -1,7 +1,13 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { isServiceRubro } from '@/lib/category-icons'
-import { getCategoryAttributes, getMyShop, getProductLimitInfo, getSubcategories } from '@/lib/shops/queries'
+import {
+  getCategoryAttributes,
+  getMyShop,
+  getProductLimitInfo,
+  getProductVideoLimitInfo,
+  getSubcategories,
+} from '@/lib/shops/queries'
 import { createProduct } from '@/lib/shops/actions'
 import { BackLink } from '@/components/shared/back-link'
 import { ProductForm } from '../product-form'
@@ -49,9 +55,10 @@ export default async function NewProductPage() {
     )
   }
 
-  const [categories, attributeDefs] = await Promise.all([
+  const [categories, attributeDefs, videoLimitInfo] = await Promise.all([
     getSubcategories(shop.category_id),
     getCategoryAttributes(shop.category_id),
+    getProductVideoLimitInfo(shop.id),
   ])
 
   return (
@@ -66,6 +73,7 @@ export default async function NewProductPage() {
         action={createProduct}
         submitLabel={`Crear ${noun}`}
         isService={isService}
+        videoLimitReached={videoLimitInfo.reached}
       />
     </div>
   )

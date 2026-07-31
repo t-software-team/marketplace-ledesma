@@ -731,3 +731,40 @@ export async function getProductLimitInfo(shopId: string) {
     reached: max !== null && used >= max,
   }
 }
+
+const FREE_PLAN_MAX_VIDEOS = 3
+
+export async function getProductVideoLimitInfo(shopId: string) {
+  const supabase = await createClient()
+
+  const [{ count }, { data: activeSubscription }] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('shop_id', shopId)
+      .not('video_url', 'is', null),
+    supabase
+      .from('subscriptions')
+      .select('subscription_plans ( benefits )')
+      .eq('shop_id', shopId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
+
+  const used = count ?? 0
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    | { max_videos?: number | null }
+    | null
+    | undefined
+
+  const hasActivePlan = Boolean(activeSubscription)
+  const max = hasActivePlan ? (benefits?.max_videos ?? null) : FREE_PLAN_MAX_VIDEOS
+
+  return {
+    used,
+    max,
+    reached: max !== null && used >= max,
+  }
+}
