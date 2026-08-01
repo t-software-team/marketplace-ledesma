@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { Globe, MapPin } from 'lucide-react'
+import { ArrowLeft, Globe, MapPin } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
 import { notFound } from 'next/navigation'
@@ -164,6 +164,13 @@ export default async function ShopPage({ params }: ShopPageProps) {
           ) : (
             <div className="h-full bg-gradient-to-br from-primary/20 to-muted" />
           )}
+          <Link
+            href="/"
+            className="absolute top-3 right-3 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+          >
+            <ArrowLeft className="size-3.5" aria-hidden />
+            Ir al Marketplace
+          </Link>
           {isFeatured && <FeaturedRibbon variant="floating" />}
         </div>
 

@@ -89,7 +89,12 @@ export function PublicHeader({
     })
   }
 
-  if (isMinimal) {
+  // /tienda/[slug] has its own explicit "Ir al Marketplace" link over the
+  // banner (see the shop page), so the generic floating back button would
+  // just duplicate/overlap it there.
+  const showFloatingBack = isMinimal && !pathname.startsWith('/tienda/')
+
+  if (showFloatingBack) {
     return (
       <button
         type="button"
@@ -109,6 +114,8 @@ export function PublicHeader({
       </button>
     )
   }
+
+  if (isMinimal) return null
 
   return (
     <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
