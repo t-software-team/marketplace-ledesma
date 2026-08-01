@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useTransition } from 'react'
-import { Ban } from 'lucide-react'
+import { useMemo, useState, useTransition } from 'react'
+import { Ban, Download, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -13,17 +13,31 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
-import { bulkApproveShopVerification, bulkSuspendShops } from '@/lib/admin/actions'
-import type { getShopsForReview } from '@/lib/admin/queries'
+import {
+  bulkApproveShopVerification,
+  bulkChangeShopPlan,
+  bulkSuspendShops,
+} from '@/lib/admin/actions'
+import type { getShopsForReview, getSubscriptionPlans } from '@/lib/admin/queries'
 
 type Shop = Awaited<ReturnType<typeof getShopsForReview>>[number]
+type Plan = Awaited<ReturnType<typeof getSubscriptionPlans>>[number]
 
 const PAGE_SIZE = 15
 
@@ -31,20 +45,73 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString('es-AR')
 }
 
-export function ShopsTable({ shops }: { shops: Shop[] }) {
+function escapeCsvValue(value: string) {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`
+  }
+  return value
+}
+
+function buildCsv(shops: Shop[]) {
+  const header = ['Comercio', 'Ciudad', 'WhatsApp', 'Registrado', 'Plan', 'Estado']
+  const rows = shops.map((shop) => [
+    shop.name,
+    shop.city ?? 'Sin ciudad',
+    shop.whatsapp_number,
+    formatDate(shop.created_at),
+    shop.activePlanName ?? 'Free',
+    shop.is_active ? shop.verification_status : `${shop.verification_status} / suspendido`,
+  ])
+
+  return [header, ...rows].map((row) => row.map(escapeCsvValue).join(',')).join('\n')
+}
+
+function downloadCsv(csv: string) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const date = new Date().toISOString().slice(0, 10)
+  link.href = url
+  link.download = `comercios-export-${date}.csv`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
   const [isPending, startTransition] = useTransition()
   const [suspendOpen, setSuspendOpen] = useState(false)
   const [reason, setReason] = useState('')
-  const isPendingTab = shops.every((shop) => shop.verification_status === 'pending')
-  const totalPages = Math.max(1, Math.ceil(shops.length / PAGE_SIZE))
+  const [planDialogOpen, setPlanDialogOpen] = useState(false)
+  const [selectedPlanId, setSelectedPlanId] = useState('')
+  const [quickViewShop, setQuickViewShop] = useState<Shop | null>(null)
+
+  const filteredShops = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return shops
+    return shops.filter(
+      (shop) =>
+        shop.name.toLowerCase().includes(query) || shop.whatsapp_number.toLowerCase().includes(query)
+    )
+  }, [shops, search])
+
+  const isPendingTab = filteredShops.every((shop) => shop.verification_status === 'pending')
+  const totalPages = Math.max(1, Math.ceil(filteredShops.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
-  const pageShops = shops.slice(start, start + PAGE_SIZE)
+  const pageShops = filteredShops.slice(start, start + PAGE_SIZE)
 
   const { selected, selectedIds, isAllSelected, toggle, toggleAll, clear } = useRowSelection(
     pageShops.map((shop) => shop.id)
   )
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
 
   function handleBulkApprove() {
     startTransition(async () => {
@@ -74,8 +141,41 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
     })
   }
 
+  function handleExportCsv() {
+    const selectedShops = shops.filter((shop) => selected.has(shop.id))
+    downloadCsv(buildCsv(selectedShops))
+  }
+
+  function handleBulkChangePlan() {
+    if (!selectedPlanId) return
+    startTransition(async () => {
+      const { changed, failed } = await bulkChangeShopPlan(selectedIds, selectedPlanId)
+      if (changed > 0) {
+        toast.add({ title: `${changed} comercios actualizados`, type: 'success' })
+      }
+      if (failed > 0) {
+        toast.add({ title: `${failed} comercios no se pudieron actualizar`, type: 'error' })
+      }
+      setPlanDialogOpen(false)
+      setSelectedPlanId('')
+      clear()
+    })
+  }
+
+  function openQuickView(shop: Shop) {
+    setQuickViewShop(shop)
+  }
+
   return (
     <div className="space-y-3">
+      <Input
+        value={search}
+        onChange={(event) => handleSearchChange(event.target.value)}
+        placeholder="Buscar por nombre o WhatsApp..."
+        aria-label="Buscar comercios"
+        className="max-w-sm"
+      />
+
       <BulkActionsBar count={selected.size} onClear={clear}>
         {isPendingTab && (
           <Button variant="outline" size="sm" disabled={isPending} onClick={handleBulkApprove}>
@@ -114,6 +214,44 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
+          <DialogTrigger render={<Button variant="outline" size="sm" className="gap-1.5" />}>
+            <CreditCard className="size-3.5" aria-hidden />
+            Cambiar plan
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>
+                Cambiar plan de {selected.size} comercio{selected.size === 1 ? '' : 's'}
+              </DialogTitle>
+            </DialogHeader>
+            <select
+              value={selectedPlanId}
+              onChange={(event) => setSelectedPlanId(event.target.value)}
+              aria-label="Plan de suscripción"
+              className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="">Seleccioná un plan</option>
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name}
+                </option>
+              ))}
+            </select>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPlanDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button disabled={isPending || !selectedPlanId} onClick={handleBulkChangePlan}>
+                {isPending ? 'Guardando...' : 'Confirmar'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportCsv}>
+          <Download className="size-3.5" aria-hidden />
+          Exportar CSV
+        </Button>
       </BulkActionsBar>
 
       <Table>
@@ -137,8 +275,12 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
         </TableHeader>
         <TableBody>
           {pageShops.map((shop) => (
-            <TableRow key={shop.id}>
-              <TableCell>
+            <TableRow
+              key={shop.id}
+              className="cursor-pointer"
+              onClick={() => openQuickView(shop)}
+            >
+              <TableCell onClick={(event) => event.stopPropagation()}>
                 <Checkbox
                   checked={selected.has(shop.id)}
                   onCheckedChange={() => toggle(shop.id)}
@@ -164,7 +306,7 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
                   <StatusBadge status={shop.verification_status} />
                 </div>
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
                 <Button
                   render={<Link href={`/admin/shops/${shop.id}`} />}
                   nativeButton={false}
@@ -181,10 +323,57 @@ export function ShopsTable({ shops }: { shops: Shop[] }) {
       <PaginationControls
         page={currentPage}
         totalPages={totalPages}
-        totalCount={shops.length}
+        totalCount={filteredShops.length}
         onPrevious={() => setPage(currentPage - 1)}
         onNext={() => setPage(currentPage + 1)}
       />
+
+      <Sheet open={quickViewShop !== null} onOpenChange={(open) => !open && setQuickViewShop(null)}>
+        <SheetContent>
+          {quickViewShop && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{quickViewShop.name}</SheetTitle>
+                <SheetDescription>Vista rápida del comercio</SheetDescription>
+              </SheetHeader>
+              <div className="flex-1 space-y-3 px-4 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Ciudad</span>
+                  <span>{quickViewShop.city ?? 'Sin ciudad'}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">WhatsApp</span>
+                  <span>{quickViewShop.whatsapp_number}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Registrado</span>
+                  <span>{formatDate(quickViewShop.created_at)}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Plan</span>
+                  <span>{quickViewShop.activePlanName ?? 'Free'}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Estado</span>
+                  <div className="flex items-center gap-1.5">
+                    {!quickViewShop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
+                    <StatusBadge status={quickViewShop.verification_status} />
+                  </div>
+                </div>
+              </div>
+              <SheetFooter>
+                <Button
+                  render={<Link href={`/admin/shops/${quickViewShop.id}`} />}
+                  nativeButton={false}
+                  className="w-full"
+                >
+                  Ver detalle completo
+                </Button>
+              </SheetFooter>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

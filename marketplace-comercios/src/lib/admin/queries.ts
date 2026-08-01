@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/server/supabase-service-role'
+import type { Database } from '@/types/database.types'
 
 export async function getShopsForReview() {
   const supabase = await createClient()
@@ -21,6 +23,24 @@ export async function getShopsForReview() {
       subscriptions?.find((sub) => sub.status === 'active')?.subscription_plans?.name ?? null
     return { ...rest, activePlanName }
   })
+}
+
+export async function searchShopsByName(query: string) {
+  const trimmed = query.trim()
+
+  if (trimmed.length < 2) return []
+
+  const supabase = await createClient()
+
+  const { data: shops } = await supabase
+    .from('shops')
+    .select('id, name')
+    .is('deleted_at', null)
+    .ilike('name', `%${trimmed}%`)
+    .order('name', { ascending: true })
+    .limit(8)
+
+  return shops ?? []
 }
 
 export async function getShopForReview(shopId: string) {
@@ -214,6 +234,65 @@ export async function getUnreadNotifications() {
     .limit(10)
 
   return notifications ?? []
+}
+
+type UserRole = Database['public']['Enums']['user_role']
+
+export interface UserDirectoryEntry {
+  id: string
+  role: UserRole | null
+  full_name: string | null
+  avatar_url: string | null
+  phone: string | null
+  city: string | null
+  created_at: string
+  email: string | null
+  last_sign_in_at: string | null
+}
+
+export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
+  const supabase = await createClient()
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, role, full_name, avatar_url, phone, city, created_at')
+    .order('created_at', { ascending: false })
+
+  const rows = profiles ?? []
+
+  // Fetch every auth user via the service-role client to attach email/last_sign_in_at.
+  // Paginated with a generous cap (20 pages x 200 = 4000 users) — this is a marketplace
+  // admin tool, not expected to have huge user counts yet. If this cap is ever hit,
+  // switch to a server-side join/RPC instead of paging through auth.admin.listUsers.
+  const service = createServiceRoleClient()
+  const authUsersById = new Map<string, { email: string | null; last_sign_in_at: string | null }>()
+  const perPage = 200
+  const maxPages = 20
+
+  for (let page = 1; page <= maxPages; page++) {
+    const { data: userPage, error } = await service.auth.admin.listUsers({ page, perPage })
+    if (error || !userPage) break
+
+    for (const authUser of userPage.users) {
+      authUsersById.set(authUser.id, {
+        email: authUser.email ?? null,
+        last_sign_in_at: authUser.last_sign_in_at ?? null,
+      })
+    }
+
+    if (userPage.users.length < perPage) break
+  }
+
+  return rows
+    .map((profile) => {
+      const authUser = authUsersById.get(profile.id)
+      return {
+        ...profile,
+        email: authUser?.email ?? null,
+        last_sign_in_at: authUser?.last_sign_in_at ?? null,
+      }
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 }
 
 export async function getUnreadNotificationsCount() {

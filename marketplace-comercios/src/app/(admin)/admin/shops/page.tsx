@@ -1,11 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
-import { getShopsForReview } from '@/lib/admin/queries'
+import { getShopsForReview, getSubscriptionPlans } from '@/lib/admin/queries'
 import { ShopsTable } from './shops-table'
 
 export default async function AdminShopsPage() {
-  const shops = await getShopsForReview()
+  const [shops, plans] = await Promise.all([getShopsForReview(), getSubscriptionPlans()])
 
   const groups: Record<'pending' | 'verified' | 'rejected' | 'all', typeof shops> = {
     pending: shops.filter((shop) => shop.verification_status === 'pending'),
@@ -39,7 +39,7 @@ export default async function AdminShopsPage() {
                 message="No hay comercios en esta categoría."
               />
             ) : (
-              <ShopsTable shops={groups[key]} />
+              <ShopsTable shops={groups[key]} plans={plans} />
             )}
           </TabsContent>
         ))}

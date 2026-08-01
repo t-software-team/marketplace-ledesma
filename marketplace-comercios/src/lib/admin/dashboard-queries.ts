@@ -5,6 +5,7 @@ const REVENUE_STATUSES = ['active', 'expired'] as const
 export async function getDashboardStats() {
   const supabase = await createClient()
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
 
   const [
     { count: totalShops },
@@ -14,6 +15,7 @@ export async function getDashboardStats() {
     { count: activeProducts },
     { count: pendingReports },
     { count: pendingSuggestions },
+    { count: pendingVerificationsOver48h },
     { data: subscriptions },
   ] = await Promise.all([
     supabase.from('shops').select('id', { count: 'exact', head: true }).is('deleted_at', null),
@@ -38,6 +40,12 @@ export async function getDashboardStats() {
       .from('category_suggestions')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending'),
+    supabase
+      .from('shops')
+      .select('id', { count: 'exact', head: true })
+      .eq('verification_status', 'pending')
+      .is('deleted_at', null)
+      .lte('created_at', fortyEightHoursAgo),
     supabase
       .from('subscriptions')
       .select('id, status, created_at, subscription_plans ( name, price )'),
@@ -67,6 +75,7 @@ export async function getDashboardStats() {
     activeProducts: activeProducts ?? 0,
     pendingReports: pendingReports ?? 0,
     pendingSuggestions: pendingSuggestions ?? 0,
+    pendingVerificationsOver48h: pendingVerificationsOver48h ?? 0,
     activeSubscriptionsCount: activeSubscriptions.length,
     pendingSubscriptionsCount: pendingSubscriptions.length,
     totalRevenue,

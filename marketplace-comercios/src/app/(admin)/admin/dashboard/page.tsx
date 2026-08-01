@@ -10,8 +10,18 @@ import {
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { getDashboardStats, getRecentContacts, getShopsGrowthSeries } from '@/lib/admin/dashboard-queries'
+import { DashboardAlerts } from './dashboard-alerts'
 import { RevenueByPlanChart, ShopsGrowthChart } from './dashboard-charts'
+import { DashboardRangeSelect } from './dashboard-range-select'
 import { LiveContactsFeed } from './live-contacts-feed'
+
+const VALID_RANGES = [7, 30, 90] as const
+type RangeDays = (typeof VALID_RANGES)[number]
+
+function parseRange(value: string | undefined): RangeDays {
+  const parsed = Number(value)
+  return VALID_RANGES.includes(parsed as RangeDays) ? (parsed as RangeDays) : 30
+}
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -41,12 +51,51 @@ function StatCard({
   )
 }
 
-export default async function AdminDashboardPage() {
+interface AdminDashboardPageProps {
+  searchParams: Promise<{ range?: string }>
+}
+
+export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
+  const { range } = await searchParams
+  const rangeDays = parseRange(range)
+
   const [stats, shopsGrowth, recentContacts] = await Promise.all([
     getDashboardStats(),
-    getShopsGrowthSeries(30),
+    getShopsGrowthSeries(rangeDays),
     getRecentContacts(15),
   ])
+
+  const alerts = [
+    {
+      label:
+        stats.pendingVerificationsOver48h === 1
+          ? 'verificación pendiente hace más de 48hs'
+          : 'verificaciones pendientes hace más de 48hs',
+      count: stats.pendingVerificationsOver48h,
+      href: '/admin/shops',
+    },
+    {
+      label: stats.pendingReports === 1 ? 'reporte sin revisar' : 'reportes sin revisar',
+      count: stats.pendingReports,
+      href: '/admin/reportes',
+    },
+    {
+      label:
+        stats.pendingSubscriptionsCount === 1
+          ? 'solicitud de suscripción pendiente'
+          : 'solicitudes de suscripción pendientes',
+      count: stats.pendingSubscriptionsCount,
+      href: '/admin/subscripciones',
+    },
+    {
+      label:
+        stats.pendingSuggestions === 1
+          ? 'sugerencia de categoría pendiente'
+          : 'sugerencias de categoría pendientes',
+      count: stats.pendingSuggestions,
+      href: '/admin/categorias',
+    },
+  ]
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-8">
@@ -56,6 +105,8 @@ export default async function AdminDashboardPage() {
           Estado general del marketplace, actualizado en tiempo real.
         </p>
       </div>
+
+      <DashboardAlerts alerts={alerts} />
 
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-destacado p-6 shadow-lg shadow-primary/20 sm:p-8">
         <Sparkles
@@ -98,11 +149,15 @@ export default async function AdminDashboardPage() {
         <StatCard icon={MessageCircle} label="Sugerencias pendientes" value={stats.pendingSuggestions} />
       </div>
 
+      <div className="flex items-center justify-end">
+        <DashboardRangeSelect defaultRange={rangeDays} />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardContent className="pt-6">
             <h2 className="mb-3 text-sm font-medium text-muted-foreground">
-              Comercios nuevos (últimos 30 días)
+              Comercios nuevos (últimos {rangeDays} días)
             </h2>
             <ShopsGrowthChart data={shopsGrowth} />
           </CardContent>

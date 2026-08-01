@@ -2,10 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
 import { getUnreadNotifications, getUnreadNotificationsCount } from '@/lib/admin/queries'
+import { CommandPalette } from './command-palette'
 
 const navItems: DashboardNavItem[] = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { href: '/admin/shops', label: 'Comercios', icon: 'store' },
+  { href: '/admin/usuarios', label: 'Usuarios', icon: 'users' },
   { href: '/admin/categorias', label: 'Categorías', icon: 'tag' },
   { href: '/admin/subscripciones', label: 'Suscripciones', icon: 'credit-card' },
   { href: '/admin/reportes', label: 'Reportes', icon: 'flag' },
@@ -42,16 +44,19 @@ export default async function AdminLayout({
   ])
 
   return (
-    <DashboardShell
-      navItems={navItems}
-      userEmail={user?.email ?? ''}
-      userFullName={fullName}
-      userAvatarUrl={avatarUrl}
-      sectionTitle=""
-      notifications={notifications}
-      unreadNotificationsCount={unreadNotificationsCount}
-    >
-      {children}
-    </DashboardShell>
+    <>
+      <CommandPalette />
+      <DashboardShell
+        navItems={navItems}
+        userEmail={user?.email ?? ''}
+        userFullName={fullName}
+        userAvatarUrl={avatarUrl}
+        sectionTitle=""
+        notifications={notifications}
+        unreadNotificationsCount={unreadNotificationsCount}
+      >
+        {children}
+      </DashboardShell>
+    </>
   )
 }

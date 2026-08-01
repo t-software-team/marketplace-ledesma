@@ -20,6 +20,11 @@ import {
   rejectionReasonSchema,
   subscriptionPlanSchema,
 } from '@/lib/validations/admin'
+import { searchShopsByName as searchShopsByNameQuery } from '@/lib/admin/queries'
+
+export async function searchShopsByName(query: string) {
+  return searchShopsByNameQuery(query)
+}
 
 export type ActionState = {
   error: string | null
@@ -255,6 +260,32 @@ export async function bulkSuspendShops(
   revalidatePath('/')
   revalidatePath('/admin/shops')
   return { suspended, failed }
+}
+
+export async function bulkChangeShopPlan(
+  shopIds: string[],
+  planId: string
+): Promise<{ changed: number; failed: number }> {
+  const supabase = await createClient()
+  let changed = 0
+  let failed = 0
+
+  for (const shopId of shopIds) {
+    const { error } = await supabase.rpc('admin_set_shop_plan', {
+      p_shop_id: shopId,
+      p_plan_id: planId,
+    })
+    if (error) {
+      console.error('bulkChangeShopPlan: fallo al cambiar el plan', { shopId, planId, error })
+      failed += 1
+      continue
+    }
+    changed += 1
+    await logAdminAction(supabase, 'shop_plan_changed', 'shops', shopId, { planId })
+  }
+
+  revalidatePath('/admin/shops')
+  return { changed, failed }
 }
 
 export async function createCategory(

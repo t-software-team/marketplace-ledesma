@@ -14,6 +14,7 @@ import {
   Sparkles,
   Store,
   Tag,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -30,6 +31,7 @@ const ICONS = {
   megaphone: Megaphone,
   dashboard: LayoutDashboard,
   sparkles: Sparkles,
+  users: Users,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS
