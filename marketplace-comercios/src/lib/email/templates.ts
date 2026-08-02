@@ -1,18 +1,70 @@
 import { getBaseUrl } from '@/lib/site-url'
 
+const COLOR_BG = '#faf8fc'
+const COLOR_SURFACE = '#ffffff'
+const COLOR_FOREGROUND = '#3a3550'
+const COLOR_MUTED = '#767296'
+const COLOR_BORDER = '#e6e1ed'
+const COLOR_PRIMARY = '#7c3aed'
+const COLOR_PRIMARY_FOREGROUND = '#faf5ff'
+
 function layout(title: string, bodyHtml: string, ctaHref?: string, ctaLabel?: string) {
   const baseUrl = getBaseUrl()
+  const font = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+
   return `
-    <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #3a3550;">
-      <p style="font-size: 13px; color: #767296; margin-bottom: 24px;">Proxi Marketplace</p>
-      <h1 style="font-size: 20px; margin-bottom: 12px;">${title}</h1>
-      <div style="font-size: 14px; line-height: 1.6; color: #3a3550;">${bodyHtml}</div>
-      ${
-        ctaHref && ctaLabel
-          ? `<a href="${baseUrl}${ctaHref}" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#7c3aed;color:#faf5ff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:500;">${ctaLabel}</a>`
-          : ''
-      }
-    </div>
+  <!doctype html>
+  <html lang="es">
+    <body style="margin:0; padding:0; background:${COLOR_BG}; font-family:${font};">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COLOR_BG}; padding:32px 16px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px; width:100%; background:${COLOR_SURFACE}; border:1px solid ${COLOR_BORDER}; border-radius:16px; overflow:hidden;">
+              <tr>
+                <td style="padding:28px 32px 0 32px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="vertical-align:middle;">
+                        <img src="${baseUrl}/brand/logo.png" alt="Proxi" width="28" height="28" style="display:block; border-radius:8px;" />
+                      </td>
+                      <td style="vertical-align:middle; padding-left:10px;">
+                        <span style="font-size:15px; font-weight:600; color:${COLOR_FOREGROUND};">Proxi Marketplace</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 32px 8px 32px;">
+                  <h1 style="margin:0 0 12px 0; font-size:20px; line-height:1.3; color:${COLOR_FOREGROUND};">${title}</h1>
+                  <div style="font-size:14px; line-height:1.6; color:${COLOR_FOREGROUND};">${bodyHtml}</div>
+                  <!--
+                    Botón CTA desactivado temporalmente: el dominio todavía es de prueba
+                    (VERCEL_URL cambia entre deployments), así que el link rompía con
+                    "DEPLOYMENT_NOT_FOUND". Reactivar seteando NEXT_PUBLIC_SITE_URL con
+                    el dominio estable y descomentando este bloque.
+                    ${
+                      ctaHref && ctaLabel
+                        ? `<a href="${baseUrl}${ctaHref}" style="display:inline-block; margin-top:20px; padding:12px 22px; background:${COLOR_PRIMARY}; color:${COLOR_PRIMARY_FOREGROUND}; text-decoration:none; border-radius:10px; font-size:14px; font-weight:600;">${ctaLabel}</a>`
+                        : ''
+                    }
+                  -->
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 32px 28px 32px;">
+                  <hr style="border:none; border-top:1px solid ${COLOR_BORDER}; margin:0 0 16px 0;" />
+                  <p style="margin:0; font-size:12px; line-height:1.5; color:${COLOR_MUTED};">
+                    Recibiste este email porque tenés un comercio en Proxi Marketplace.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
   `
 }
 
