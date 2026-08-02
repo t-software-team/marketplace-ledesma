@@ -37,6 +37,8 @@ interface ProductFormProps {
   submitLabel: string
   isService?: boolean
   videoLimitReached?: boolean
+  maxImages?: number
+  maxVariants?: number
 }
 
 const initialState: ActionState = { error: null }
@@ -51,6 +53,8 @@ export function ProductForm({
   submitLabel,
   isService = false,
   videoLimitReached = false,
+  maxImages = 3,
+  maxVariants = 3,
 }: ProductFormProps) {
   const noun = isService ? 'servicio' : 'producto'
   const [state, formAction, isPending] = useActionState(action, initialState)
@@ -132,6 +136,7 @@ export function ProductForm({
         initialVariants={defaultValues?.variants}
         noun={noun}
         isService={isService}
+        maxVariants={maxVariants}
       />
 
       <div className="space-y-2">
@@ -184,7 +189,12 @@ export function ProductForm({
 
       <ProductAttributesFields attributeDefs={attributeDefs} initialValues={defaultValues?.attributes} />
 
-      <ProductImagesField shopId={shopId} initialImages={defaultValues?.imageUrls} noun={noun} />
+      <ProductImagesField
+        shopId={shopId}
+        initialImages={defaultValues?.imageUrls}
+        noun={noun}
+        maxImages={maxImages}
+      />
 
       <ProductVideoField
         shopId={shopId}

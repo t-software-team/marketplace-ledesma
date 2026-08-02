@@ -33,6 +33,7 @@ import {
   getShopRating,
   getShopReviews,
 } from '@/lib/shops/queries'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { createClient } from '@/lib/supabase/server'
 import { getAccentColor } from '@/lib/accent-colors'
 import { getBaseUrl } from '@/lib/site-url'
@@ -106,7 +107,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
     ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
-  const isVerified = shop.verification_status === 'verified'
+  const isVerified = hasVerifiedBadge(shop)
   const isFeatured = shop.subscription_status === 'active'
   const baseUrl = getBaseUrl()
   const accentColor = shop.accent_color ? getAccentColor(shop.accent_color) : null

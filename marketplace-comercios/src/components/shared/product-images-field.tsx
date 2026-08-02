@@ -1,23 +1,25 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRef, useState } from 'react'
 import { Camera, ChevronLeft, ChevronRight, ImagePlus, Loader2, X } from 'lucide-react'
 import { uploadShopImage } from '@/lib/shops/upload-image'
-
-const MAX_IMAGES = 6
 
 interface ProductImagesFieldProps {
   shopId: string
   initialImages?: string[]
   noun?: string
+  maxImages?: number
 }
 
 export function ProductImagesField({
   shopId,
   initialImages = [],
   noun = 'producto',
+  maxImages = 3,
 }: ProductImagesFieldProps) {
+  const MAX_IMAGES = maxImages
   const [images, setImages] = useState(initialImages)
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -177,6 +179,18 @@ export function ProductImagesField({
           )}
           <p className="mt-2 text-center text-xs text-muted-foreground">
             Podés subir {remaining} foto{remaining === 1 ? '' : 's'} más
+          </p>
+        </div>
+      )}
+
+      {remaining <= 0 && (
+        <div className="rounded-xl border border-dashed border-border bg-muted px-4 py-3 text-center">
+          <p className="text-xs text-muted-foreground">
+            Llegaste al límite de fotos de tu plan.{' '}
+            <Link href="/mi-tienda/suscripcion" className="underline">
+              Mejorá tu suscripción
+            </Link>{' '}
+            para sumar más.
           </p>
         </div>
       )}

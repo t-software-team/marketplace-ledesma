@@ -12,6 +12,7 @@ import { BackToTopButton } from '@/components/shared/back-to-top-button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCategoryAttributes, useProductsFeed, useShopSearch } from '@/hooks/use-products'
@@ -215,7 +216,7 @@ export function FeedClient({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1">
                     <p className="truncate text-sm font-medium">{shop.name}</p>
-                    {shop.verification_status === 'verified' && <VerifiedStamp className="size-4" />}
+                    {hasVerifiedBadge(shop) && <VerifiedStamp className="size-4" />}
                   </div>
                   {shop.city && <p className="truncate text-xs text-muted-foreground">{shop.city}</p>}
                 </div>

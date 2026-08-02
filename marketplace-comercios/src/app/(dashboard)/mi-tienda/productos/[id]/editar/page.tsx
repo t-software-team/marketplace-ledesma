@@ -5,6 +5,8 @@ import {
   getMyProduct,
   getMyShop,
   getProductAttributeValues,
+  getProductImageLimitInfo,
+  getProductVariantLimitInfo,
   getProductVideoLimitInfo,
   getSubcategories,
 } from '@/lib/shops/queries'
@@ -30,12 +32,15 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     notFound()
   }
 
-  const [categories, attributeDefs, attributeValues, videoLimitInfo] = await Promise.all([
-    getSubcategories(shop.category_id),
-    getCategoryAttributes(shop.category_id),
-    getProductAttributeValues(product.id),
-    getProductVideoLimitInfo(shop.id),
-  ])
+  const [categories, attributeDefs, attributeValues, videoLimitInfo, imageLimitInfo, variantLimitInfo] =
+    await Promise.all([
+      getSubcategories(shop.category_id),
+      getCategoryAttributes(shop.category_id),
+      getProductAttributeValues(product.id),
+      getProductVideoLimitInfo(shop.id),
+      getProductImageLimitInfo(shop.id),
+      getProductVariantLimitInfo(shop.id),
+    ])
   const images = [...(product.product_images ?? [])].sort(
     (a, b) => a.sort_order - b.sort_order
   )
@@ -74,6 +79,8 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
         submitLabel="Guardar cambios"
         isService={isService}
         videoLimitReached={videoLimitInfo.reached}
+        maxImages={imageLimitInfo.max}
+        maxVariants={variantLimitInfo.max}
         defaultValues={{
           name: product.name,
           description: product.description,

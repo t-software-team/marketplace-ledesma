@@ -4,7 +4,9 @@ import { isServiceRubro } from '@/lib/category-icons'
 import {
   getCategoryAttributes,
   getMyShop,
+  getProductImageLimitInfo,
   getProductLimitInfo,
+  getProductVariantLimitInfo,
   getProductVideoLimitInfo,
   getSubcategories,
 } from '@/lib/shops/queries'
@@ -55,10 +57,12 @@ export default async function NewProductPage() {
     )
   }
 
-  const [categories, attributeDefs, videoLimitInfo] = await Promise.all([
+  const [categories, attributeDefs, videoLimitInfo, imageLimitInfo, variantLimitInfo] = await Promise.all([
     getSubcategories(shop.category_id),
     getCategoryAttributes(shop.category_id),
     getProductVideoLimitInfo(shop.id),
+    getProductImageLimitInfo(shop.id),
+    getProductVariantLimitInfo(shop.id),
   ])
 
   return (
@@ -74,6 +78,8 @@ export default async function NewProductPage() {
         submitLabel={`Crear ${noun}`}
         isService={isService}
         videoLimitReached={videoLimitInfo.reached}
+        maxImages={imageLimitInfo.max}
+        maxVariants={variantLimitInfo.max}
       />
     </div>
   )

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -15,12 +16,14 @@ interface ProductVariantsFieldProps {
   initialVariants?: { name: string; price: number }[]
   noun?: string
   isService?: boolean
+  maxVariants?: number
 }
 
 export function ProductVariantsField({
   initialVariants = [],
   noun = 'producto',
   isService = false,
+  maxVariants = 3,
 }: ProductVariantsFieldProps) {
   const example = isService
     ? { a: 'Corte', aPrice: '3000', b: 'Corte + barba', bPrice: '5000' }
@@ -87,16 +90,26 @@ export function ProductVariantsField({
         </div>
       )}
 
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="gap-1.5"
-        onClick={() => setVariants((current) => [...current, { name: '', price: '' }])}
-      >
-        <Plus className="size-4" aria-hidden />
-        Agregar opción
-      </Button>
+      {variants.length < maxVariants ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setVariants((current) => [...current, { name: '', price: '' }])}
+        >
+          <Plus className="size-4" aria-hidden />
+          Agregar opción
+        </Button>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Llegaste al límite de {maxVariants} opciones de tu plan actual.{' '}
+          <Link href="/mi-tienda/suscripcion" className="underline">
+            Mejorá tu suscripción
+          </Link>{' '}
+          para sumar más.
+        </p>
+      )}
     </div>
   )
 }

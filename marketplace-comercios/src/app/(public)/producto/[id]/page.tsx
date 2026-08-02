@@ -10,6 +10,7 @@ import { ProductContact } from '@/components/product/product-contact'
 import { ProductGallery } from '@/components/product/product-gallery'
 import { formatPrice } from '@/lib/format'
 import { getProductDetail } from '@/lib/shops/queries'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/site-url'
 import { stripHtml } from '@/lib/strip-html'
@@ -68,7 +69,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const shop = product.shop
-  const isVerified = shop.verification_status === 'verified'
+  const isVerified = hasVerifiedBadge(shop)
   const baseUrl = getBaseUrl()
 
   const jsonLd = {

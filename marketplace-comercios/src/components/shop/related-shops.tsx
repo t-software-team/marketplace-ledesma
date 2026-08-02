@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Store } from 'lucide-react'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 
 interface RelatedShop {
   id: string
@@ -10,6 +11,7 @@ interface RelatedShop {
   logo_url: string | null
   city: string | null
   verification_status: string
+  subscription_status: string
 }
 
 interface RelatedShopsProps {
@@ -41,7 +43,7 @@ export function RelatedShops({ shops }: RelatedShopsProps) {
             <div className="min-w-0">
               <div className="flex items-center justify-center gap-1">
                 <p className="truncate text-sm font-medium">{shop.name}</p>
-                {shop.verification_status === 'verified' && <VerifiedStamp className="size-3.5 shrink-0" />}
+                {hasVerifiedBadge(shop) && <VerifiedStamp className="size-3.5 shrink-0" />}
               </div>
               {shop.city && <p className="truncate text-xs text-muted-foreground">{shop.city}</p>}
             </div>

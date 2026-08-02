@@ -732,6 +732,62 @@ export async function getProductLimitInfo(shopId: string) {
   }
 }
 
+const FREE_PLAN_MAX_IMAGES = 3
+const PAID_PLAN_MAX_IMAGES = 5
+
+export async function getProductImageLimitInfo(shopId: string) {
+  const supabase = await createClient()
+
+  const { data: activeSubscription } = await supabase
+    .from('subscriptions')
+    .select('subscription_plans ( benefits )')
+    .eq('shop_id', shopId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    | { max_images?: number | null }
+    | null
+    | undefined
+
+  const hasActivePlan = Boolean(activeSubscription)
+  const max = hasActivePlan
+    ? (benefits?.max_images ?? PAID_PLAN_MAX_IMAGES)
+    : FREE_PLAN_MAX_IMAGES
+
+  return { max }
+}
+
+const FREE_PLAN_MAX_VARIANTS = 3
+const PAID_PLAN_MAX_VARIANTS = 10
+
+export async function getProductVariantLimitInfo(shopId: string) {
+  const supabase = await createClient()
+
+  const { data: activeSubscription } = await supabase
+    .from('subscriptions')
+    .select('subscription_plans ( benefits )')
+    .eq('shop_id', shopId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    | { max_variants?: number | null }
+    | null
+    | undefined
+
+  const hasActivePlan = Boolean(activeSubscription)
+  const max = hasActivePlan
+    ? (benefits?.max_variants ?? PAID_PLAN_MAX_VARIANTS)
+    : FREE_PLAN_MAX_VARIANTS
+
+  return { max }
+}
+
 const FREE_PLAN_MAX_VIDEOS = 3
 
 export async function getProductVideoLimitInfo(shopId: string) {

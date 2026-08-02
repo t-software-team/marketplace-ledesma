@@ -100,6 +100,7 @@ export interface ShopSearchResult {
   logo_url: string | null
   city: string | null
   verification_status: string
+  subscription_status: string
 }
 
 export function useShopSearch() {
@@ -112,7 +113,7 @@ export function useShopSearch() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('shops')
-        .select('id, name, slug, logo_url, city, verification_status')
+        .select('id, name, slug, logo_url, city, verification_status, subscription_status')
         .ilike('name', `%${trimmed}%`)
         .eq('is_active', true)
         .is('deleted_at', null)

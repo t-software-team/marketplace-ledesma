@@ -9,7 +9,9 @@ import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import {
   getMyActiveSubscription,
+  getProductImageLimitInfo,
   getProductLimitInfo,
+  getProductVariantLimitInfo,
   getProductVideoLimitInfo,
 } from '@/lib/shops/queries'
 import { ACCENT_COLORS } from '@/lib/accent-colors'
@@ -502,6 +504,20 @@ export async function createProduct(
     }
   }
 
+  const imageLimitInfo = await getProductImageLimitInfo(shop.id)
+  if (parsed.data.image_urls.length > imageLimitInfo.max) {
+    return {
+      error: `Podés subir hasta ${imageLimitInfo.max} fotos por ${'producto'} con tu plan actual. Mejorá tu suscripción para sumar más.`,
+    }
+  }
+
+  const variantLimitInfo = await getProductVariantLimitInfo(shop.id)
+  if (parsed.data.variants.length > variantLimitInfo.max) {
+    return {
+      error: `Podés cargar hasta ${variantLimitInfo.max} opciones con tu plan actual. Mejorá tu suscripción para sumar más.`,
+    }
+  }
+
   const minVariantPrice =
     parsed.data.variants.length > 0
       ? Math.min(...parsed.data.variants.map((v) => v.price))
@@ -616,6 +632,22 @@ export async function updateProduct(
       return {
         error:
           'Llegaste al límite de 3 productos con video de tu Plan Free. Mejorá a Plan Básico o Ilimitado para sumar más.',
+      }
+    }
+  }
+
+  if (existingProduct?.shop_id) {
+    const imageLimitInfo = await getProductImageLimitInfo(existingProduct.shop_id)
+    if (parsed.data.image_urls.length > imageLimitInfo.max) {
+      return {
+        error: `Podés subir hasta ${imageLimitInfo.max} fotos por producto con tu plan actual. Mejorá tu suscripción para sumar más.`,
+      }
+    }
+
+    const variantLimitInfo = await getProductVariantLimitInfo(existingProduct.shop_id)
+    if (parsed.data.variants.length > variantLimitInfo.max) {
+      return {
+        error: `Podés cargar hasta ${variantLimitInfo.max} opciones con tu plan actual. Mejorá tu suscripción para sumar más.`,
       }
     }
   }
