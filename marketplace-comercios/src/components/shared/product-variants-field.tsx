@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { PriceInput } from '@/components/shared/price-input'
 
 interface Variant {
   name: string
@@ -67,12 +68,10 @@ export function ProductVariantsField({
                 onChange={(event) => updateVariant(index, 'name', event.target.value)}
                 className="flex-1"
               />
-              <Input
-                type="number"
-                step="0.01"
+              <PriceInput
                 placeholder="Precio"
                 value={variant.price}
-                onChange={(event) => updateVariant(index, 'price', event.target.value)}
+                onChange={(rawValue) => updateVariant(index, 'price', rawValue)}
                 className="w-28"
               />
               <button

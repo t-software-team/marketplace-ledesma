@@ -9,6 +9,7 @@ import { ProductImagesField } from '@/components/shared/product-images-field'
 import { ProductVideoField } from '@/components/shared/product-video-field'
 import { ProductVariantsField } from '@/components/shared/product-variants-field'
 import { ProductAttributesFields, type AttributeDef } from '@/components/shared/product-attributes-fields'
+import { PriceInput } from '@/components/shared/price-input'
 import { SuggestCategoryDialog } from '@/components/shared/suggest-category-dialog'
 import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
@@ -103,11 +104,9 @@ export function ProductForm({
           <label htmlFor="price" className="text-base font-medium sm:text-sm">
             {isService ? 'Precio del servicio' : 'Precio'}
           </label>
-          <Input
+          <PriceInput
             id="price"
             name="price"
-            type="number"
-            step="0.01"
             defaultValue={defaultValues?.price ?? ''}
             aria-invalid={Boolean(fieldErrors.price)}
           />

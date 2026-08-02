@@ -28,6 +28,7 @@ import { signOut } from '@/lib/auth/actions'
 import { markAllNotificationsRead } from '@/lib/admin/actions'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { InstallAppButton } from '@/components/shared/install-app-button'
 import { COMMAND_PALETTE_OPEN_EVENT } from '@/app/(admin)/admin/command-palette'
 
 export interface AdminNotification {
@@ -176,6 +177,7 @@ export function DashboardHeader({
         </div>
 
         <div className="flex items-center gap-1">
+          <InstallAppButton />
           <Button
             type="button"
             variant="ghost"

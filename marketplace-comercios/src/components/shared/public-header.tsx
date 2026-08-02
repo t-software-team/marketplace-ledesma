@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { UserMenu } from '@/components/shared/user-menu'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { InstallAppBanner } from '@/components/shared/install-app-banner'
 import { markClientNotificationsRead } from '@/lib/notifications/actions'
 import { cn } from '@/lib/utils'
 
@@ -228,6 +229,7 @@ export function PublicHeader({
           )}
         </nav>
       </div>
+      <InstallAppBanner />
     </header>
   )
 }
