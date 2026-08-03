@@ -80,6 +80,11 @@ export default function OnboardingPage() {
                 <p className="font-heading text-lg">Quiero comprar</p>
                 <p className="mt-1 text-sm text-muted-foreground">Cliente</p>
               </div>
+              <ul className="space-y-1 text-left text-xs text-muted-foreground">
+                <li>• Descubrí comercios y productos cerca tuyo</li>
+                <li>• Contactá por WhatsApp en un toque</li>
+                <li>• Guardá tus favoritos y seguí comercios</li>
+              </ul>
               <Button
                 render={<span />}
                 nativeButton={false}
@@ -108,6 +113,11 @@ export default function OnboardingPage() {
                 <p className="font-heading text-lg">Quiero vender</p>
                 <p className="mt-1 text-sm text-muted-foreground">Comercio</p>
               </div>
+              <ul className="space-y-1 text-left text-xs text-muted-foreground">
+                <li>• Creá tu tienda y cargá tus productos</li>
+                <li>• Aparecé en el feed y en búsquedas</li>
+                <li>• Recibí contactos directo por WhatsApp</li>
+              </ul>
               <Button
                 render={<span />}
                 nativeButton={false}
