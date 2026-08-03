@@ -458,7 +458,7 @@ export async function getMyActiveSubscription(shopId: string) {
     .select('id, plan_id, end_date, subscription_plans ( name, benefits )')
     .eq('shop_id', shopId)
     .eq('status', 'active')
-    .order('created_at', { ascending: false })
+    .order('approved_at', { ascending: false, nullsFirst: false })
     .limit(1)
     .maybeSingle()
 
