@@ -1,3 +1,4 @@
+import { timingSafeEqual, createHmac } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
@@ -8,11 +9,55 @@ interface GalioPayWebhookPayload {
   referenceId: string
 }
 
+const MAX_TIMESTAMP_SKEW_SECONDS = 5 * 60
+
+function isValidSignature(rawBody: string, timestamp: string, signatureHeader: string) {
+  const secret = process.env.GALIOPAY_WEBHOOK_SECRET
+  if (!secret) {
+    console.error('galiopay webhook: GALIOPAY_WEBHOOK_SECRET no está configurada')
+    return false
+  }
+
+  const received = signatureHeader.startsWith('v1=')
+    ? signatureHeader.slice('v1='.length)
+    : signatureHeader
+
+  const expected = createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex')
+
+  const receivedBuffer = Buffer.from(received, 'hex')
+  const expectedBuffer = Buffer.from(expected, 'hex')
+
+  if (receivedBuffer.length !== expectedBuffer.length) return false
+  return timingSafeEqual(receivedBuffer, expectedBuffer)
+}
+
 export async function POST(request: Request) {
+  const rawBody = await request.text()
+
+  const signature = request.headers.get('x-galiopay-signature')
+  const timestamp = request.headers.get('x-galiopay-timestamp')
+
+  if (!signature || !timestamp) {
+    return NextResponse.json({ error: 'missing signature headers' }, { status: 401 })
+  }
+
+  const timestampSeconds = Number(timestamp)
+  if (
+    !Number.isFinite(timestampSeconds) ||
+    Math.abs(Date.now() / 1000 - timestampSeconds) > MAX_TIMESTAMP_SKEW_SECONDS
+  ) {
+    return NextResponse.json({ error: 'stale timestamp' }, { status: 401 })
+  }
+
+  if (!isValidSignature(rawBody, timestamp, signature)) {
+    console.error('galiopay webhook: firma inválida')
+    return NextResponse.json({ error: 'invalid signature' }, { status: 401 })
+  }
+
   let payload: GalioPayWebhookPayload
 
   try {
-    payload = await request.json()
+    payload = JSON.parse(rawBody)
   } catch (error) {
     console.error('galiopay webhook: body no es JSON válido', { error })
     return NextResponse.json({ error: 'invalid body' }, { status: 400 })
