@@ -106,7 +106,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
         </p>
       </div>
 
-      <DashboardAlerts alerts={alerts} />
 
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary to-destacado p-6 shadow-lg shadow-primary/20 sm:p-8">
         <Sparkles
@@ -148,6 +147,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
         <StatCard icon={Flag} label="Reportes pendientes" value={stats.pendingReports} />
         <StatCard icon={MessageCircle} label="Sugerencias pendientes" value={stats.pendingSuggestions} />
       </div>
+      <DashboardAlerts alerts={alerts} />
 
       <div className="flex items-center justify-end">
         <DashboardRangeSelect defaultRange={rangeDays} />

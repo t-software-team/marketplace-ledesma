@@ -68,6 +68,17 @@ function layout(title: string, bodyHtml: string, ctaHref?: string, ctaLabel?: st
   `
 }
 
+export function clientWelcomeEmail() {
+  return {
+    subject: '¡Bienvenido a Proxi Marketplace! 🎉',
+    html: layout(
+      '¡Creaste tu cuenta!',
+      `<p>Ya podés descubrir comercios y productos cerca tuyo, contactar por WhatsApp en un toque y guardar tus favoritos.</p>
+       <p>Gracias por sumarte a Proxi.</p>`
+    ),
+  }
+}
+
 export function shopVerificationApprovedEmail(shopName: string) {
   return {
     subject: `¡${shopName} fue verificado! ✅`,

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { createClient } from '@/lib/supabase/client'
+import { selectUserRole } from '@/lib/auth/actions'
 import type { Database } from '@/types/database.types'
 
 type UserRole = Database['public']['Enums']['user_role']
@@ -14,30 +14,16 @@ export default function OnboardingPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loadingRole, setLoadingRole] = useState<UserRole | null>(null)
-  const supabase = createClient()
 
   async function selectRole(role: UserRole) {
     setError(null)
     setLoadingRole(role)
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ role })
-        .eq('id', user.id)
+      const { error: updateError } = await selectUserRole(role)
 
       if (updateError) {
-        console.error('selectRole: failed to update profile role', updateError)
-        setError('No pudimos guardar tu elección. Intentá de nuevo.')
+        setError(updateError)
         return
       }
 

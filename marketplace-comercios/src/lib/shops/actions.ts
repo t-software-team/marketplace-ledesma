@@ -1017,7 +1017,7 @@ export async function startSubscriptionCheckout(
 
   const { data: pending } = await supabase
     .from('subscriptions')
-    .select('id, galiopay_link_id, galiopay_proof_token, galiopay_checkout_url')
+    .select('id, plan_id, galiopay_link_id, galiopay_proof_token, galiopay_checkout_url')
     .eq('shop_id', shop.id)
     .eq('status', 'pending')
     .not('galiopay_checkout_url', 'is', null)
@@ -1025,7 +1025,11 @@ export async function startSubscriptionCheckout(
     .limit(1)
     .maybeSingle()
 
-  if (pending?.galiopay_link_id && pending.galiopay_proof_token) {
+  if (pending && pending.plan_id !== planId) {
+    await supabase.from('subscriptions').update({ status: 'expired' }).eq('id', pending.id)
+  }
+
+  if (pending?.plan_id === planId && pending.galiopay_link_id && pending.galiopay_proof_token) {
     let activated = false
 
     try {
