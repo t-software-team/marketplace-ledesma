@@ -102,10 +102,38 @@ export const getActivePromotions = unstable_cache(
   { revalidate: 30 }
 )
 
-export async function getMyShopProducts(shopId: string) {
+export interface MyShopProductsResult {
+  products: {
+    id: string
+    name: string
+    price: number | null
+    currency: string
+    is_active: boolean
+    is_featured: boolean
+    mainImage: string | null
+    imageUrls: string[]
+    categoryName: string | null
+  }[]
+  totalCount: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export async function getMyShopProducts(
+  shopId: string,
+  page = 1,
+  pageSize = 24,
+  search?: string
+): Promise<MyShopProductsResult> {
   const supabase = await createClient()
 
-  const { data: products, error } = await supabase
+  const safePage = Math.max(1, page)
+  const from = (safePage - 1) * pageSize
+  const to = safePage * pageSize - 1
+  const normalizedSearch = search?.trim()
+
+  let query = supabase
     .from('products')
     .select(
       `
@@ -117,15 +145,27 @@ export async function getMyShopProducts(shopId: string) {
       is_featured,
       product_images ( id, url, sort_order ),
       categories ( name )
-    `
+    `,
+      { count: 'exact' }
     )
     .eq('shop_id', shopId)
+
+  if (normalizedSearch) {
+    query = query.ilike('name', `%${normalizedSearch}%`)
+  }
+
+  const { data: products, error, count } = await query
     .order('created_at', { ascending: false })
-    .limit(200)
+    .range(from, to)
 
-  if (error || !products) return []
+  if (error || !products) {
+    return { products: [], totalCount: 0, page: safePage, pageSize, totalPages: 1 }
+  }
 
-  return products.map((product) => {
+  const totalCount = count ?? products.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+
+  const mapped = products.map((product) => {
     const images = [...(product.product_images ?? [])].sort(
       (a, b) => a.sort_order - b.sort_order
     )
@@ -142,6 +182,8 @@ export async function getMyShopProducts(shopId: string) {
       categoryName: product.categories?.name ?? null,
     }
   })
+
+  return { products: mapped, totalCount, page: safePage, pageSize, totalPages }
 }
 
 export async function getActiveCategories() {

@@ -7,19 +7,28 @@ import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
 import { SavedToast } from '@/components/shared/saved-toast'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getMyShop, getMyShopProducts, getProductLimitInfo } from '@/lib/shops/queries'
+import { PaginationLinks } from '@/components/shared/pagination-links'
 import { ProductsList } from './products-list'
 
-export default async function ProductsPage() {
+interface ProductsPageProps {
+  searchParams: Promise<{ page?: string; q?: string }>
+}
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
+  const { page: pageParam, q } = await searchParams
+  const page = Math.max(1, Number(pageParam) || 1)
+  const search = q?.trim() || undefined
   const shop = await getMyShop()
 
   if (!shop) {
     redirect('/mi-tienda')
   }
 
-  const [products, limitInfo] = await Promise.all([
-    getMyShopProducts(shop.id),
+  const [productsResult, limitInfo] = await Promise.all([
+    getMyShopProducts(shop.id, page, 24, search),
     getProductLimitInfo(shop.id),
   ])
+  const { products, totalCount, totalPages } = productsResult
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
@@ -58,7 +67,7 @@ export default async function ProductsPage() {
         </p>
       )}
 
-      {products.length === 0 ? (
+      {totalCount === 0 && !search ? (
         <EmptyState
           illustration={<EmptyBoxIllustration />}
           message={`Todavía no cargaste ningún ${noun}. Agregá el primero para aparecer en el feed.`}
@@ -79,7 +88,21 @@ export default async function ProductsPage() {
               </Link>
             </p>
           )}
-          <ProductsList products={products} noun={noun} canFeature={canFeature} />
+          <ProductsList
+            products={products}
+            noun={noun}
+            canFeature={canFeature}
+            totalCount={totalCount}
+            search={search}
+            basePath="/mi-tienda/productos"
+          />
+          <PaginationLinks
+            page={page}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            basePath="/mi-tienda/productos"
+            extraQuery={search ? { q: search } : undefined}
+          />
         </>
       )}
     </div>

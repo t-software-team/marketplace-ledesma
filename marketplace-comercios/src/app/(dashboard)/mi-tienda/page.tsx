@@ -71,13 +71,13 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const [products, contactsSeries, activeSubscription, allPlans] = await Promise.all([
-    getMyShopProducts(shop.id),
+  const [productsResult, contactsSeries, activeSubscription, allPlans] = await Promise.all([
+    getMyShopProducts(shop.id, 1, 4),
     getShopContactsSeries(shop.id, 14),
     getMyActiveSubscription(shop.id),
     getActiveSubscriptionPlans(),
   ])
-  const recentProducts = products.slice(0, 4)
+  const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
@@ -134,7 +134,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       <OnboardingChecklist
         hasCategory={Boolean(shop.category_id)}
         hasBranding={Boolean(shop.logo_url)}
-        hasProducts={products.length > 0}
+        hasProducts={productsCount > 0}
         isVerified={shop.verification_status === 'verified'}
         isSubscribed={shop.subscription_status === 'active'}
         noun={noun}
@@ -250,7 +250,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
             <CardContent className="space-y-1 pt-6">
               <Package className="size-4 text-muted-foreground" aria-hidden />
               <p className="text-xs text-muted-foreground">{nounPlural}</p>
-              <p className="text-2xl font-heading">{products.length}</p>
+              <p className="text-2xl font-heading">{productsCount}</p>
             </CardContent>
           </Card>
           <Card>
@@ -296,7 +296,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-lg">{nounPlural}</h2>
           <div className="flex gap-2">
-            {products.length > 0 && (
+            {productsCount > 0 && (
               <Button render={<Link href="/mi-tienda/productos" />} nativeButton={false} variant="outline" size="sm">
                 Ver todos
               </Button>

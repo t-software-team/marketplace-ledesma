@@ -18,11 +18,12 @@ export default async function PromotionsPage() {
 
   if (!shop) redirect('/mi-tienda')
 
-  const [activeSubscription, promotions, products] = await Promise.all([
+  const [activeSubscription, promotions, productsResult] = await Promise.all([
     getMyActiveSubscription(shop.id),
     getMyPromotions(shop.id),
-    getMyShopProducts(shop.id),
+    getMyShopProducts(shop.id, 1, 200),
   ])
+  const { products } = productsResult
 
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
