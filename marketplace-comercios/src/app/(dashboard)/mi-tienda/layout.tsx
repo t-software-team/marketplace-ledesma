@@ -71,7 +71,6 @@ export default async function MiTiendaLayout({
       userFullName={fullName}
       userAvatarUrl={avatarUrl}
       sectionTitle=""
-      showSiteLink={false}
       showInstallButton={false}
     >
       {children}
