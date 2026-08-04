@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { MapPin, Search, Store } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryGrid } from './category-grid'
 import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
 import { AttributeFilterSheet } from './attribute-filter-sheet'
@@ -78,6 +78,20 @@ export function FeedClient({
   const { data: rubroAttributes } = useCategoryAttributes(activeRubroId)
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  const [searchInput, setSearchInput] = useState(searchQuery)
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value)
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => setSearch(value), 350)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const sentinel = loadMoreRef.current
@@ -96,22 +110,6 @@ export function FeedClient({
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  useEffect(() => {
-    if (userLocation || !navigator.geolocation) return
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        })
-      },
-      () => {
-        setLocation(null)
-      },
-      { enableHighAccuracy: false, timeout: 8000 }
-    )
-  }, [userLocation, setLocation])
 
   const displayProducts = products ? products.pages.flat() : initialProducts
   const showLoading = isLoading || (isFetching && !isFetchingNextPage && !products)
@@ -140,8 +138,8 @@ export function FeedClient({
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar productos, servicios o comercios..."
-            value={searchQuery}
-            onChange={(event) => setSearch(event.target.value)}
+            value={searchInput}
+            onChange={(event) => handleSearchChange(event.target.value)}
             className="h-11 pl-9"
             aria-label="Buscar productos, servicios o comercios"
           />
@@ -235,7 +233,7 @@ export function FeedClient({
       ) : displayProducts.length === 0 ? (
         <EmptyState
           illustration={<EmptySearchIllustration />}
-          message="No encontramos comercios en esta categoría. Probá con otra o ampliá la distancia."
+          message="No encontramos productos que coincidan. Probá con otra búsqueda, categoría o ampliá la distancia."
         />
       ) : (
         <>
