@@ -52,6 +52,7 @@ export default async function AdminLayout({
         userFullName={fullName}
         userAvatarUrl={avatarUrl}
         sectionTitle=""
+        showSiteLink={false}
         notifications={notifications}
         unreadNotificationsCount={unreadNotificationsCount}
       >

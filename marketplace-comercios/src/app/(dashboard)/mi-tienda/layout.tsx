@@ -70,7 +70,9 @@ export default async function MiTiendaLayout({
       userEmail={user?.email ?? ''}
       userFullName={fullName}
       userAvatarUrl={avatarUrl}
-      sectionTitle="Mi tienda"
+      sectionTitle=""
+      showSiteLink={false}
+      showInstallButton={false}
     >
       {children}
     </DashboardShell>

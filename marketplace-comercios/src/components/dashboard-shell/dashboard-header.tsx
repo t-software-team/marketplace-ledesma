@@ -74,6 +74,8 @@ interface DashboardHeaderProps {
   userAvatarUrl: string | null
   notifications?: AdminNotification[]
   unreadNotificationsCount?: number
+  showSiteLink?: boolean
+  showInstallButton?: boolean
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -103,6 +105,8 @@ export function DashboardHeader({
   userAvatarUrl,
   notifications,
   unreadNotificationsCount,
+  showSiteLink = true,
+  showInstallButton = true,
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [isMarkingRead, startMarkingRead] = useTransition()
@@ -173,11 +177,11 @@ export function DashboardHeader({
             </SheetContent>
           </Sheet>
           
-          <h1 className="font-heading text-lg">{section}</h1>
+          {section && <h1 className="font-heading text-lg">{section}</h1>}
         </div>
 
         <div className="flex items-center gap-1">
-          <InstallAppButton />
+          {showInstallButton && <InstallAppButton />}
           <Button
             type="button"
             variant="ghost"
@@ -190,16 +194,18 @@ export function DashboardHeader({
               ⌘K
             </kbd>
           </Button>
-          <Button
-            render={<Link href="/" />}
-            nativeButton={false}
-            variant="ghost"
-            size="sm"
-            className="gap-1.5"
-          >
-            <ArrowLeft className="size-4" aria-hidden />
-            <span>Volver al sitio</span>
-          </Button>
+          {showSiteLink && (
+            <Button
+              render={<Link href="/" />}
+              nativeButton={false}
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+            >
+              <ArrowLeft className="size-4" aria-hidden />
+              <span>Volver al sitio</span>
+            </Button>
+          )}
           <Button
             render={<Link href="/favoritos" aria-label="Favoritos" />}
             nativeButton={false}

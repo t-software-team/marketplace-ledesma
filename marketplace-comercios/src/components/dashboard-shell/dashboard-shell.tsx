@@ -10,6 +10,8 @@ interface DashboardShellProps {
   sectionTitle: string
   notifications?: AdminNotification[]
   unreadNotificationsCount?: number
+  showSiteLink?: boolean
+  showInstallButton?: boolean
   children: React.ReactNode
 }
 
@@ -21,6 +23,8 @@ export function DashboardShell({
   sectionTitle,
   notifications,
   unreadNotificationsCount,
+  showSiteLink,
+  showInstallButton,
   children,
 }: DashboardShellProps) {
   return (
@@ -35,6 +39,8 @@ export function DashboardShell({
           userAvatarUrl={userAvatarUrl}
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
+          showSiteLink={showSiteLink}
+          showInstallButton={showInstallButton}
         />
         <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">
           {children}

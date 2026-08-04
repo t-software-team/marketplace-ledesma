@@ -55,7 +55,6 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   if (!shop) {
     return (
       <div className="mx-auto max-w-md space-y-4 px-4 py-8">
-        <h1 className="text-2xl font-heading">Mi tienda</h1>
         <Card>
           <CardHeader>
             <CardTitle>¡Bienvenido! Vamos a crear tu tienda</CardTitle>
