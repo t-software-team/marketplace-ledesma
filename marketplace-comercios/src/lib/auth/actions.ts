@@ -25,10 +25,23 @@ export async function selectUserRole(role: UserRole) {
     return { error: 'No estás autenticado' }
   }
 
-  const { error } = await supabase.from('profiles').update({ role }).eq('id', user.id)
+  const { data: updated, error } = await supabase
+    .from('profiles')
+    .update({ role })
+    .eq('id', user.id)
+    .is('role', null)
+    .select('id')
+    .maybeSingle()
 
   if (error) {
     console.error('selectUserRole: failed to update profile role', error)
+    return { error: 'No pudimos guardar tu elección. Intentá de nuevo.' }
+  }
+
+  if (!updated) {
+    console.error('selectUserRole: no row updated (profile missing or role already set)', {
+      userId: user.id,
+    })
     return { error: 'No pudimos guardar tu elección. Intentá de nuevo.' }
   }
 
@@ -37,5 +50,5 @@ export async function selectUserRole(role: UserRole) {
     await sendEmail(user.email, subject, html)
   }
 
-  return { error: null }
+  redirect(role === 'shop_admin' ? '/mi-tienda' : '/')
 }

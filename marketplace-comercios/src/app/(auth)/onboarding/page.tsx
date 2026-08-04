@@ -1,7 +1,7 @@
 'use client'
 
 import { ShoppingBag, Store } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { unstable_rethrow } from 'next/navigation'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,7 +11,6 @@ import type { Database } from '@/types/database.types'
 type UserRole = Database['public']['Enums']['user_role']
 
 export default function OnboardingPage() {
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loadingRole, setLoadingRole] = useState<UserRole | null>(null)
 
@@ -20,23 +19,17 @@ export default function OnboardingPage() {
     setLoadingRole(role)
 
     try {
-      const { error: updateError } = await selectUserRole(role)
+      const result = await selectUserRole(role)
 
-      if (updateError) {
-        setError(updateError)
-        return
+      if (result?.error) {
+        setError(result.error)
+        setLoadingRole(null)
       }
-
-      if (role === 'shop_admin') {
-        router.push('/mi-tienda')
-      } else {
-        router.push('/')
-      }
-      router.refresh()
+      // On success selectUserRole redirects server-side; this component unmounts.
     } catch (err) {
+      unstable_rethrow(err)
       console.error('selectRole: unexpected error', err)
       setError('No pudimos guardar tu elección. Intentá de nuevo.')
-    } finally {
       setLoadingRole(null)
     }
   }
