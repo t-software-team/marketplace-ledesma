@@ -2,6 +2,7 @@ import { timingSafeEqual, createHmac } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface GalioPayWebhookPayload {
   id: string
@@ -52,6 +53,12 @@ export async function POST(request: Request) {
   if (!isValidSignature(rawBody, timestamp, signature)) {
     console.error('galiopay webhook: firma inválida')
     return NextResponse.json({ error: 'invalid signature' }, { status: 401 })
+  }
+
+  const allowed = await checkRateLimit('galiopay_webhook', 60, 60)
+  if (!allowed) {
+    console.error('galiopay webhook: rate limit excedido')
+    return NextResponse.json({ error: 'rate limit exceeded' }, { status: 429 })
   }
 
   let payload: GalioPayWebhookPayload

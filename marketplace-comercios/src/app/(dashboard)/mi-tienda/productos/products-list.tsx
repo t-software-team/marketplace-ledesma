@@ -1,8 +1,9 @@
 'use client'
 
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { AlertTriangle, Search, Star, Trash2 } from 'lucide-react'
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -10,7 +11,6 @@ import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
-import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
@@ -28,8 +28,6 @@ interface Product {
   categoryName: string | null
 }
 
-const PAGE_SIZE = 15
-
 function formatPrice(price: number | null, currency: string) {
   if (price == null) return 'Consultar'
   return new Intl.NumberFormat('es-AR', {
@@ -43,27 +41,44 @@ export function ProductsList({
   products,
   noun = 'producto',
   canFeature = false,
+  totalCount,
+  search,
+  basePath,
 }: {
   products: Product[]
   noun?: string
   canFeature?: boolean
+  totalCount?: number
+  search?: string
+  basePath?: string
 }) {
-  const [query, setQuery] = useState('')
-  const [page, setPage] = useState(1)
+  const router = useRouter()
+  const [query, setQuery] = useState(search ?? '')
   const [isPending, startTransition] = useTransition()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const activeCount = products.filter((product) => product.is_active).length
+  const pageProducts = products
 
-  const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
-    if (!normalized) return products
-    return products.filter((product) => product.name.toLowerCase().includes(normalized))
-  }, [products, query])
+  function handleSearchChange(value: string) {
+    setQuery(value)
+    if (!basePath) return
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const start = (currentPage - 1) * PAGE_SIZE
-  const pageProducts = filtered.slice(start, start + PAGE_SIZE)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams()
+      if (value.trim()) params.set('q', value.trim())
+      startTransition(() => {
+        router.push(params.size > 0 ? `${basePath}?${params.toString()}` : basePath)
+      })
+    }, 400)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const { selected, selectedIds, isAllSelected, toggle, toggleAll, clear } = useRowSelection(
     pageProducts.map((product) => product.id)
@@ -100,8 +115,8 @@ export function ProductsList({
     <div className="space-y-4">
       <div className="flex flex-col gap-1">
         <p className="text-sm text-muted-foreground">
-          {products.length} {noun}
-          {products.length === 1 ? '' : 's'} · {activeCount} activo
+          {totalCount ?? products.length} {noun}
+          {(totalCount ?? products.length) === 1 ? '' : 's'} · {activeCount} activo
           {activeCount === 1 ? '' : 's'}
         </p>
         <div className="relative">
@@ -110,8 +125,7 @@ export function ProductsList({
             placeholder={`Buscar ${noun}...`}
             value={query}
             onChange={(event) => {
-              setQuery(event.target.value)
-              setPage(1)
+              handleSearchChange(event.target.value)
             }}
             className="pl-9"
             aria-label={`Buscar ${noun}`}
@@ -142,7 +156,7 @@ export function ProductsList({
         />
       </BulkActionsBar>
 
-      {filtered.length === 0 ? (
+      {pageProducts.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           No encontramos {noun}s que coincidan con &quot;{query}&quot;.
         </p>
@@ -240,13 +254,6 @@ export function ProductsList({
               ))}
             </TableBody>
           </Table>
-          <PaginationControls
-            page={currentPage}
-            totalPages={totalPages}
-            totalCount={filtered.length}
-            onPrevious={() => setPage(currentPage - 1)}
-            onNext={() => setPage(currentPage + 1)}
-          />
         </div>
       )}
     </div>

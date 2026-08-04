@@ -27,12 +27,26 @@ interface ShopProductGridProps {
 const SEARCH_THRESHOLD = 8
 
 export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProductGridProps) {
+  const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useShopProductsPaged(
     shopId,
     searchQuery
   )
   const loadMoreRef = useRef<HTMLDivElement>(null)
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setSearchQuery(value.trim()), 350)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [])
 
   const products = useMemo(
     () => (data ? data.pages.flat() : searchQuery ? [] : initialProducts),
@@ -71,21 +85,23 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
   return (
     <>
       {showSearch && (
-        <div className="relative mb-3">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={`Buscar en ${shopName}...`}
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            className="h-10 pl-9"
-            aria-label={`Buscar productos de ${shopName}`}
-          />
+        <div className="sticky top-14 z-10 mb-3 bg-background/95 py-2 backdrop-blur-sm sm:static sm:bg-transparent sm:py-0 sm:backdrop-blur-none">
+          <div className="relative">
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={`Buscar en ${shopName}...`}
+              value={searchInput}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              className="h-10 pl-9"
+              aria-label={`Buscar productos de ${shopName}`}
+            />
+          </div>
         </div>
       )}
 
       {products.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No encontramos productos que coincidan con &quot;{searchQuery}&quot;.
+          No encontramos productos que coincidan con &quot;{searchInput}&quot;.
         </p>
       ) : (
         <>
