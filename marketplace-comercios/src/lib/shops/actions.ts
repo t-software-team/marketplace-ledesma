@@ -172,6 +172,7 @@ export async function createShop(
     name: parsed.data.name,
     slug: parsed.data.slug,
     whatsapp_number: parsed.data.whatsapp_number,
+    email: user.email ?? null,
   })
 
   if (error) {
