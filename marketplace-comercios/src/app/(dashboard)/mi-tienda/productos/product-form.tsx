@@ -93,22 +93,6 @@ export function ProductForm({
         <FieldError message={fieldErrors.name} />
       </div>
 
-      <div className="space-y-2">
-        <label id="description-label" className="text-base font-medium sm:text-sm">
-          Descripción
-        </label>
-        <RichTextEditor
-          name="description"
-          initialValue={defaultValues?.description ?? ''}
-          ariaLabelledBy="description-label"
-        />
-        <p className="text-xs text-muted-foreground">
-          Contá lo que a tu cliente le sirve saber: material, talles o colores disponibles, tiempo de
-          entrega, etc.
-        </p>
-        <FieldError message={fieldErrors.description} />
-      </div>
-
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label htmlFor="price" className="text-base font-medium sm:text-sm">
@@ -138,63 +122,6 @@ export function ProductForm({
         </div>
       </div>
 
-      <ProductVariantsField
-        initialVariants={defaultValues?.variants}
-        noun={noun}
-        isService={isService}
-        maxVariants={maxVariants}
-      />
-
-      <fieldset className="m-0 min-w-0 border-0 p-0 space-y-2">
-        <legend className="text-base font-medium sm:text-sm">Subcategoría</legend>
-        <input type="hidden" name="category_id" value={categoryId} />
-        {categories.length > 0 && (
-          <div className="relative">
-            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Buscar subcategoría..."
-              value={categorySearch}
-              onChange={(event) => setCategorySearch(event.target.value)}
-              className="h-10 pl-9"
-              aria-label="Buscar subcategoría"
-            />
-          </div>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
-          {categories.length > 0 && filteredCategories.length === 0 && (
-            <p className="text-xs text-muted-foreground">No encontramos ninguna subcategoría con ese nombre.</p>
-          )}
-          {filteredCategories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => setCategoryId(category.id)}
-              className={cn(
-                'shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors',
-                categoryId === category.id
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-surface text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {category.name}
-            </button>
-          ))}
-          <SuggestCategoryDialog
-            parentId={shopRubroId}
-            existingNames={categories.map((category) => category.name)}
-          />
-        </div>
-        {categories.length === 0 && (
-          <p className="text-xs text-muted-foreground">
-            No hay subcategorías para el rubro de tu comercio todavía.
-          </p>
-        )}
-        <FieldError message={fieldErrors.category_id} />
-      </fieldset>
-
-      <ProductAttributesFields attributeDefs={attributeDefs} initialValues={defaultValues?.attributes} />
-
       <ProductImagesField
         shopId={shopId}
         initialImages={defaultValues?.imageUrls}
@@ -202,13 +129,87 @@ export function ProductForm({
         maxImages={maxImages}
       />
 
-      <ProductVideoField
-        shopId={shopId}
-        initialVideoUrl={defaultValues?.videoUrl}
-        noun={noun}
-        videoLimitReached={videoLimitReached}
-      />
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <label id="description-label" className="text-base font-medium sm:text-sm">
+            Descripción
+          </label>
+          <RichTextEditor
+            name="description"
+            initialValue={defaultValues?.description ?? ''}
+            ariaLabelledBy="description-label"
+          />
+          <p className="text-xs text-muted-foreground">
+            Contá lo que a tu cliente le sirve saber: material, talles o colores disponibles, tiempo de
+            entrega, etc.
+          </p>
+          <FieldError message={fieldErrors.description} />
+        </div>
 
+        <ProductVariantsField
+          initialVariants={defaultValues?.variants}
+          noun={noun}
+          isService={isService}
+          maxVariants={maxVariants}
+        />
+
+        <fieldset className="m-0 min-w-0 border-0 p-0 space-y-2">
+          <legend className="text-base font-medium sm:text-sm">Subcategoría</legend>
+          <input type="hidden" name="category_id" value={categoryId} />
+          {categories.length > 0 && (
+            <div className="relative">
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar subcategoría..."
+                value={categorySearch}
+                onChange={(event) => setCategorySearch(event.target.value)}
+                className="h-10 pl-9"
+                aria-label="Buscar subcategoría"
+              />
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {categories.length > 0 && filteredCategories.length === 0 && (
+              <p className="text-xs text-muted-foreground">No encontramos ninguna subcategoría con ese nombre.</p>
+            )}
+            {filteredCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setCategoryId(category.id)}
+                className={cn(
+                  'shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors',
+                  categoryId === category.id
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-surface text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {category.name}
+              </button>
+            ))}
+            <SuggestCategoryDialog
+              parentId={shopRubroId}
+              existingNames={categories.map((category) => category.name)}
+            />
+          </div>
+          {categories.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No hay subcategorías para el rubro de tu comercio todavía.
+            </p>
+          )}
+          <FieldError message={fieldErrors.category_id} />
+        </fieldset>
+
+        <ProductAttributesFields attributeDefs={attributeDefs} initialValues={defaultValues?.attributes} />
+
+        <ProductVideoField
+          shopId={shopId}
+          initialVideoUrl={defaultValues?.videoUrl}
+          noun={noun}
+          videoLimitReached={videoLimitReached}
+        />
+      </div>
 
       <div className="space-y-1">
         <label className="flex items-center gap-2 text-base font-medium sm:text-sm">
