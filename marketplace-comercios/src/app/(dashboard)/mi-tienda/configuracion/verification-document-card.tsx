@@ -60,7 +60,7 @@ export function VerificationDocumentCard({
   const isVerified = verificationStatus === 'verified'
 
   return (
-    <Card>
+    <Card id="verificacion" className="scroll-mt-20">
       <CardContent className="space-y-4 pt-6">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">

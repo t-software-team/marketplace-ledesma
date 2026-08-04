@@ -26,7 +26,7 @@ export function OnboardingChecklist({
       done: hasCategory,
       label: 'Elegí el rubro de tu comercio',
       description: 'Define qué subcategorías vas a poder usar al cargar productos.',
-      href: '/mi-tienda/configuracion',
+      href: '/mi-tienda/configuracion#rubro',
       cta: 'Configurar',
     },
     {
@@ -34,7 +34,7 @@ export function OnboardingChecklist({
       done: hasBranding,
       label: 'Subí tu logo y portada',
       description: 'Un comercio con fotos genera mucha más confianza.',
-      href: '/mi-tienda/configuracion',
+      href: '/mi-tienda/configuracion#imagenes',
       cta: 'Configurar',
     },
     {
@@ -50,7 +50,7 @@ export function OnboardingChecklist({
       done: isVerified,
       label: 'Verificá tu comercio',
       description: 'Subí un documento (habilitación, DNI, factura) para tener el sello de verificado.',
-      href: '/mi-tienda/configuracion',
+      href: '/mi-tienda/configuracion#verificacion',
       cta: 'Verificar',
     },
     {

@@ -248,7 +248,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="rubro" className="scroll-mt-20">
         <CardContent className="space-y-4 pt-6">
           <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Rubro y horario</h2>
 
@@ -319,7 +319,7 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="imagenes" className="scroll-mt-20">
         <CardContent className="space-y-4 pt-6">
           <h2 className="text-base font-medium sm:text-sm text-muted-foreground">Imágenes</h2>
 
