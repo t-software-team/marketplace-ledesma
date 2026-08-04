@@ -240,6 +240,7 @@ export function PublicMain({ children }: { children: React.ReactNode }) {
 
   return (
     <main
+      id="main-content"
       className={cn(
         'mx-auto w-full max-w-5xl flex-1 px-4 md:px-6',
         isMinimal ? 'pt-5 pb-6' : 'py-6 pb-24 sm:pb-6'

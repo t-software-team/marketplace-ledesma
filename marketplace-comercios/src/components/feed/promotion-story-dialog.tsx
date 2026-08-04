@@ -166,13 +166,13 @@ export function PromotionStoryDialog({
               type="button"
               onClick={goPrevious}
               aria-label="Promoción anterior"
-              className="absolute inset-y-0 left-0 z-[5] w-1/3"
+              className="absolute inset-y-0 left-0 z-[5] w-1/3 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
             />
             <button
               type="button"
               onClick={goNext}
               aria-label="Siguiente promoción"
-              className="absolute inset-y-0 right-0 z-[5] w-2/3"
+              className="absolute inset-y-0 right-0 z-[5] w-2/3 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
             />
 
             <StoryPreview

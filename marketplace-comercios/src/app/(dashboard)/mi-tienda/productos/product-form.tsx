@@ -94,8 +94,14 @@ export function ProductForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-base font-medium sm:text-sm">Descripción</label>
-        <RichTextEditor name="description" initialValue={defaultValues?.description ?? ''} />
+        <label id="description-label" className="text-base font-medium sm:text-sm">
+          Descripción
+        </label>
+        <RichTextEditor
+          name="description"
+          initialValue={defaultValues?.description ?? ''}
+          ariaLabelledBy="description-label"
+        />
         <p className="text-xs text-muted-foreground">
           Contá lo que a tu cliente le sirve saber: material, talles o colores disponibles, tiempo de
           entrega, etc.
@@ -139,8 +145,8 @@ export function ProductForm({
         maxVariants={maxVariants}
       />
 
-      <div className="space-y-2">
-        <label className="text-base font-medium sm:text-sm">Subcategoría</label>
+      <fieldset className="m-0 min-w-0 border-0 p-0 space-y-2">
+        <legend className="text-base font-medium sm:text-sm">Subcategoría</legend>
         <input type="hidden" name="category_id" value={categoryId} />
         {categories.length > 0 && (
           <div className="relative">
@@ -185,7 +191,7 @@ export function ProductForm({
           </p>
         )}
         <FieldError message={fieldErrors.category_id} />
-      </div>
+      </fieldset>
 
       <ProductAttributesFields attributeDefs={attributeDefs} initialValues={defaultValues?.attributes} />
 

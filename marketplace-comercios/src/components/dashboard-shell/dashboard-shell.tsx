@@ -36,7 +36,9 @@ export function DashboardShell({
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
         />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">{children}</main>
+        <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">
+          {children}
+        </main>
         <DashboardFooter />
       </div>
     </div>

@@ -11,6 +11,7 @@ interface RichTextEditorProps {
   name: string
   initialValue?: string | null
   placeholder?: string
+  ariaLabelledBy?: string
 }
 
 function ToolbarButton({
@@ -40,7 +41,12 @@ function ToolbarButton({
   )
 }
 
-export function RichTextEditor({ name, initialValue = '', placeholder }: RichTextEditorProps) {
+export function RichTextEditor({
+  name,
+  initialValue = '',
+  placeholder,
+  ariaLabelledBy,
+}: RichTextEditorProps) {
   const [html, setHtml] = useState(initialValue ?? '')
 
   const editor = useEditor({
@@ -60,6 +66,7 @@ export function RichTextEditor({ name, initialValue = '', placeholder }: RichTex
       attributes: {
         class:
           'prose prose-sm max-w-none min-h-24 rounded-b-lg border border-t-0 border-input bg-transparent px-3 py-2 text-sm outline-none focus:ring-3 focus:ring-ring/50 [&_p]:my-1',
+        ...(ariaLabelledBy ? { 'aria-labelledby': ariaLabelledBy } : {}),
       },
     },
   })
