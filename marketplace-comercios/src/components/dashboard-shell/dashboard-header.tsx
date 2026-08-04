@@ -29,7 +29,6 @@ import { markAllNotificationsRead } from '@/lib/admin/actions'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppButton } from '@/components/shared/install-app-button'
-import { COMMAND_PALETTE_OPEN_EVENT } from '@/app/(admin)/admin/command-palette'
 
 export interface AdminNotification {
   id: string
@@ -182,18 +181,6 @@ export function DashboardHeader({
 
         <div className="flex items-center gap-1">
           {showInstallButton && <InstallAppButton />}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="hidden gap-1 text-xs text-muted-foreground md:inline-flex"
-            onClick={() => window.dispatchEvent(new Event(COMMAND_PALETTE_OPEN_EVENT))}
-            aria-label="Abrir paleta de comandos"
-          >
-            <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px]">
-              ⌘K
-            </kbd>
-          </Button>
           {showSiteLink && (
             <Button
               render={<Link href="/" />}
