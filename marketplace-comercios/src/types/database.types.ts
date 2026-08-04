@@ -1417,6 +1417,7 @@ export type Database = {
           rubro_slug: string
           shop_id: string
           shop_is_featured: boolean
+          shop_is_verified: boolean
           shop_name: string
         }[]
       }

@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { Eye, MessageCircle, Package, Store } from 'lucide-react'
+import { Check, Eye, MessageCircle, Package, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,7 +12,14 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isServiceRubro } from '@/lib/category-icons'
-import { getMyShop, getMyShopProducts, getShopContactsSeries } from '@/lib/shops/queries'
+import { getBenefitLines } from '@/lib/shops/benefits'
+import {
+  getActiveSubscriptionPlans,
+  getMyActiveSubscription,
+  getMyShop,
+  getMyShopProducts,
+  getShopContactsSeries,
+} from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
 import { OnboardingChecklist } from './onboarding-checklist'
 
@@ -65,9 +72,11 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const [products, contactsSeries] = await Promise.all([
+  const [products, contactsSeries, activeSubscription, allPlans] = await Promise.all([
     getMyShopProducts(shop.id),
     getShopContactsSeries(shop.id, 14),
+    getMyActiveSubscription(shop.id),
+    getActiveSubscriptionPlans(),
   ])
   const recentProducts = products.slice(0, 4)
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
@@ -81,6 +90,20 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   const shopUrl = `${protocol}://${host}/tienda/${shop.slug}`
 
   const daysUntilExpiry = shop.subscription_expires_at ? daysUntil(shop.subscription_expires_at) : null
+
+  const freeMaxForShop = isService ? 3 : 15
+  const freePlan = allPlans.find(
+    (plan) =>
+      plan.price === 0 && (plan.applies_to === 'all' || plan.applies_to === (isService ? 'service' : 'product'))
+  )
+
+  const planName = activeSubscription?.subscription_plans?.name ?? freePlan?.name ?? 'Free'
+  const planBenefits = activeSubscription
+    ? activeSubscription.subscription_plans?.benefits
+    : freePlan
+      ? { ...(freePlan.benefits as object), max_products: freeMaxForShop }
+      : null
+  const benefitLines = getBenefitLines(planBenefits, noun, nounPlural)
 
   const isExpired = shop.subscription_status === 'expired'
   const isExpiringSoon =
@@ -177,24 +200,40 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       </div>
 
       <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Suscripción</p>
-            <div className="flex items-center gap-2">
-              <StatusBadge
-                status={shop.subscription_status}
-                label={subscriptionLabels[shop.subscription_status]}
-              />
-              {shop.subscription_expires_at && (
-                <span className="text-xs text-muted-foreground">
-                  Vence {new Date(shop.subscription_expires_at).toLocaleDateString('es-AR')}
-                </span>
-              )}
+        <CardContent className="space-y-3 pt-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Suscripción</p>
+              <div className="flex items-center gap-2">
+                <StatusBadge
+                  status={shop.subscription_status}
+                  label={
+                    shop.subscription_status === 'active' || shop.subscription_status === 'none'
+                      ? planName
+                      : subscriptionLabels[shop.subscription_status]
+                  }
+                />
+                {shop.subscription_expires_at && (
+                  <span className="text-xs text-muted-foreground">
+                    Vence {new Date(shop.subscription_expires_at).toLocaleDateString('es-AR')}
+                  </span>
+                )}
+              </div>
             </div>
+            <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
+              {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
+            </Button>
           </div>
-          <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
-            {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
-          </Button>
+          {benefitLines.length > 0 && (
+            <ul className="grid gap-1.5 border-t border-border pt-3 text-xs text-muted-foreground sm:grid-cols-2">
+              {benefitLines.map((line) => (
+                <li key={line} className="flex items-start gap-1.5">
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-success" aria-hidden />
+                  <span>{line}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

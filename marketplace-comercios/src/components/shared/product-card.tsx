@@ -16,6 +16,7 @@ export interface ProductFeedItem {
   shop_id: string
   shop_name: string
   shop_is_featured: boolean
+  shop_is_verified?: boolean
   product_is_featured?: boolean
   distance_km: number | null
   main_image: string | null
@@ -33,7 +34,6 @@ function ShopRubroIcon({ rubroSlug, className }: { rubroSlug?: string | null; cl
 
 interface ProductCardProps {
   product: ProductFeedItem
-  isVerified?: boolean
   className?: string
   isLoggedIn?: boolean
   initialIsFavorite?: boolean
@@ -56,11 +56,11 @@ function formatDistance(distanceKm: number | null) {
 
 export function ProductCard({
   product,
-  isVerified = false,
   className,
   isLoggedIn = false,
   initialIsFavorite = false,
 }: ProductCardProps) {
+  const isVerified = Boolean(product.shop_is_verified)
   const distance = formatDistance(product.distance_km)
   const categoryBreadcrumb = product.category_name
     ? product.parent_category_name
@@ -104,11 +104,6 @@ export function ProductCard({
             </div>
           )}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/25 to-transparent" />
-          {isVerified && (
-            <div className="absolute right-2 bottom-2">
-              <VerifiedStamp />
-            </div>
-          )}
         </div>
         <CardContent className="space-y-1.5 pb-4">
           {categoryBreadcrumb && (
@@ -144,6 +139,7 @@ export function ProductCard({
             <span className="flex min-w-0 items-center gap-1">
               <ShopRubroIcon rubroSlug={product.rubro_slug} className="size-3 shrink-0" />
               <span className="truncate">{product.shop_name}</span>
+              {isVerified && <VerifiedStamp className="size-3.5 shrink-0" />}
             </span>
             {distance && (
               <span className="flex shrink-0 items-center gap-0.5 font-mono">
