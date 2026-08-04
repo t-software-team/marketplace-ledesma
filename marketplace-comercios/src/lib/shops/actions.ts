@@ -1103,10 +1103,10 @@ export async function startSubscriptionCheckout(
     }
   }
 
-  const { error } = await supabase.from('subscriptions').insert({
+  const subscriptionRow = {
     shop_id: shop.id,
     plan_id: planId,
-    status: 'pending',
+    status: 'pending' as const,
     start_date: null,
     end_date: endDate.toISOString(),
     galiopay_reference_id: referenceId,
@@ -1114,10 +1114,23 @@ export async function startSubscriptionCheckout(
     galiopay_proof_token: link.proofToken,
     galiopay_checkout_url: link.url,
     galiopay_status: 'pending',
-  })
+  }
+
+  let { error } = await supabase.from('subscriptions').insert(subscriptionRow)
 
   if (error) {
-    console.error('startSubscriptionCheckout: fallo al crear solicitud', { referenceId, error })
+    // Reintento único: el link ya existe en GalioPay, un blip transitorio de red/DB
+    // no debería dejarlo huérfano si podemos evitarlo.
+    ;({ error } = await supabase.from('subscriptions').insert(subscriptionRow))
+  }
+
+  if (error) {
+    console.error('startSubscriptionCheckout: fallo al crear solicitud (link huérfano en GalioPay)', {
+      referenceId,
+      linkId: link.linkId,
+      checkoutUrl: link.url,
+      error,
+    })
     return { error: 'No pudimos iniciar el pago' }
   }
 

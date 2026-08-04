@@ -71,12 +71,37 @@ export async function POST(request: Request) {
 
   const { data: subscription } = await service
     .from('subscriptions')
-    .select('id, status, galiopay_link_id, galiopay_proof_token')
+    .select('id, shop_id, status, galiopay_link_id, galiopay_proof_token')
     .eq('galiopay_reference_id', payload.referenceId)
     .maybeSingle()
 
   if (!subscription) {
     return NextResponse.json({ error: 'subscription not found' }, { status: 404 })
+  }
+
+  if (payload.status === 'refunded') {
+    const { error } = await service
+      .from('subscriptions')
+      .update({ status: 'expired', galiopay_status: 'refunded' })
+      .eq('id', subscription.id)
+
+    if (error) {
+      console.error('galiopay webhook: fallo al procesar reembolso', {
+        subscriptionId: subscription.id,
+        referenceId: payload.referenceId,
+        error,
+      })
+      return NextResponse.json({ error: 'refund processing failed' }, { status: 500 })
+    }
+
+    if (subscription.status === 'active') {
+      await service
+        .from('shops')
+        .update({ subscription_status: 'expired', updated_at: new Date().toISOString() })
+        .eq('id', subscription.shop_id)
+    }
+
+    return NextResponse.json({ ok: true, refunded: true })
   }
 
   if (subscription.status === 'active') {
