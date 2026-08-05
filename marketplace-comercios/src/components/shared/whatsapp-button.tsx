@@ -13,6 +13,7 @@ interface WhatsAppButtonProps {
   shopId?: string
   productId?: string
   className?: string
+  compact?: boolean
 }
 
 export function WhatsAppButton({
@@ -21,6 +22,7 @@ export function WhatsAppButton({
   shopId,
   productId,
   className,
+  compact = false,
 }: WhatsAppButtonProps) {
   const sanitizedPhone = toWhatsAppNumber(phoneNumber)
   const url = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`
@@ -54,7 +56,7 @@ export function WhatsAppButton({
       aria-label="Contactar por WhatsApp"
     >
       <MessageCircle className="size-5" />
-      Contactar por WhatsApp
+      {compact ? 'Contactar' : 'Contactar por WhatsApp'}
     </Button>
   )
 }

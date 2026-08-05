@@ -16,6 +16,7 @@ import { RelatedShops } from '@/components/shop/related-shops'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
+import { ShopServiceList } from '@/components/shop/shop-service-list'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import Link from 'next/link'
 import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
@@ -107,6 +108,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
     ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
+  const isService = shop.categories?.is_service ?? false
   const isVerified = hasVerifiedBadge(shop)
   const isFeatured = shop.subscription_status === 'active'
   const baseUrl = getBaseUrl()
@@ -327,8 +329,17 @@ export default async function ShopPage({ params }: ShopPageProps) {
       <LandingVideoSection url={shop.landing_video_url} />
 
       <section className="space-y-4">
-        <h2 className="text-lg font-heading">Productos</h2>
-        <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
+        <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
+        {isService ? (
+          <ShopServiceList
+            shopId={shop.id}
+            initialProducts={products}
+            shopName={shop.name}
+            whatsappNumber={shop.whatsapp_number}
+          />
+        ) : (
+          <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
+        )}
       </section>
 
       {isFeatured && (

@@ -1408,6 +1408,7 @@ export type Database = {
           attributes: Json
           category_name: string
           distance_km: number
+          is_service: boolean
           main_image: string
           parent_category_name: string
           price: number

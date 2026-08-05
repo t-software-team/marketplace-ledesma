@@ -24,6 +24,7 @@ export interface ProductFeedItem {
   parent_category_name?: string | null
   attributes?: unknown
   rubro_slug?: string | null
+  is_service?: boolean | null
 }
 
 const HEX_COLOR_REGEX = /^#[0-9a-f]{6}$/i
@@ -106,11 +107,18 @@ export function ProductCard({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/25 to-transparent" />
         </div>
         <CardContent className="space-y-1.5 pb-4">
-          {categoryBreadcrumb && (
-            <p className="truncate text-[11px] font-medium tracking-wide text-primary uppercase">
-              {categoryBreadcrumb}
-            </p>
-          )}
+          <div className="flex items-center justify-between gap-2">
+            {categoryBreadcrumb && (
+              <p className="truncate text-[11px] font-medium tracking-wide text-primary uppercase">
+                {categoryBreadcrumb}
+              </p>
+            )}
+            {product.is_service && (
+              <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                Servicio
+              </span>
+            )}
+          </div>
           <p className="line-clamp-2 font-medium leading-snug">{product.product_name}</p>
           <p className="font-mono text-base font-semibold text-foreground">
             {formatPrice(product.price)}
