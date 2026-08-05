@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,7 +15,6 @@ import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
 import { GoogleButton } from '@/components/auth/google-button'
 
 export default function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [authError, setAuthError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
@@ -47,8 +46,7 @@ export default function LoginForm() {
     } = await supabase.auth.getUser()
 
     if (!user) {
-      router.push('/')
-      router.refresh()
+      window.location.href = '/'
       return
     }
 
@@ -59,8 +57,7 @@ export default function LoginForm() {
       .single()
 
     if (!profile?.role) {
-      router.push('/onboarding')
-      router.refresh()
+      window.location.href = '/onboarding'
       return
     }
 
@@ -72,8 +69,7 @@ export default function LoginForm() {
         : profile.role === 'superadmin'
           ? '/admin/dashboard'
           : '/'
-    router.push(next ?? roleDestination)
-    router.refresh()
+    window.location.href = next ?? roleDestination
   }
 
   return (

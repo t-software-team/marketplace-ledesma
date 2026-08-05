@@ -313,16 +313,9 @@ export function DashboardHeader({
                 <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                render={
-                  <form action={signOut} className="w-full">
-                    <button type="submit" className="w-full text-left">
-                      Cerrar sesión
-                    </button>
-                  </form>
-                }
-                variant="destructive"
-              />
+              <DropdownMenuItem variant="destructive" onClick={() => signOut()}>
+                Cerrar sesión
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
