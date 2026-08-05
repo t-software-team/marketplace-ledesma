@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { Check, Eye, MessageCircle, Package, Star, Store } from 'lucide-react'
+import { Check, Eye, MessageCircle, Package, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +14,7 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import {
+  getActiveCategories,
   getActiveSubscriptionPlans,
   getMyActiveSubscription,
   getMyShop,
@@ -45,28 +46,31 @@ function formatPrice(price: number | null, currency: string) {
 }
 
 interface MyShopPageProps {
-  searchParams: Promise<{ subscription?: string }>
+  searchParams: Promise<{ subscription?: string; saved?: string; warning?: string }>
 }
 
 export default async function MyShopPage({ searchParams }: MyShopPageProps) {
-  const { subscription } = await searchParams
+  const { subscription, saved, warning } = await searchParams
   const shop = await getMyShop()
 
   if (!shop) {
+    const categories = await getActiveCategories()
     return (
-      <div className="mx-auto max-w-md space-y-4 px-4 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>¡Bienvenido! Vamos a crear tu tienda</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Son solo 3 datos para arrancar. No te preocupes si no queda perfecto — podés
-              cambiar todo después.
-            </p>
-            <CreateShopForm />
-          </CardContent>
-        </Card>
+      <div className="-mx-4 -my-6 md:-mx-6 sm:mx-0 sm:my-0">
+        <div className="mx-auto space-y-4 px-4 py-6 sm:max-w-md sm:px-0 sm:py-8">
+          <Card className="rounded-none ring-0 sm:rounded-xl sm:ring-1">
+            <CardHeader>
+              <CardTitle>¡Bienvenido! Vamos a crear tu tienda</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Son solo unos datos para arrancar. No te preocupes si no queda perfecto — podés
+                cambiar todo después.
+              </p>
+              <CreateShopForm categories={categories} />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -113,6 +117,18 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       {subscription === 'activada' && (
         <p className="rounded-lg border border-success bg-success/30 p-3 text-sm text-success-foreground">
           ¡Listo! Tu pago se acreditó y tu suscripción ya está activa.
+        </p>
+      )}
+
+      {saved === '1' && (
+        <p className="rounded-lg border border-success bg-success/30 p-3 text-sm text-success-foreground">
+          Cambios guardados con éxito.
+        </p>
+      )}
+
+      {warning && (
+        <p className="rounded-lg border border-warning bg-warning/10 p-3 text-sm text-warning-foreground">
+          {warning}
         </p>
       )}
 
@@ -192,7 +208,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               url={shopUrl}
               variant="outline"
               size="sm"
-              icon={Star}
+              icon="star"
               label="Invitar a reseñar"
               copiedLabel="Link copiado"
             />

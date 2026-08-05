@@ -17,6 +17,7 @@ export const createShopSchema = z.object({
     .max(60)
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Usá solo minúsculas, números y guiones'),
   whatsapp_number: whatsappNumberSchema,
+  category_id: uuidLike('Elegí un rubro'),
 })
 
 export type CreateShopFormValues = z.infer<typeof createShopSchema>

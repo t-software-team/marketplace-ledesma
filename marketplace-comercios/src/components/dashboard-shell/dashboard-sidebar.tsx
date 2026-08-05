@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { Badge } from '@/components/ui/badge'
 
 const ICONS = {
   store: Store,
@@ -100,16 +101,25 @@ export function SidebarNav({ navItems, onNavigate }: SidebarNavProps) {
 
 interface DashboardSidebarProps {
   navItems: DashboardNavItem[]
+  accent?: boolean
 }
 
-export function DashboardSidebar({ navItems }: DashboardSidebarProps) {
+export function DashboardSidebar({ navItems, accent = false }: DashboardSidebarProps) {
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-border bg-surface md:flex">
+    <aside
+      className={cn(
+        'fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-border bg-surface md:flex',
+        accent && 'border-t-4 border-t-violet-500'
+      )}
+    >
       <div className="flex h-14 items-center gap-2 border-b border-border px-4 font-heading text-lg">
        <span className="relative hidden size-7 shrink-0 sm:block">
             <Image src="/brand/logo.png" alt="" fill className="object-contain" />
           </span>
         Proxi Marketplace
+        {accent && (
+          <Badge className="ml-auto bg-violet-500 text-white hover:bg-violet-500">Admin</Badge>
+        )}
       </div>
       <SidebarNav navItems={navItems} />
     </aside>

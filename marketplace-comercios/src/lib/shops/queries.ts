@@ -191,7 +191,7 @@ export async function getActiveCategories() {
 
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name, slug')
+    .select('id, name, slug, is_service')
     .eq('is_active', true)
     .is('parent_id', null)
     .order('name', { ascending: true })

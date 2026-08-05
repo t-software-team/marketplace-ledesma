@@ -51,7 +51,9 @@ export default async function AdminLayout({
         userEmail={user?.email ?? ''}
         userFullName={fullName}
         userAvatarUrl={avatarUrl}
-        sectionTitle=""
+        sectionTitle="Admin"
+        rootHref="/admin/dashboard"
+        accent
         notifications={notifications}
         unreadNotificationsCount={unreadNotificationsCount}
       >

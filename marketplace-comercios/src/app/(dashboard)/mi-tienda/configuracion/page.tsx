@@ -28,6 +28,7 @@ export default async function ShopSettingsPage() {
       <VerificationDocumentCard
         shopId={shop.id}
         verificationStatus={shop.verification_status}
+        subscriptionStatus={shop.subscription_status}
         hasDocument={Boolean(shop.verification_document_url)}
         documentUrl={documentUrl}
       />

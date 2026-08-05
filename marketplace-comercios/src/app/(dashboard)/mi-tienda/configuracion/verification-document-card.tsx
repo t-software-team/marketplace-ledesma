@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRef, useState, useTransition } from 'react'
 import { FileText, ShieldCheck, UploadCloud } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,6 +13,7 @@ import { updateVerificationDocument } from '@/lib/shops/actions'
 interface VerificationDocumentCardProps {
   shopId: string
   verificationStatus: string
+  subscriptionStatus: string
   hasDocument: boolean
   documentUrl: string | null
 }
@@ -24,6 +26,7 @@ const STATUS_HELP: Record<string, string> = {
 export function VerificationDocumentCard({
   shopId,
   verificationStatus,
+  subscriptionStatus,
   hasDocument,
   documentUrl,
 }: VerificationDocumentCardProps) {
@@ -58,6 +61,7 @@ export function VerificationDocumentCard({
   }
 
   const isVerified = verificationStatus === 'verified'
+  const isSubscriptionActive = subscriptionStatus === 'active'
 
   return (
     <Card id="verificacion" className="scroll-mt-20">
@@ -71,14 +75,35 @@ export function VerificationDocumentCard({
         </div>
 
         {isVerified ? (
-          <p className="text-sm text-muted-foreground">
-            Tu comercio ya tiene el sello de verificado ✓
-          </p>
+          isSubscriptionActive ? (
+            <p className="text-sm text-muted-foreground">
+              Tu comercio ya tiene el sello de verificado ✓
+            </p>
+          ) : (
+            <div className="space-y-2 rounded-lg border border-border bg-surface p-3">
+              <p className="text-sm text-muted-foreground">
+                Tu documento ya fue aprobado, pero el sello de verificado ✓ solo se muestra en
+                comercios con un plan <strong>Básico</strong> o <strong>Ilimitado</strong> activo.
+              </p>
+              <Button size="sm" render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false}>
+                Ver planes
+              </Button>
+            </div>
+          )
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
               {STATUS_HELP[verificationStatus] ?? STATUS_HELP.pending}
             </p>
+
+            {!isSubscriptionActive && (
+              <p className="rounded-lg border border-border bg-surface p-3 text-xs text-muted-foreground">
+                El sello de verificado ✓ se muestra en comercios con un plan{' '}
+                <strong>Básico</strong> o <strong>Ilimitado</strong> activo. Podés subir tu
+                documento igual — cuando lo aprobemos y tengas uno de esos planes, el sello se
+                activa solo.
+              </p>
+            )}
 
             {hasDocument && (
               <a

@@ -161,6 +161,7 @@ export async function createShop(
     name: formData.get('name'),
     slug: formData.get('slug'),
     whatsapp_number: formData.get('whatsapp_number'),
+    category_id: formData.get('category_id'),
   })
 
   if (!parsed.success) {
@@ -172,6 +173,7 @@ export async function createShop(
     name: parsed.data.name,
     slug: parsed.data.slug,
     whatsapp_number: parsed.data.whatsapp_number,
+    category_id: parsed.data.category_id,
     email: user.email ?? null,
   })
 
@@ -333,7 +335,10 @@ export async function updateShopSettings(
   revalidatePath('/mi-tienda/configuracion')
   revalidatePath('/mi-tienda')
   revalidatePath('/mi-tienda/productos')
-  return { error: null, warning }
+
+  const params = new URLSearchParams({ saved: '1' })
+  if (warning) params.set('warning', warning)
+  redirect(`/mi-tienda?${params.toString()}`)
 }
 
 export async function updateShopPersonalization(

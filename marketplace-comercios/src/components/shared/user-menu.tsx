@@ -65,16 +65,9 @@ export function UserMenu({ userEmail, userFullName, userAvatarUrl }: UserMenuPro
         Mis contactos
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          render={
-            <form action={signOut} className="w-full">
-              <button type="submit" className="w-full text-left">
-                Cerrar sesión
-              </button>
-            </form>
-          }
-          variant="destructive"
-        />
+        <DropdownMenuItem variant="destructive" onClick={() => signOut()}>
+          Cerrar sesión
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
