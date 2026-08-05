@@ -17,7 +17,7 @@ interface VerificationDocumentCardProps {
 }
 
 const STATUS_HELP: Record<string, string> = {
-  pending: 'Subí un documento que acredite tu comercio (habilitación, DNI del titular, factura de servicios) para que el equipo lo revise.',
+  pending: 'Subí un documento que acredite tu comercio (habilitación, DNI del titular, factura de servicios) para que el equipo lo revise. Así podrás obtener el sello de verificado ✓',
   rejected: 'Tu verificación fue rechazada. Subí un documento nuevo o más claro para volver a solicitarla.',
 }
 

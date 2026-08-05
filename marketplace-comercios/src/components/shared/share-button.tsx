@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ComponentType } from 'react'
 import { Check, Share2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
@@ -13,6 +13,9 @@ interface ShareButtonProps {
   className?: string
   variant?: 'default' | 'outline' | 'ghost'
   size?: 'sm' | 'default' | 'icon'
+  icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+  label?: string
+  copiedLabel?: string
 }
 
 export function ShareButton({
@@ -22,6 +25,9 @@ export function ShareButton({
   className,
   variant = 'outline',
   size = 'sm',
+  icon: Icon = Share2,
+  label = 'Compartir',
+  copiedLabel = 'Copiado',
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
@@ -55,10 +61,10 @@ export function ShareButton({
       size={size}
       className={cn('gap-1.5', className)}
       onClick={handleShare}
-      aria-label={size === 'icon' ? (copied ? 'Link copiado' : 'Compartir') : undefined}
+      aria-label={size === 'icon' ? (copied ? 'Link copiado' : label) : undefined}
     >
-      {copied ? <Check className="size-4" aria-hidden /> : <Share2 className="size-4" aria-hidden />}
-      {size !== 'icon' && (copied ? 'Copiado' : 'Compartir')}
+      {copied ? <Check className="size-4" aria-hidden /> : <Icon className="size-4" aria-hidden />}
+      {size !== 'icon' && (copied ? copiedLabel : label)}
     </Button>
   )
 }

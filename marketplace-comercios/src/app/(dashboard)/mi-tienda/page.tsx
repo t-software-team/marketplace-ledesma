@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { Check, Eye, MessageCircle, Package, Store } from 'lucide-react'
+import { Check, Eye, MessageCircle, Package, Star, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -185,6 +185,16 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               url={shopUrl}
               variant="outline"
               size="icon"
+            />
+            <ShareButton
+              title={shop.name}
+              text={`¿Nos regalás una reseña en Proxi? Contanos cómo te fue con ${shop.name}:`}
+              url={shopUrl}
+              variant="outline"
+              size="sm"
+              icon={Star}
+              label="Invitar a reseñar"
+              copiedLabel="Link copiado"
             />
             <Button
               render={<Link href={`/tienda/${shop.slug}`} target="_blank" />}
