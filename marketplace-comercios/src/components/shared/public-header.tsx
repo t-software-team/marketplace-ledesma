@@ -2,11 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Bell, Compass, Heart, Home, User } from 'lucide-react'
+import { ArrowLeft, Bell, Compass, Heart, Home, Search, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ import { UserMenu } from '@/components/shared/user-menu'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppBanner } from '@/components/shared/install-app-banner'
 import { markClientNotificationsRead } from '@/lib/notifications/actions'
+import { useFiltersStore } from '@/stores/use-filters-store'
 import { cn } from '@/lib/utils'
 
 interface ClientNotification {
@@ -66,9 +68,27 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const setSearch = useFiltersStore((state) => state.setSearch)
   const [isMarkingRead, startMarkingRead] = useTransition()
+  const [searchInput, setSearchInput] = useState('')
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   const isFirstPathname = useRef(true)
+
+  function handleSearchChange(value: string) {
+    setSearchInput(value)
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => {
+      setSearch(value)
+      if (pathname !== '/') router.push('/')
+    }, 350)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    }
+  }, [])
 
   // `window.history.length` is unreliable on mobile: opening a product/shop
   // link from WhatsApp, Instagram or a QR code often reports length > 1 with
@@ -97,22 +117,32 @@ export function PublicHeader({
 
   if (showFloatingBack) {
     return (
-      <button
-        type="button"
-        onClick={() => {
-          const navigatedWithinApp = internalNavCount > 0
+      <>
+        <button
+          type="button"
+          onClick={() => {
+            const navigatedWithinApp = internalNavCount > 0
 
-          if (navigatedWithinApp) {
-            router.back()
-          } else {
-            router.push('/')
-          }
-        }}
-        className="fixed top-3 left-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground shadow-md ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-muted"
-        aria-label="Volver"
-      >
-        <ArrowLeft className="size-5" aria-hidden />
-      </button>
+            if (navigatedWithinApp) {
+              router.back()
+            } else {
+              router.push('/')
+            }
+          }}
+          className="fixed top-3 left-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground shadow-md ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-muted"
+          aria-label="Volver"
+        >
+          <ArrowLeft className="size-5" aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={() => router.push('/')}
+          className="fixed top-3 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground shadow-md ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-muted"
+          aria-label="Buscar"
+        >
+          <Search className="size-4.5" aria-hidden />
+        </button>
+      </>
     )
   }
 
@@ -125,11 +155,34 @@ export function PublicHeader({
           <span className="relative flex size-8 shrink-0 items-center justify-center">
             <Image src="/brand/logo.png" alt="" fill className="object-contain" priority />
           </span>
-          <span className="truncate">
-            <span className="sm:hidden">Proxi</span>
-            <span className="hidden sm:inline">Marketplace</span>
+          <span className="hidden md:inline">
+            <span className="truncate">Marketplace</span>
           </span>
         </Link>
+        {pathname !== '/' && (
+          <>
+            <div className="relative hidden min-w-0 flex-1 sm:block sm:max-w-xs">
+              <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar en Proxi..."
+                value={searchInput}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                className="h-9 pl-9"
+                aria-label="Buscar comercios y productos"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 sm:hidden"
+              aria-label="Buscar"
+              onClick={() => router.push('/')}
+            >
+              <Search className="size-4.5" aria-hidden />
+            </Button>
+          </>
+        )}
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           {user ? (
             <>

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search } from 'lucide-react'
+import { Search, Store, Wrench } from 'lucide-react'
 import { useActionState, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { FieldError } from '@/components/shared/field-error'
@@ -12,7 +12,7 @@ import { RichTextEditor } from '@/components/shared/rich-text-editor'
 import { SuggestCategoryDialog } from '@/components/shared/suggest-category-dialog'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
-import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
+import { getRubroIcon } from '@/lib/category-icons'
 import { uploadShopImage } from '@/lib/shops/upload-image'
 import { slugify } from '@/lib/slugify'
 import { updateShopSettings, type ActionState } from '@/lib/shops/actions'
@@ -23,7 +23,7 @@ type Shop = NonNullable<Awaited<ReturnType<typeof getMyShop>>>
 
 interface ShopSettingsFormProps {
   shop: Shop
-  categories: { id: string; name: string; slug: string }[]
+  categories: { id: string; name: string; slug: string; is_service: boolean | null }[]
 }
 
 const initialState: ActionState = { error: null }
@@ -40,8 +40,6 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
     }
     if (state.error) {
       toast.add({ title: 'No pudimos guardar los cambios', description: state.error, type: 'error' })
-    } else {
-      toast.add({ title: 'Cambios guardados', type: 'success' })
     }
   }, [state])
   const [logoUrl, setLogoUrl] = useState(shop.logo_url ?? '')
@@ -51,11 +49,17 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [categoryId, setCategoryId] = useState(shop.category_id ?? '')
   const [categorySearch, setCategorySearch] = useState('')
+  const [kind, setKind] = useState<'comercio' | 'servicio'>(() => {
+    const current = categories.find((category) => category.id === shop.category_id)
+    return current?.is_service ? 'servicio' : 'comercio'
+  })
   const filteredCategories = useMemo(() => {
+    const wantsService = kind === 'servicio'
+    const byKind = categories.filter((category) => Boolean(category.is_service) === wantsService)
     const query = categorySearch.trim().toLowerCase()
-    if (!query) return categories
-    return categories.filter((category) => category.name.toLowerCase().includes(query))
-  }, [categories, categorySearch])
+    if (!query) return byKind
+    return byKind.filter((category) => category.name.toLowerCase().includes(query))
+  }, [categories, categorySearch, kind])
   const [slug, setSlug] = useState(shop.slug)
   // If the current slug doesn't match what auto-slugifying the name would
   // produce, the shop already has a manually customized URL — don't
@@ -255,6 +259,31 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
           <div className="space-y-2">
             <label className="text-base font-medium sm:text-sm">Rubro</label>
             <input type="hidden" name="category_id" value={categoryId} />
+            <div className="grid grid-cols-2 gap-2">
+              {(['comercio', 'servicio'] as const).map((option) => {
+                const Icon = option === 'comercio' ? Store : Wrench
+                const isSelected = kind === option
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      setKind(option)
+                      setCategoryId('')
+                    }}
+                    className={cn(
+                      'flex items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors',
+                      isSelected
+                        ? 'border-primary bg-primary/5 text-foreground'
+                        : 'border-border bg-surface text-muted-foreground hover:border-primary/50'
+                    )}
+                  >
+                    <Icon className="size-4" aria-hidden />
+                    {option === 'comercio' ? 'Comercio' : 'Servicio'}
+                  </button>
+                )
+              })}
+            </div>
             <div className="relative">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -287,18 +316,6 @@ export function ShopSettingsForm({ shop, categories }: ShopSettingsFormProps) {
                   >
                     <Icon className="size-3.5" aria-hidden />
                     {category.name}
-                    {isServiceRubro(category.slug) && (
-                      <span
-                        className={cn(
-                          'rounded-full px-1.5 py-0.5 text-[10px] font-medium',
-                          isSelected
-                            ? 'bg-primary-foreground/20 text-primary-foreground'
-                            : 'bg-muted text-muted-foreground'
-                        )}
-                      >
-                        Servicio
-                      </span>
-                    )}
                   </button>
                 )
               })}

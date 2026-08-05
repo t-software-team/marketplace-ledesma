@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, type ComponentType } from 'react'
-import { Check, Share2 } from 'lucide-react'
+import { useState } from 'react'
+import { Check, Share2, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
@@ -13,9 +13,14 @@ interface ShareButtonProps {
   className?: string
   variant?: 'default' | 'outline' | 'ghost'
   size?: 'sm' | 'default' | 'icon'
-  icon?: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>
+  icon?: 'share' | 'star'
   label?: string
   copiedLabel?: string
+}
+
+const ICONS = {
+  share: Share2,
+  star: Star,
 }
 
 export function ShareButton({
@@ -25,11 +30,12 @@ export function ShareButton({
   className,
   variant = 'outline',
   size = 'sm',
-  icon: Icon = Share2,
+  icon = 'share',
   label = 'Compartir',
   copiedLabel = 'Copiado',
 }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
+  const Icon = ICONS[icon]
 
   async function handleShare() {
     if (navigator.share) {

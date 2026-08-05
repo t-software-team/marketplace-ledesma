@@ -70,7 +70,8 @@ export default async function MiTiendaLayout({
       userEmail={user?.email ?? ''}
       userFullName={fullName}
       userAvatarUrl={avatarUrl}
-      sectionTitle=""
+      sectionTitle="Mi tienda"
+      rootHref="/mi-tienda"
       showInstallButton={false}
     >
       {children}

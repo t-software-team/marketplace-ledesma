@@ -24,11 +24,13 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { SidebarNav, type DashboardNavItem } from './dashboard-sidebar'
+import { Breadcrumbs } from './breadcrumbs'
 import { signOut } from '@/lib/auth/actions'
 import { markAllNotificationsRead } from '@/lib/admin/actions'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppButton } from '@/components/shared/install-app-button'
+import { cn } from '@/lib/utils'
 
 export interface AdminNotification {
   id: string
@@ -67,6 +69,7 @@ function formatUnreadCount(count: number) {
 
 interface DashboardHeaderProps {
   section: string
+  rootHref: string
   navItems: DashboardNavItem[]
   userEmail: string
   userFullName: string | null
@@ -75,6 +78,7 @@ interface DashboardHeaderProps {
   unreadNotificationsCount?: number
   showSiteLink?: boolean
   showInstallButton?: boolean
+  accent?: boolean
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -98,6 +102,7 @@ function notificationHref(notification: AdminNotification) {
 
 export function DashboardHeader({
   section,
+  rootHref,
   navItems,
   userEmail,
   userFullName,
@@ -106,6 +111,7 @@ export function DashboardHeader({
   unreadNotificationsCount,
   showSiteLink = true,
   showInstallButton = true,
+  accent = false,
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [isMarkingRead, startMarkingRead] = useTransition()
@@ -157,7 +163,12 @@ export function DashboardHeader({
   }
 
   return (
-    <header className="sticky top-0 z-10  border-border bg-background/95 backdrop-blur-sm">
+    <header
+      className={cn(
+        'sticky top-0 z-10 border-border bg-background/95 backdrop-blur-sm',
+        accent && 'border-t-4 border-t-violet-500'
+      )}
+    >
       <div className="flex h-14 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
@@ -175,8 +186,11 @@ export function DashboardHeader({
               <SidebarNav navItems={navItems} onNavigate={() => setMobileNavOpen(false)} />
             </SheetContent>
           </Sheet>
-          
-          {section && <h1 className="font-heading text-lg">{section}</h1>}
+
+          {accent && (
+            <Badge className="bg-violet-500 text-white hover:bg-violet-500 md:hidden">Admin</Badge>
+          )}
+          <Breadcrumbs navItems={navItems} rootHref={rootHref} rootLabel={section} />
         </div>
 
         <div className="flex items-center gap-1">
