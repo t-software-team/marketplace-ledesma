@@ -1,12 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { Eye, EyeOff, Pencil, Star, Trash2 } from 'lucide-react'
+import { Copy, Eye, EyeOff, Pencil, Star, Trash2 } from 'lucide-react'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { toast } from '@/components/ui/toast'
-import { deleteProduct, toggleProductActive, toggleProductFeatured } from '@/lib/shops/actions'
+import {
+  deleteProduct,
+  duplicateProduct,
+  toggleProductActive,
+  toggleProductFeatured,
+} from '@/lib/shops/actions'
 
 interface ProductRowActionsProps {
   productId: string
@@ -45,6 +50,17 @@ export function ProductRowActions({
           description: error instanceof Error ? error.message : undefined,
           type: 'error',
         })
+      }
+    })
+  }
+
+  function handleDuplicate() {
+    startTransition(async () => {
+      try {
+        await duplicateProduct(productId)
+        toast.add({ title: 'Producto duplicado', type: 'success' })
+      } catch {
+        toast.add({ title: 'No pudimos duplicar el producto', type: 'error' })
       }
     })
   }
@@ -92,6 +108,16 @@ export function ProductRowActions({
           <Star className={isFeatured ? 'size-4 fill-current' : 'size-4'} aria-hidden />
         </Button>
       )}
+
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={isPending}
+        onClick={handleDuplicate}
+        aria-label="Duplicar"
+      >
+        <Copy className="size-4" aria-hidden />
+      </Button>
 
       <ConfirmDialog
         trigger={<Button variant="destructive" size="icon" disabled={isPending} aria-label="Eliminar" />}

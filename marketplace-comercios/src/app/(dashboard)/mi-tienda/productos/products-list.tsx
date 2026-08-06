@@ -6,6 +6,7 @@ import { AlertTriangle, Search, Star, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -14,7 +15,11 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
-import { bulkDeleteProducts, bulkToggleProductActive } from '@/lib/shops/actions'
+import {
+  bulkDeleteProducts,
+  bulkToggleProductActive,
+  bulkToggleProductFeatured,
+} from '@/lib/shops/actions'
 import { ProductRowActions } from './product-row-actions'
 
 interface Product {
@@ -99,6 +104,22 @@ export function ProductsList({
     })
   }
 
+  function handleBulkFeature() {
+    startTransition(async () => {
+      try {
+        await bulkToggleProductFeatured(selectedIds, true)
+        toast.add({ title: `${selectedIds.length} ${noun}s destacados`, type: 'success' })
+        clear()
+      } catch (error) {
+        toast.add({
+          title: `No pudimos destacar los ${noun}s`,
+          description: error instanceof Error ? error.message : undefined,
+          type: 'error',
+        })
+      }
+    })
+  }
+
   function handleBulkDelete() {
     startTransition(async () => {
       try {
@@ -140,6 +161,11 @@ export function ProductsList({
         <Button variant="outline" size="sm" disabled={isPending} onClick={() => handleBulkToggle(false)}>
           Desactivar
         </Button>
+        {canFeature && (
+          <Button variant="outline" size="sm" disabled={isPending} onClick={handleBulkFeature}>
+            Destacar
+          </Button>
+        )}
         <ConfirmDialog
           trigger={<Button variant="outline" size="sm" className="gap-1.5 text-destructive" />}
           triggerLabel={
@@ -162,6 +188,86 @@ export function ProductsList({
         </p>
       ) : (
         <div className="space-y-3">
+          <div className="flex flex-col gap-3 sm:hidden">
+            {pageProducts.map((product) => (
+              <Card
+                key={product.id}
+                className={product.is_active ? undefined : 'opacity-60'}
+              >
+                <CardContent className="space-y-3 p-3">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      checked={selected.has(product.id)}
+                      onCheckedChange={() => toggle(product.id)}
+                      aria-label={`Seleccionar ${product.name}`}
+                    />
+                    <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
+                      {product.mainImage ? (
+                        <Image
+                          src={product.mainImage}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                          sizes="44px"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[9px] text-muted-foreground">
+                          Sin imagen
+                        </div>
+                      )}
+                      {product.is_featured && (
+                        <span className="absolute top-0.5 left-0.5 flex size-3.5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
+                          <Star className="size-2 fill-current" aria-hidden />
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{product.name}</p>
+                      {product.categoryName ? (
+                        <p className="truncate text-xs text-muted-foreground">
+                          {product.categoryName}
+                        </p>
+                      ) : (
+                        <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
+                          <AlertTriangle className="size-3 shrink-0" aria-hidden />
+                          Sin subcategoría
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-mono text-sm">
+                        {formatPrice(product.price, product.currency)}
+                      </span>
+                      <StatusBadge
+                        status={product.is_active ? 'active' : 'none'}
+                        label={product.is_active ? 'Activo' : 'Inactivo'}
+                      />
+                      {product.is_featured && (
+                        <Badge className="gap-1">
+                          <Star className="size-2.5 fill-current" aria-hidden />
+                          Destacado
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end border-t border-border/60 pt-3">
+                    <ProductRowActions
+                      productId={product.id}
+                      isActive={product.is_active}
+                      isFeatured={product.is_featured}
+                      canFeature={canFeature}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="hidden sm:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -254,6 +360,7 @@ export function ProductsList({
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
       )}
     </div>

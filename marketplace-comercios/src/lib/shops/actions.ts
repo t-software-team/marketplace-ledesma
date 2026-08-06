@@ -962,6 +962,114 @@ export async function deleteProduct(productId: string) {
   revalidatePath('/mi-tienda/productos')
 }
 
+export async function duplicateProduct(productId: string) {
+  const { supabase } = await requireUser()
+
+  const { data: original, error: fetchError } = await supabase
+    .from('products')
+    .select(
+      '*, product_images(url, sort_order), product_variants(name, price, sort_order)'
+    )
+    .eq('id', productId)
+    .single()
+
+  if (fetchError || !original) {
+    console.error('duplicateProduct: fallo al obtener producto', { productId, error: fetchError })
+    throw new Error('No pudimos duplicar el producto')
+  }
+
+  const { data: attributeValues } = await supabase
+    .from('product_attribute_values')
+    .select('attribute_id, value')
+    .eq('product_id', productId)
+
+  const limitInfo = await getProductLimitInfo(original.shop_id)
+  if (limitInfo.reached) {
+    throw new Error(
+      'Llegaste al límite de productos/servicios de tu plan actual. Mejorá tu suscripción para duplicar más.'
+    )
+  }
+
+  const { data: newProduct, error: insertError } = await supabase
+    .from('products')
+    .insert({
+      shop_id: original.shop_id,
+      name: `${original.name} (copia)`,
+      description: original.description,
+      price: original.price,
+      currency: original.currency,
+      category_id: original.category_id,
+      is_active: false,
+      video_url: original.video_url,
+    })
+    .select('id')
+    .single()
+
+  if (insertError || !newProduct) {
+    console.error('duplicateProduct: fallo al crear producto', { productId, error: insertError })
+    throw new Error('No pudimos duplicar el producto')
+  }
+
+  const images = original.product_images ?? []
+  if (images.length > 0) {
+    const { error: imagesError } = await supabase.from('product_images').insert(
+      images.map((image: { url: string; sort_order: number }) => ({
+        product_id: newProduct.id,
+        url: image.url,
+        sort_order: image.sort_order,
+      }))
+    )
+
+    if (imagesError) {
+      console.error('duplicateProduct: fallo al copiar imágenes', {
+        productId: newProduct.id,
+        error: imagesError,
+      })
+      throw new Error('No pudimos duplicar el producto')
+    }
+  }
+
+  const variants = original.product_variants ?? []
+  if (variants.length > 0) {
+    const { error: variantsError } = await supabase.from('product_variants').insert(
+      variants.map((variant: { name: string; price: number; sort_order: number }) => ({
+        product_id: newProduct.id,
+        name: variant.name,
+        price: variant.price,
+        sort_order: variant.sort_order,
+      }))
+    )
+
+    if (variantsError) {
+      console.error('duplicateProduct: fallo al copiar opciones', {
+        productId: newProduct.id,
+        error: variantsError,
+      })
+      throw new Error('No pudimos duplicar el producto')
+    }
+  }
+
+  if (attributeValues && attributeValues.length > 0) {
+    const { error: attributesError } = await supabase.from('product_attribute_values').insert(
+      attributeValues.map((attribute) => ({
+        product_id: newProduct.id,
+        attribute_id: attribute.attribute_id,
+        value: attribute.value,
+      }))
+    )
+
+    if (attributesError) {
+      console.error('duplicateProduct: fallo al copiar atributos', {
+        productId: newProduct.id,
+        error: attributesError,
+      })
+      throw new Error('No pudimos duplicar el producto')
+    }
+  }
+
+  revalidatePath('/mi-tienda/productos')
+}
+
 export async function toggleProductActive(productId: string, isActive: boolean) {
   const { supabase } = await requireUser()
 
@@ -992,6 +1100,47 @@ export async function bulkToggleProductActive(productIds: string[], isActive: bo
   }
 
   revalidatePath('/mi-tienda/productos')
+}
+
+export async function bulkToggleProductFeatured(productIds: string[], isFeatured: boolean) {
+  const { supabase, user } = await requireUser()
+
+  if (isFeatured) {
+    const firstProductId = productIds[0]
+    if (!firstProductId) throw new Error('Producto no encontrado')
+
+    const { data: product } = await supabase
+      .from('products')
+      .select('shop_id')
+      .eq('id', firstProductId)
+      .maybeSingle()
+
+    if (!product) throw new Error('Producto no encontrado')
+
+    const { data: shop } = await supabase
+      .from('shops')
+      .select('subscription_status')
+      .eq('id', product.shop_id)
+      .eq('owner_id', user.id)
+      .maybeSingle()
+
+    if (shop?.subscription_status !== 'active') {
+      throw new Error('Necesitás una suscripción activa para destacar productos')
+    }
+  }
+
+  const { error } = await supabase
+    .from('products')
+    .update({ is_featured: isFeatured })
+    .in('id', productIds)
+
+  if (error) {
+    console.error('bulkToggleProductFeatured: fallo al actualizar productos', { productIds, error })
+    throw new Error('No pudimos actualizar los productos seleccionados')
+  }
+
+  revalidatePath('/mi-tienda/productos')
+  revalidatePath('/')
 }
 
 export async function bulkDeleteProducts(productIds: string[]) {
