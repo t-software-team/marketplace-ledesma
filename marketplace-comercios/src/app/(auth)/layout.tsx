@@ -1,5 +1,5 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import { Store } from 'lucide-react'
 
 export default function AuthLayout({
   children,
@@ -13,8 +13,8 @@ export default function AuthLayout({
         aria-hidden
       />
       <Link href="/" className="mb-8 flex items-center gap-2 font-heading text-xl">
-        <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10">
-          <Store className="size-4.5 text-primary" aria-hidden />
+        <span className="relative flex size-9 shrink-0 items-center justify-center">
+          <Image src="/brand/logo.png" alt="" fill className="object-contain" priority />
         </span>
         Proxi Marketplace
       </Link>

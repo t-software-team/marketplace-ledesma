@@ -108,64 +108,61 @@ export function ShopServiceList({
         <>
           <div className="flex flex-col gap-3">
             {services.map((service) => (
-              <Link
+              <Card
                 key={service.id}
-                href={`/producto/${service.id}`}
-                className="block active:scale-[0.99] active:transition-transform"
+                className="overflow-hidden py-0 ring-border/60 transition-all sm:hover:-translate-y-0.5 sm:hover:shadow-md sm:hover:ring-primary/40"
               >
-                <Card className="overflow-hidden py-0 ring-border/60 transition-all sm:hover:-translate-y-0.5 sm:hover:shadow-md sm:hover:ring-primary/40">
-                  <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
-                    <div className="flex items-center gap-3 sm:flex-1 sm:gap-4">
-                      <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
-                        {service.mainImage ? (
-                          <Image
-                            src={service.mainImage}
-                            alt={service.name}
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-muted-foreground">
-                            <Wrench className="size-6" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <p className="line-clamp-2 font-medium leading-snug">{service.name}</p>
-                        <p
-                          className={cn(
-                            'font-mono text-sm',
-                            service.price === null ? 'text-muted-foreground' : 'text-foreground'
-                          )}
-                        >
-                          {service.price === null
-                            ? 'Consultar precio'
-                            : formatPrice(service.price, service.currency)}
-                        </p>
-                      </div>
-
-                      <ChevronRight className="hidden size-4 shrink-0 text-muted-foreground sm:block" />
+                <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
+                  <Link
+                    href={`/producto/${service.id}`}
+                    className="flex items-center gap-3 active:scale-[0.99] active:transition-transform sm:flex-1 sm:gap-4"
+                  >
+                    <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+                      {service.mainImage ? (
+                        <Image
+                          src={service.mainImage}
+                          alt={service.name}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                          <Wrench className="size-6" />
+                        </div>
+                      )}
                     </div>
 
-                    {whatsappNumber && (
-                      <div
-                        className="shrink-0 sm:border-l sm:border-border sm:pl-3"
-                        onClick={(event) => event.stopPropagation()}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="line-clamp-2 font-medium leading-snug">{service.name}</p>
+                      <p
+                        className={cn(
+                          'font-mono text-sm',
+                          service.price === null ? 'text-muted-foreground' : 'text-foreground'
+                        )}
                       >
-                        <WhatsAppButton
-                          phoneNumber={whatsappNumber}
-                          shopId={shopId}
-                          message={`Hola ${shopName}, quiero consultar sobre "${service.name}"`}
-                          className="h-10 w-full gap-1.5 px-3 text-sm sm:w-auto"
-                          compact
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </Link>
+                        {service.price === null
+                          ? 'Consultar precio'
+                          : formatPrice(service.price, service.currency)}
+                      </p>
+                    </div>
+
+                    <ChevronRight className="hidden size-4 shrink-0 text-muted-foreground sm:block" />
+                  </Link>
+
+                  {whatsappNumber && (
+                    <div className="shrink-0 sm:border-l sm:border-border sm:pl-3">
+                      <WhatsAppButton
+                        phoneNumber={whatsappNumber}
+                        shopId={shopId}
+                        message={`Hola ${shopName}, quiero consultar sobre "${service.name}"`}
+                        className="h-10 w-full gap-1.5 px-3 text-sm sm:w-auto"
+                        compact
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             ))}
           </div>
 

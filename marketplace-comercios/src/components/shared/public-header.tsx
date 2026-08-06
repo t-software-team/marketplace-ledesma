@@ -155,8 +155,9 @@ export function PublicHeader({
           <span className="relative flex size-8 shrink-0 items-center justify-center">
             <Image src="/brand/logo.png" alt="" fill className="object-contain" priority />
           </span>
-          <span className="hidden md:inline">
-            <span className="truncate">Proxi</span>
+          <span className="truncate">
+            <span className="sm:hidden">Proxi</span>
+            <span className="hidden sm:inline">Marketplace</span>
           </span>
         </Link>
         {pathname !== '/' && (

@@ -13,13 +13,14 @@ import { FollowShopButton } from '@/components/shop/follow-shop-button'
 import { LandingBannerSection, LandingGallerySection, LandingServicesSection } from '@/components/shop/landing-sections'
 import { LandingVideoSection } from '@/components/shop/landing-video-section'
 import { OpenNowBadge } from '@/components/shop/open-now-badge'
-import { FeaturedReviewsRow } from '@/components/shop/featured-reviews-row'
 import { RelatedShops } from '@/components/shop/related-shops'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopServiceList } from '@/components/shop/shop-service-list'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
+import { ShopMoreLinksMenu } from '@/components/shop/shop-more-links-menu'
+import { ExpandableDescription } from '@/components/shop/expandable-description'
 import Link from 'next/link'
 import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
 import { ShopReviewsList } from '@/components/shop/shop-reviews-list'
@@ -138,7 +139,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
   }
 
   return (
-    <div className={cn('space-y-6 pb-24', themeClass)}>
+    <div className={cn('-mt-5 space-y-6 pb-24 sm:mt-0', themeClass)}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
@@ -179,7 +180,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
           {isFeatured && <FeaturedRibbon variant="floating" />}
         </div>
 
-        <div className="relative px-4 pb-5 md:px-6">
+        <div className="relative px-4 pb-5 md:px-6 pt-2">
           <div className="flex items-end gap-3">
             <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-muted shadow-md ring-1 ring-border">
               {shop.logo_url ? (
@@ -203,24 +204,6 @@ export default async function ShopPage({ params }: ShopPageProps) {
                     <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
                     {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-muted-foreground">
-                    {isFeatured && rating.reviewCount > 0 && (
-                      <span className="flex items-center gap-1">
-                        <StarRating rating={rating.avgRating} />
-                        <span>
-                          {rating.avgRating} ({rating.reviewCount})
-                        </span>
-                      </span>
-                    )}
-                    {isFeatured && rating.reviewCount > 0 && followerCount > 0 && (
-                      <span aria-hidden>·</span>
-                    )}
-                    {followerCount > 0 && (
-                      <span>
-                        {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
-                      </span>
-                    )}
-                  </div>
                 </div>
                 <FollowShopButton
                   shopId={shop.id}
@@ -228,22 +211,37 @@ export default async function ShopPage({ params }: ShopPageProps) {
                   initialIsFollowing={isFollowing}
                 />
               </div>
-              {(categoryName || shop.city) && (
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-                  {categoryName && (
-                    <Badge variant="outline" className="font-normal">
-                      {categoryName}
-                    </Badge>
-                  )}
-                  {shop.city && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="size-3.5" aria-hidden />
-                      {shop.city}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+                {isFeatured && rating.reviewCount > 0 && (
+                  <span className="flex shrink-0 items-center gap-1">
+                    <StarRating rating={rating.avgRating} />
+                    <span>
+                      {rating.avgRating} ({rating.reviewCount})
                     </span>
-                  )}
-                  <OpenNowBadge businessHours={shop.business_hours} />
-                </div>
-              )}
+                  </span>
+                )}
+                {isFeatured && rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
+                {followerCount > 0 && (
+                  <span className="shrink-0">
+                    {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
+                  </span>
+                )}
+                {((isFeatured && rating.reviewCount > 0) || followerCount > 0) && categoryName && (
+                  <span aria-hidden>·</span>
+                )}
+                {categoryName && (
+                  <Badge variant="outline" className="shrink-0 font-normal">
+                    {categoryName}
+                  </Badge>
+                )}
+                {shop.city && (
+                  <span className="flex shrink-0 items-center gap-1">
+                    <MapPin className="size-3.5" aria-hidden />
+                    {shop.city}
+                  </span>
+                )}
+                <OpenNowBadge businessHours={shop.business_hours} />
+              </div>
             </div>
           </div>
 
@@ -253,14 +251,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
             </Badge>
           )}
 
-          {shop.description && (
-            <div
-              className="prose prose-sm mt-4 max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:text-primary [&_a]:underline"
-              // shop.description is sanitized server-side (sanitizeRichText) before it's ever
-              // persisted, so it's safe to render here without re-sanitizing on every request.
-              dangerouslySetInnerHTML={{ __html: shop.description }}
-            />
-          )}
+          {shop.description && <ExpandableDescription html={shop.description} />}
 
           <div className="mt-4 hidden items-center gap-2 sm:flex">
             <WhatsAppButton
@@ -279,42 +270,11 @@ export default async function ShopPage({ params }: ShopPageProps) {
                 <MapPin className="size-4" />
               </Button>
             )}
-            {shop.instagram_url && (
-              <Button
-                variant="outline"
-                size="icon"
-                render={
-                  <a href={shop.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Instagram" />
-                }
-                nativeButton={false}
-              >
-                <InstagramIcon className="size-4" />
-              </Button>
-            )}
-            {shop.facebook_url && (
-              <Button
-                variant="outline"
-                size="icon"
-                render={
-                  <a href={shop.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Facebook" />
-                }
-                nativeButton={false}
-              >
-                <FacebookIcon className="size-4" />
-              </Button>
-            )}
-            {shop.website_url && (
-              <Button
-                variant="outline"
-                size="icon"
-                render={
-                  <a href={shop.website_url} target="_blank" rel="noopener noreferrer" aria-label="Ver sitio web" />
-                }
-                nativeButton={false}
-              >
-                <Globe className="size-4" />
-              </Button>
-            )}
+            <ShopMoreLinksMenu
+              instagramUrl={shop.instagram_url}
+              facebookUrl={shop.facebook_url}
+              websiteUrl={shop.website_url}
+            />
             <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
             <ShareButton
               title={shop.name}
@@ -325,8 +285,6 @@ export default async function ShopPage({ params }: ShopPageProps) {
           </div>
         </div>
       </div>
-
-      <FeaturedReviewsRow reviews={reviews} isFeatured={isFeatured} />
 
       <LandingBannerSection data={shop.landing_banner} />
 
