@@ -1,14 +1,14 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import { Check, ImageIcon, Palette, Play, Sparkles, Wand2 } from 'lucide-react'
+import { Check, GalleryHorizontal, ImageIcon, Palette, Play, Sparkles, Wand2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { ACCENT_COLORS, DEFAULT_ACCENT_COLOR, getAccentColor } from '@/lib/accent-colors'
 import { LandingSectionsEditor, type LandingSectionsValues } from '@/components/shop/landing-sections-editor'
-import { LandingBannerSection, LandingServicesSection } from '@/components/shop/landing-sections'
+import { LandingBannerSection, LandingGallerySection, LandingServicesSection } from '@/components/shop/landing-sections'
 import { LandingVideoSection } from '@/components/shop/landing-video-section'
 import { PERSONALIZATION_TEMPLATES } from '@/lib/shops/personalization-templates'
 import { updateShopPersonalization, type ActionState } from '@/lib/shops/actions'
@@ -22,6 +22,7 @@ const STEPS = [
   { key: 'color', label: 'Color', icon: Palette },
   { key: 'banner', label: 'Banner', icon: ImageIcon },
   { key: 'services', label: 'Servicios', icon: Sparkles },
+  { key: 'gallery', label: 'Galería', icon: GalleryHorizontal },
   { key: 'video', label: 'Video', icon: Play },
 ] as const
 
@@ -60,12 +61,15 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
 
   const bannerComplete = Boolean(landingValues?.bannerEnabled && landingValues.banner.title.trim())
   const servicesComplete = Boolean(landingValues?.services.some((service) => service.name.trim()))
+  const galleryComplete = Boolean(landingValues?.gallery.length)
   const videoComplete = Boolean(landingValues?.videoUrl.trim())
-  const completedCount = 1 + Number(bannerComplete) + Number(servicesComplete) + Number(videoComplete)
+  const completedCount =
+    1 + Number(bannerComplete) + Number(servicesComplete) + Number(galleryComplete) + Number(videoComplete)
 
   const previewBannerData =
     landingValues?.bannerEnabled && landingValues.banner.title.trim() ? landingValues.banner : null
   const previewServicesData = landingValues?.services.filter((service) => service.name.trim()) ?? []
+  const previewGalleryData = landingValues?.gallery ?? []
   const previewThemeClass = `shop-theme-preview-${shop.id}`
 
   return (
@@ -125,6 +129,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
                 (step.key === 'color' && true) ||
                 (step.key === 'banner' && bannerComplete) ||
                 (step.key === 'services' && servicesComplete) ||
+                (step.key === 'gallery' && galleryComplete) ||
                 (step.key === 'video' && videoComplete)
               const isActive = activeStep === step.key
               return (
@@ -150,10 +155,10 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${(completedCount / 4) * 100}%` }}
+                style={{ width: `${(completedCount / 5) * 100}%` }}
               />
             </div>
-            <span className="shrink-0 text-xs text-muted-foreground">{completedCount}/4 secciones</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{completedCount}/5 secciones</span>
           </div>
         </div>
 
@@ -194,6 +199,9 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
             <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'services' && 'hidden')}>
               Servicios destacados
             </h2>
+            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'gallery' && 'hidden')}>
+              Galería de fotos
+            </h2>
             <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'video' && 'hidden')}>
               Video
             </h2>
@@ -202,6 +210,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
                 shopId={shop.id}
                 landingBanner={shop.landing_banner}
                 landingServices={shop.landing_services}
+                landingGallery={shop.landing_gallery}
                 landingVideoUrl={shop.landing_video_url}
                 onChange={setLandingValues}
                 applyTemplate={template}
@@ -247,8 +256,12 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
             <div className="space-y-4 rounded-lg border border-border bg-background p-4">
               <LandingBannerSection data={previewBannerData} />
               <LandingServicesSection data={previewServicesData} />
+              <LandingGallerySection data={previewGalleryData} />
               <LandingVideoSection url={landingValues?.videoUrl.trim() ? landingValues.videoUrl : null} />
-              {!previewBannerData && previewServicesData.length === 0 && !landingValues?.videoUrl.trim() && (
+              {!previewBannerData &&
+                previewServicesData.length === 0 &&
+                previewGalleryData.length === 0 &&
+                !landingValues?.videoUrl.trim() && (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <Sparkles className="size-5 text-muted-foreground/50" aria-hidden />
                   <p className="text-xs text-muted-foreground">

@@ -10,8 +10,10 @@ import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { FollowShopButton } from '@/components/shop/follow-shop-button'
-import { LandingBannerSection, LandingServicesSection } from '@/components/shop/landing-sections'
+import { LandingBannerSection, LandingGallerySection, LandingServicesSection } from '@/components/shop/landing-sections'
 import { LandingVideoSection } from '@/components/shop/landing-video-section'
+import { OpenNowBadge } from '@/components/shop/open-now-badge'
+import { FeaturedReviewsRow } from '@/components/shop/featured-reviews-row'
 import { RelatedShops } from '@/components/shop/related-shops'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
@@ -239,6 +241,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
                       {shop.city}
                     </span>
                   )}
+                  <OpenNowBadge businessHours={shop.business_hours} />
                 </div>
               )}
             </div>
@@ -323,9 +326,12 @@ export default async function ShopPage({ params }: ShopPageProps) {
         </div>
       </div>
 
+      <FeaturedReviewsRow reviews={reviews} isFeatured={isFeatured} />
+
       <LandingBannerSection data={shop.landing_banner} />
 
       <LandingServicesSection data={shop.landing_services} />
+      <LandingGallerySection data={shop.landing_gallery} />
       <LandingVideoSection url={shop.landing_video_url} />
 
       <section className="space-y-4">

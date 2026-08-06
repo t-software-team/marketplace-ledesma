@@ -63,6 +63,7 @@ export const personalizationSchema = z.object({
   accent_color: z.string().optional().or(z.literal('')),
   landing_banner_text: z.string().max(2000).optional().or(z.literal('')),
   landing_services_text: z.string().max(4000).optional().or(z.literal('')),
+  landing_gallery_text: z.string().max(4000).optional().or(z.literal('')),
   landing_video_url: z
     .string()
     .url('Ingresá una URL válida')
@@ -72,12 +73,18 @@ export const personalizationSchema = z.object({
 
 export type PersonalizationFormValues = z.infer<typeof personalizationSchema>
 
+const httpUrlSchema = z
+  .string()
+  .url('Ingresá una URL válida')
+  .refine((url) => /^https?:\/\//i.test(url), 'La URL debe empezar con http:// o https://')
+
 export const landingBannerSchema = z.object({
   title: z.string().min(1).max(80),
   subtitle: z.string().max(200).optional().or(z.literal('')),
   image_url: z.string().optional().or(z.literal('')),
+  images: z.array(z.string()).max(6).optional(),
   cta_label: z.string().max(40).optional().or(z.literal('')),
-  cta_url: z.string().url('Ingresá una URL válida').optional().or(z.literal('')),
+  cta_url: httpUrlSchema.optional().or(z.literal('')),
 })
 
 export const landingServiceSchema = z.object({
@@ -86,6 +93,8 @@ export const landingServiceSchema = z.object({
 })
 
 export const landingServicesSchema = z.array(landingServiceSchema).max(6)
+
+export const landingGallerySchema = z.array(z.string()).max(8)
 
 export const productSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(150),
