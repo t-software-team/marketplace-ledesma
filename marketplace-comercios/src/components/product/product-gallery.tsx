@@ -2,19 +2,22 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
-import { Play } from 'lucide-react'
+import { Play, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Dialog, DialogPortal, DialogOverlay, DialogContent } from '@/components/ui/dialog'
 
 interface ProductGalleryProps {
   images: { id: string; url: string }[]
   productName: string
   videoUrl?: string | null
+  imageOverlay?: React.ReactNode
 }
 
 type Slide = { type: 'image'; id: string; url: string } | { type: 'video'; id: string; url: string }
 
-export function ProductGallery({ images, productName, videoUrl }: ProductGalleryProps) {
+export function ProductGallery({ images, productName, videoUrl, imageOverlay }: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0)
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false)
 
   const slides: Slide[] = [
     ...images.map((image) => ({ type: 'image' as const, id: image.id, url: image.url })),
@@ -24,16 +27,24 @@ export function ProductGallery({ images, productName, videoUrl }: ProductGallery
 
   return (
     <div className="space-y-2">
-      <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
+      <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+        {imageOverlay}
         {activeSlide?.type === 'image' ? (
-          <Image
-            src={activeSlide.url}
-            alt={productName}
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 512px"
-          />
+          <button
+            type="button"
+            onClick={() => setIsLightboxOpen(true)}
+            className="absolute inset-0 size-full cursor-zoom-in"
+            aria-label="Ver imagen completa"
+          >
+            <Image
+              src={activeSlide.url}
+              alt={productName}
+              fill
+              priority
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 512px"
+            />
+          </button>
         ) : activeSlide?.type === 'video' ? (
           <video
             src={activeSlide.url}
@@ -57,8 +68,8 @@ export function ProductGallery({ images, productName, videoUrl }: ProductGallery
               type="button"
               onClick={() => setActiveIndex(index)}
               className={cn(
-                'relative size-16 shrink-0 overflow-hidden rounded-lg border-2 bg-muted transition-colors',
-                index === activeIndex ? 'border-primary' : 'border-transparent'
+                'relative size-14 shrink-0 overflow-hidden rounded-lg transition-opacity',
+                index === activeIndex ? 'opacity-100 ring-2 ring-primary' : 'opacity-60 hover:opacity-100'
               )}
               aria-label={
                 slide.type === 'video'
@@ -74,11 +85,11 @@ export function ProductGallery({ images, productName, videoUrl }: ProductGallery
                       alt={`${productName} - imagen 1`}
                       fill
                       className="object-cover"
-                      sizes="64px"
+                      sizes="56px"
                     />
                   )}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <Play className="size-5 fill-white text-white" aria-hidden />
+                    <Play className="size-4 fill-white text-white" aria-hidden />
                   </span>
                 </>
               ) : (
@@ -87,12 +98,42 @@ export function ProductGallery({ images, productName, videoUrl }: ProductGallery
                   alt={`${productName} - imagen ${index + 1}`}
                   fill
                   className="object-cover"
-                  sizes="64px"
+                  sizes="56px"
                 />
               )}
             </button>
           ))}
         </div>
+      )}
+
+      {activeSlide?.type === 'image' && (
+        <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
+          <DialogPortal>
+            <DialogOverlay className="bg-black/90" />
+            <DialogContent
+              showCloseButton={false}
+              className="top-0 left-0 grid h-dvh w-screen max-w-none translate-x-0 translate-y-0 place-items-center rounded-none bg-transparent p-0 ring-0"
+            >
+              <div className="relative h-full w-full">
+                <Image
+                  src={activeSlide.url}
+                  alt={productName}
+                  fill
+                  className="object-contain"
+                  sizes="100vw"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLightboxOpen(false)}
+                className="fixed top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                aria-label="Cerrar"
+              >
+                <X className="size-5" aria-hidden />
+              </button>
+            </DialogContent>
+          </DialogPortal>
+        </Dialog>
       )}
     </div>
   )

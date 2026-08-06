@@ -29,7 +29,7 @@ export function RelatedShops({ shops }: RelatedShopsProps) {
           <Link
             key={shop.id}
             href={`/tienda/${shop.slug}`}
-            className="flex w-40 shrink-0 flex-col items-center gap-2 rounded-xl border border-border bg-surface p-3 text-center transition-colors hover:border-primary"
+            className="flex w-28 shrink-0 flex-col items-center gap-2 text-center transition-opacity hover:opacity-70"
           >
             <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-muted">
               {shop.logo_url ? (

@@ -112,12 +112,12 @@ export function ShopServiceList({
                 key={service.id}
                 className="overflow-hidden py-0 ring-border/60 transition-all sm:hover:-translate-y-0.5 sm:hover:shadow-md sm:hover:ring-primary/40"
               >
-                <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
+                <CardContent className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
                   <Link
                     href={`/producto/${service.id}`}
-                    className="flex items-center gap-3 active:scale-[0.99] active:transition-transform sm:flex-1 sm:gap-4"
+                    className="flex min-w-0 flex-1 items-center gap-3 active:scale-[0.99] active:transition-transform sm:gap-4"
                   >
-                    <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-muted">
+                    <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-16">
                       {service.mainImage ? (
                         <Image
                           src={service.mainImage}
@@ -151,15 +151,14 @@ export function ShopServiceList({
                   </Link>
 
                   {whatsappNumber && (
-                    <div className="shrink-0 sm:border-l sm:border-border sm:pl-3">
-                      <WhatsAppButton
-                        phoneNumber={whatsappNumber}
-                        shopId={shopId}
-                        message={`Hola ${shopName}, quiero consultar sobre "${service.name}"`}
-                        className="h-10 w-full gap-1.5 px-3 text-sm sm:w-auto"
-                        compact
-                      />
-                    </div>
+                    <WhatsAppButton
+                      phoneNumber={whatsappNumber}
+                      shopId={shopId}
+                      message={`Hola ${shopName}, quiero consultar sobre "${service.name}"`}
+                      variant="outline"
+                      iconOnly
+                      className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                    />
                   )}
                 </CardContent>
               </Card>

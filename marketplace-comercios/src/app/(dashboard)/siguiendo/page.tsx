@@ -17,19 +17,19 @@ export default async function FollowingPage() {
       {shops.length === 0 ? (
         <EmptyState message="Todavía no seguís ningún comercio. Entrá a la ficha de una tienda y tocá 'Seguir' para enterarte de sus novedades." />
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="divide-y divide-border">
           {shops.map((shop) => (
             <Link
               key={shop.id}
               href={`/tienda/${shop.slug}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-primary"
+              className="flex items-center gap-3 py-3 transition-colors first:pt-0 last:pb-0 hover:opacity-70"
             >
-              <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+              <div className="relative size-11 shrink-0 overflow-hidden rounded-full bg-muted">
                 {shop.logo_url ? (
-                  <Image src={shop.logo_url} alt={shop.name} fill className="object-cover" sizes="48px" />
+                  <Image src={shop.logo_url} alt={shop.name} fill className="object-cover" sizes="44px" />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
-                    <Store className="size-5" aria-hidden />
+                    <Store className="size-4" aria-hidden />
                   </div>
                 )}
               </div>

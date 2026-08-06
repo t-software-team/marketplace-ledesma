@@ -78,9 +78,8 @@ export function ProductCard({
     <Link href={`/producto/${product.product_id}`} className={cn('block', className)}>
       <Card
         className={cn(
-          'relative overflow-hidden py-0 shadow-sm ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:ring-primary/40',
-          isFeatured &&
-            'ring-2 ring-primary shadow-md shadow-primary/15 hover:shadow-xl hover:shadow-primary/25 hover:ring-primary'
+          'relative overflow-hidden py-0 shadow-none ring-0 transition-opacity duration-200 hover:opacity-80',
+          isFeatured && 'ring-1 ring-primary/40'
         )}
       >
         {isFeatured && <FeaturedRibbon variant="floating" />}
@@ -114,7 +113,7 @@ export function ProductCard({
               </p>
             )}
             {product.is_service && (
-              <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+              <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
                 Servicio
               </span>
             )}
@@ -130,12 +129,12 @@ export function ProductCard({
                   <span
                     key={value}
                     style={{ backgroundColor: value }}
-                    className="size-3 rounded-full border border-border"
+                    className="size-3 rounded-full ring-1 ring-border"
                   />
                 ) : (
                   <span
                     key={value}
-                    className="rounded-full border border-border bg-surface px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+                    className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
                   >
                     {value}
                   </span>

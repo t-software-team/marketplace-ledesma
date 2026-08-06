@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Bell, Compass, Heart, Home, Search, User } from 'lucide-react'
+import { ArrowLeft, Bell, Compass, Heart, Home, Package, Search, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +42,10 @@ interface PublicHeaderProps {
 
 const NOTIFICATION_LABELS: Record<string, string> = {
   new_product: 'Un comercio que seguís publicó algo nuevo',
+}
+
+const NOTIFICATION_ICONS: Record<string, typeof Package> = {
+  new_product: Package,
 }
 
 function notificationHref(notification: ClientNotification) {
@@ -129,7 +133,7 @@ export function PublicHeader({
               router.push('/')
             }
           }}
-          className="fixed top-3 left-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground shadow-md ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-muted"
+          className="fixed top-3 left-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground backdrop-blur-sm transition-colors hover:bg-muted"
           aria-label="Volver"
         >
           <ArrowLeft className="size-5" aria-hidden />
@@ -137,7 +141,7 @@ export function PublicHeader({
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="fixed top-3 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground shadow-md ring-1 ring-border backdrop-blur-sm transition-colors hover:bg-muted"
+          className="fixed top-3 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground backdrop-blur-sm transition-colors hover:bg-muted"
           aria-label="Buscar"
         >
           <Search className="size-4.5" aria-hidden />
@@ -188,13 +192,13 @@ export function PublicHeader({
           {user ? (
             <>
               {profileRole === 'shop_admin' && (
-                <Button variant="outline" size="sm" render={<Link href="/mi-tienda" />} nativeButton={false}>
+                <Button variant="ghost" size="sm" render={<Link href="/mi-tienda" />} nativeButton={false}>
                   Mi tienda
                 </Button>
               )}
               <ThemeToggle />
               {profileRole === 'superadmin' && (
-                <Button variant="outline" size="sm" render={<Link href="/admin/shops" />} nativeButton={false}>
+                <Button variant="ghost" size="sm" render={<Link href="/admin/shops" />} nativeButton={false}>
                   Admin
                 </Button>
               )}
@@ -224,19 +228,27 @@ export function PublicHeader({
                           No hay notificaciones nuevas
                         </p>
                       ) : (
-                        notifications.map((notification) => (
-                          <DropdownMenuItem
-                            key={notification.id}
-                            render={<Link href={notificationHref(notification)} />}
-                          >
-                            <span className="flex flex-col gap-0.5">
-                              <span>{NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(notification.created_at).toLocaleString('es-AR')}
+                        notifications.map((notification) => {
+                          const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell
+                          return (
+                            <DropdownMenuItem
+                              key={notification.id}
+                              render={<Link href={notificationHref(notification)} />}
+                            >
+                              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <Icon className="size-4" aria-hidden />
                               </span>
-                            </span>
-                          </DropdownMenuItem>
-                        ))
+                              <span className="flex min-w-0 flex-col gap-0.5">
+                                <span className="truncate">
+                                  {NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(notification.created_at).toLocaleString('es-AR')}
+                                </span>
+                              </span>
+                            </DropdownMenuItem>
+                          )
+                        })
                       )}
                       {notifications.length > 0 && (
                         <>
@@ -272,7 +284,7 @@ export function PublicHeader({
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" render={<Link href="/login" />} nativeButton={false}>
+              <Button variant="ghost" size="sm" render={<Link href="/login" />} nativeButton={false}>
                 Ingresar
               </Button>
               <Button size="sm" render={<Link href="/registro" />} nativeButton={false}>
@@ -324,7 +336,7 @@ export function BottomNav({ isLoggedIn }: BottomNavProps) {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 px-3 pb-3 sm:hidden [padding-bottom:calc(env(safe-area-inset-bottom)+0.75rem)]">
-      <div className="mx-auto flex max-w-5xl items-center justify-around gap-1 rounded-2xl border border-border/60 bg-background/80 p-1.5 shadow-lg shadow-black/10 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-5xl items-center justify-around gap-1 rounded-2xl bg-background/80 p-1.5 shadow-sm shadow-black/5 backdrop-blur-xl">
         {NAV_ITEMS.map((item) => {
           const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
           const href = isLoggedIn || item.href === '/' ? item.href : '/login'

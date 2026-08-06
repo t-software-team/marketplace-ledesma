@@ -25,25 +25,25 @@ export default async function ContactsPage() {
       {contacts.length === 0 ? (
         <EmptyState message="Todavía no contactaste a ningún comercio por WhatsApp." />
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y divide-border">
           {contacts.map((contact) => (
             <Link
               key={contact.id}
               href={`/tienda/${contact.shops!.slug}`}
-              className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-primary"
+              className="flex items-center gap-3 py-3 transition-colors first:pt-0 last:pb-0 hover:opacity-70"
             >
-              <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+              <div className="relative size-11 shrink-0 overflow-hidden rounded-full bg-muted">
                 {contact.shops!.logo_url ? (
                   <Image
                     src={contact.shops!.logo_url}
                     alt={contact.shops!.name}
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="44px"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
-                    <Store className="size-5" aria-hidden />
+                    <Store className="size-4" aria-hidden />
                   </div>
                 )}
               </div>

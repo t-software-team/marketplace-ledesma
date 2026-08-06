@@ -92,7 +92,13 @@ export function ProfileForm({ userId, email, fullName, phone, city, avatarUrl }:
             <label htmlFor="full_name" className="text-sm font-medium">
               Nombre
             </label>
-            <Input id="full_name" name="full_name" defaultValue={fullName ?? ''} required />
+            <Input
+              key={fullName ?? ''}
+              id="full_name"
+              name="full_name"
+              defaultValue={fullName ?? ''}
+              required
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -100,13 +106,13 @@ export function ProfileForm({ userId, email, fullName, phone, city, avatarUrl }:
               <label htmlFor="phone" className="text-sm font-medium">
                 Teléfono
               </label>
-              <Input id="phone" name="phone" defaultValue={phone ?? ''} />
+              <Input key={phone ?? ''} id="phone" name="phone" defaultValue={phone ?? ''} />
             </div>
             <div className="space-y-2">
               <label htmlFor="city" className="text-sm font-medium">
                 Ciudad
               </label>
-              <Input id="city" name="city" defaultValue={city ?? ''} />
+              <Input key={city ?? ''} id="city" name="city" defaultValue={city ?? ''} />
             </div>
           </div>
         </CardContent>

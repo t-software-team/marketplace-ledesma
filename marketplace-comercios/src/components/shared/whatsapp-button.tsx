@@ -14,6 +14,8 @@ interface WhatsAppButtonProps {
   productId?: string
   className?: string
   compact?: boolean
+  iconOnly?: boolean
+  variant?: 'default' | 'outline' | 'ghost'
 }
 
 export function WhatsAppButton({
@@ -23,6 +25,8 @@ export function WhatsAppButton({
   productId,
   className,
   compact = false,
+  iconOnly = false,
+  variant = 'default',
 }: WhatsAppButtonProps) {
   const sanitizedPhone = toWhatsAppNumber(phoneNumber)
   const url = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`
@@ -42,8 +46,9 @@ export function WhatsAppButton({
 
   return (
     <Button
-      size="lg"
-      className={cn('h-12 gap-2 px-5 text-base', className)}
+      size={iconOnly ? 'icon' : 'lg'}
+      variant={variant}
+      className={cn(!iconOnly && 'h-12 gap-2 px-5 text-base', className)}
       render={
         <a
           href={url}
@@ -55,8 +60,8 @@ export function WhatsAppButton({
       nativeButton={false}
       aria-label="Contactar por WhatsApp"
     >
-      <MessageCircle className="size-5" />
-      {compact ? 'Contactar' : 'Contactar por WhatsApp'}
+      <MessageCircle className={iconOnly ? 'size-4' : 'size-5'} />
+      {!iconOnly && (compact ? 'Contactar' : 'WhatsApp')}
     </Button>
   )
 }

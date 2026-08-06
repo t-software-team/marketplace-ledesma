@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { ArrowLeft, Globe, MapPin } from 'lucide-react'
+import { ArrowLeft, MapPin } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
 import { notFound } from 'next/navigation'
@@ -333,7 +333,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
         <ReportShopDialog shopId={shop.id} />
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-background/95 p-4 backdrop-blur-sm sm:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-20 bg-background/95 p-4 shadow-[0_-1px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:hidden">
         <div className="mx-auto flex max-w-5xl gap-2">
           <WhatsAppButton
             shopId={shop.id}
@@ -341,26 +341,9 @@ export default async function ShopPage({ params }: ShopPageProps) {
             message={`Hola ${shop.name}, vi tu tienda en Proxi Marketplace`}
             className="flex-1"
           />
-          {mapsUrl && (
-            <Button
-              variant="outline"
-              size="icon"
-              render={
-                <a
-                  href={mapsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Ver en mapa"
-                />
-              }
-              nativeButton={false}
-            >
-              <MapPin className="size-4" />
-            </Button>
-          )}
           {shop.instagram_url && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               render={
                 <a href={shop.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Instagram" />
@@ -372,7 +355,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
           )}
           {shop.facebook_url && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               render={
                 <a href={shop.facebook_url} target="_blank" rel="noopener noreferrer" aria-label="Ver Facebook" />
@@ -382,19 +365,6 @@ export default async function ShopPage({ params }: ShopPageProps) {
               <FacebookIcon className="size-4" />
             </Button>
           )}
-          {shop.website_url && (
-            <Button
-              variant="outline"
-              size="icon"
-              render={
-                <a href={shop.website_url} target="_blank" rel="noopener noreferrer" aria-label="Ver sitio web" />
-              }
-              nativeButton={false}
-            >
-              <Globe className="size-4" />
-            </Button>
-          )}
-          <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
           <ShareButton
             title={shop.name}
             text={`Mirá ${shop.name} en Proxi Marketplace`}

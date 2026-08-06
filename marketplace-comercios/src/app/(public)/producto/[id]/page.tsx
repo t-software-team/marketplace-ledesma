@@ -100,17 +100,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="relative">
+        <div>
           <ProductGallery
             images={product.images}
             productName={product.name}
             videoUrl={product.videoUrl}
-          />
-          <FavoriteButton
-            productId={product.id}
-            initialIsFavorite={isFavorite}
-            isLoggedIn={Boolean(user)}
-            className="absolute top-2 right-2 z-10"
+            imageOverlay={
+              <FavoriteButton
+                productId={product.id}
+                initialIsFavorite={isFavorite}
+                isLoggedIn={Boolean(user)}
+                className="absolute right-2 bottom-2 z-10"
+              />
+            }
           />
         </div>
 

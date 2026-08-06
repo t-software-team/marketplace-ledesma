@@ -200,7 +200,7 @@ export function FeedClient({
               <Link
                 key={shop.id}
                 href={`/tienda/${shop.slug}`}
-                className="flex w-56 shrink-0 items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-primary"
+                className="flex w-56 shrink-0 items-center gap-3 rounded-xl bg-surface p-3 transition-opacity hover:opacity-70"
               >
                 <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
                   {shop.logo_url ? (

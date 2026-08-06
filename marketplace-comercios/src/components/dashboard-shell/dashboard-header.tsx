@@ -24,7 +24,6 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { SidebarNav, type DashboardNavItem } from './dashboard-sidebar'
-import { Breadcrumbs } from './breadcrumbs'
 import { signOut } from '@/lib/auth/actions'
 import { markAllNotificationsRead } from '@/lib/admin/actions'
 import { createClient } from '@/lib/supabase/client'
@@ -68,8 +67,6 @@ function formatUnreadCount(count: number) {
 }
 
 interface DashboardHeaderProps {
-  section: string
-  rootHref: string
   navItems: DashboardNavItem[]
   userEmail: string
   userFullName: string | null
@@ -101,8 +98,6 @@ function notificationHref(notification: AdminNotification) {
 }
 
 export function DashboardHeader({
-  section,
-  rootHref,
   navItems,
   userEmail,
   userFullName,
@@ -190,7 +185,6 @@ export function DashboardHeader({
           {accent && (
             <Badge className="bg-violet-500 text-white hover:bg-violet-500 md:hidden">Admin</Badge>
           )}
-          <Breadcrumbs navItems={navItems} rootHref={rootHref} rootLabel={section} />
         </div>
 
         <div className="flex items-center gap-1">
