@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-06T00:00:00.000Z",
+  "title": "Design System: Proxi Marketplace",
+  "extensions": {
+    "colorMeta": {
+      "violeta-proxi": { "role": "primary", "displayName": "Violeta Proxi", "canonical": "#7c3aed", "tonalRamp": ["#2e1065", "#4c1d95", "#5b21b6", "#6d28d9", "#7c3aed", "#9061f9", "#a179f2", "#c4b5fd"] },
+      "fondo-neutro": { "role": "neutral", "displayName": "Fondo Neutro", "canonical": "#faf8fc", "tonalRamp": ["#17131f", "#221c30", "#3a3550", "#767296", "#e6e1ed", "#f1eef6", "#faf8fc", "#ffffff"] },
+      "destacado-lima": { "role": "accent", "displayName": "Destacado Lima", "canonical": "#84cc16" },
+      "verificado-rosa": { "role": "accent", "displayName": "Verificado Rosa", "canonical": "#e8a7b0" }
+    },
+    "typographyMeta": {
+      "heading": { "displayName": "Sora", "purpose": "Títulos de página, tienda, producto y secciones." },
+      "body": { "displayName": "Inter", "purpose": "Texto general, descripciones, labels." },
+      "mono": { "displayName": "IBM Plex Mono", "purpose": "Precios y montos exclusivamente." }
+    },
+    "shadows": [],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal (CTA de contacto, guardar, confirmar).",
+      "html": "<button class=\"ds-btn-primary\">Contactar</button>",
+      "css": ".ds-btn-primary { background: #7c3aed; color: #faf5ff; padding: 0 0.625rem; height: 2rem; border-radius: 0.625rem; font-size: 0.875rem; font-weight: 500; font-family: Inter, sans-serif; border: none; transition: background 0.2s; } .ds-btn-primary:hover { background: rgba(124,58,237,0.8); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,0.5); }"
+    },
+    {
+      "name": "Product Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Card de producto en el feed: imagen, nombre, precio en mono, badges de atributo.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-price\">$12.500</div><div class=\"ds-card-title\">Nombre de producto</div></div>",
+      "css": ".ds-card { background: #ffffff; border-radius: 0.875rem; box-shadow: none; padding: 1rem; box-sizing: border-box; } .ds-card-price { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 1rem; color: #3a3550; } .ds-card-title { font-family: Inter, sans-serif; font-size: 0.875rem; color: #3a3550; margin-top: 0.25rem; }"
+    },
+    {
+      "name": "Verified Badge",
+      "kind": "chip",
+      "refersTo": "badge-default",
+      "description": "Sello de comercio verificado, distinto del violeta de marca a propósito.",
+      "html": "<span class=\"ds-badge-verified\">Verificado</span>",
+      "css": ".ds-badge-verified { display: inline-flex; align-items: center; height: 1.25rem; padding: 0.125rem 0.5rem; border-radius: 9999px; background: #e8a7b0; color: #6b2430; font-size: 0.75rem; font-weight: 500; font-family: Inter, sans-serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Kiosco de Barrio Digital",
+    "overview": "Proxi traduce la calidez y confianza de un comercio de barrio a una interfaz limpia y moderna. No es un mercado frío de resultados genéricos: es un feed curado donde cada comercio verificado se siente elegido, no listado. El violeta vibrante actúa como sello propio de la marca, no como decoración.",
+    "keyCharacteristics": [
+      "Violeta vibrante como firma, usado con moderación",
+      "Sora + Inter + IBM Plex Mono, con el mono reservado a precios",
+      "Superficies planas con ring sutil en vez de sombras",
+      "Radios suaves y consistentes en toda la UI",
+      "Grillas densas de 2 columnas en mobile, 3 en desktop"
+    ],
+    "rules": [
+      { "name": "La Regla del Violeta Raro", "body": "El violeta primario se usa para una sola cosa por pantalla a la vez: la acción principal o el dato de precio. Nunca como fondo de sección completa.", "section": "colors" },
+      { "name": "La Regla del Precio en Mono", "body": "Todo precio se muestra en font-mono. Es la única excepción a Sora/Inter y funciona como señal visual instantánea de 'esto es un monto'.", "section": "typography" }
+    ],
+    "dos": [
+      "Do usar font-mono para todo precio o monto",
+      "Do mantener el violeta como acento raro: una sola aparición dominante por pantalla",
+      "Do usar ring-1 ring-border en vez de box-shadow para separar superficies",
+      "Do llevar todo botón icon-only en overlay táctil a size-11 (44px) mínimo"
+    ],
+    "donts": [
+      "Don't usar el violeta primario como fondo de sección completa",
+      "Don't introducir una tercera familia tipográfica fuera de Sora/Inter/IBM Plex Mono",
+      "Don't simular UI de checkout o pago de producto"
+    ]
+  }
+}

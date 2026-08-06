@@ -133,7 +133,7 @@ export function PublicHeader({
               router.push('/')
             }
           }}
-          className="fixed top-3 left-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground backdrop-blur-sm transition-colors hover:bg-muted"
+          className="fixed top-3 left-3 z-20 flex size-11 items-center justify-center rounded-full bg-surface/90 text-foreground backdrop-blur-sm transition-colors hover:bg-muted"
           aria-label="Volver"
         >
           <ArrowLeft className="size-5" aria-hidden />
@@ -141,7 +141,7 @@ export function PublicHeader({
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="fixed top-3 right-3 z-20 flex size-9 items-center justify-center rounded-full bg-surface/90 text-foreground backdrop-blur-sm transition-colors hover:bg-muted"
+          className="fixed top-3 right-3 z-20 flex size-11 items-center justify-center rounded-full bg-surface/90 text-foreground backdrop-blur-sm transition-colors hover:bg-muted"
           aria-label="Buscar"
         >
           <Search className="size-4.5" aria-hidden />

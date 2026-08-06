@@ -150,12 +150,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
 
           {product.description && (
-            // product.description is sanitized server-side (sanitizeRichText) before it's
-            // ever persisted, so this is safe against stored XSS.
-            <div
-              className="prose prose-sm max-w-none text-sm leading-relaxed text-muted-foreground [&_p]:my-1"
-              dangerouslySetInnerHTML={{ __html: product.description }}
-            />
+            <div>
+              <h2 className="text-sm font-medium text-foreground">Descripción</h2>
+              {/* product.description is sanitized server-side (sanitizeRichText) before it's
+                  ever persisted, so this is safe against stored XSS. */}
+              <div
+                className="prose prose-sm mt-1 max-w-none text-sm leading-relaxed text-muted-foreground [&_p]:my-1"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            </div>
           )}
 
           {product.attributes.length > 0 && (
