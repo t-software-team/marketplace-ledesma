@@ -50,7 +50,7 @@ export function FavoriteButton({
       disabled={isPending}
       aria-label={isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'}
       className={cn(
-        'flex size-8 items-center justify-center rounded-full border border-border bg-surface/90 text-muted-foreground backdrop-blur-sm transition-colors hover:text-destructive',
+        'flex size-11 items-center justify-center rounded-full border border-border bg-surface/90 text-muted-foreground backdrop-blur-sm transition-colors hover:text-destructive',
         isFavorite && 'text-destructive',
         className
       )}
