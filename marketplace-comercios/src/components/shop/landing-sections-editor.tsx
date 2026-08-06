@@ -12,6 +12,7 @@ export interface LandingBanner {
   title: string
   subtitle: string | null
   image_url: string | null
+  images: string[]
   cta_label: string | null
   cta_url: string | null
 }
@@ -25,6 +26,7 @@ export interface LandingSectionsValues {
   banner: LandingBanner
   bannerEnabled: boolean
   services: LandingService[]
+  gallery: string[]
   videoUrl: string
 }
 
@@ -32,24 +34,34 @@ interface LandingSectionsEditorProps {
   shopId: string
   landingBanner: unknown
   landingServices: unknown
+  landingGallery?: unknown
   landingVideoUrl: string | null
   onChange?: (values: LandingSectionsValues) => void
   applyTemplate?: {
     key: string
     banner?: { title: string; subtitle: string }
   } | null
-  visibleSection?: 'banner' | 'services' | 'video' | 'all'
+  visibleSection?: 'banner' | 'services' | 'gallery' | 'video' | 'all'
 }
 
 function parseBanner(value: unknown): LandingBanner {
   const raw = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  const images = Array.isArray(raw.images)
+    ? raw.images.filter((item): item is string => typeof item === 'string').slice(0, 6)
+    : []
   return {
     title: typeof raw.title === 'string' ? raw.title : '',
     subtitle: typeof raw.subtitle === 'string' ? raw.subtitle : '',
     image_url: typeof raw.image_url === 'string' ? raw.image_url : '',
+    images,
     cta_label: typeof raw.cta_label === 'string' ? raw.cta_label : '',
     cta_url: typeof raw.cta_url === 'string' ? raw.cta_url : '',
   } as LandingBanner
+}
+
+function parseGallery(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is string => typeof item === 'string').slice(0, 8)
 }
 
 function parseServices(value: unknown): LandingService[] {
@@ -66,6 +78,7 @@ export function LandingSectionsEditor({
   shopId,
   landingBanner,
   landingServices,
+  landingGallery,
   landingVideoUrl,
   onChange,
   applyTemplate,
@@ -77,15 +90,18 @@ export function LandingSectionsEditor({
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   const [services, setServices] = useState<LandingService[]>(() => parseServices(landingServices))
+  const [gallery, setGallery] = useState<string[]>(() => parseGallery(landingGallery))
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false)
+  const [galleryUploadError, setGalleryUploadError] = useState<string | null>(null)
   const [videoUrl, setVideoUrl] = useState(landingVideoUrl ?? '')
   const [videoInputMode, setVideoInputMode] = useState<'link' | 'file'>('link')
   const [isUploadingVideo, setIsUploadingVideo] = useState(false)
   const [videoUploadError, setVideoUploadError] = useState<string | null>(null)
 
   useEffect(() => {
-    onChange?.({ banner, bannerEnabled, services, videoUrl })
+    onChange?.({ banner, bannerEnabled, services, gallery, videoUrl })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [banner, bannerEnabled, services, videoUrl])
+  }, [banner, bannerEnabled, services, gallery, videoUrl])
 
   useEffect(() => {
     if (!applyTemplate?.banner) return
@@ -105,21 +121,60 @@ export function LandingSectionsEditor({
     return JSON.stringify(valid)
   }, [services])
 
+  const galleryJson = useMemo(() => {
+    if (gallery.length === 0) return ''
+    return JSON.stringify(gallery)
+  }, [gallery])
+
   async function handleBannerImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
+    if (banner.images.length >= 6) return
 
     setIsUploadingBanner(true)
     setUploadError(null)
     try {
       const url = await uploadShopImage('shop-promotions', shopId, file)
-      setBanner((current) => ({ ...current, image_url: url }))
+      setBanner((current) => ({
+        ...current,
+        images: [...current.images, url],
+        image_url: current.image_url || url,
+      }))
     } catch (error) {
       console.error('LandingSectionsEditor: fallo al subir imagen del banner', { error })
       setUploadError(error instanceof Error ? error.message : 'No pudimos subir la imagen')
     } finally {
       setIsUploadingBanner(false)
     }
+  }
+
+  function removeBannerImage(index: number) {
+    setBanner((current) => {
+      const images = current.images.filter((_, i) => i !== index)
+      return { ...current, images, image_url: images[0] ?? '' }
+    })
+  }
+
+  async function handleGalleryImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (gallery.length >= 8) return
+
+    setIsUploadingGallery(true)
+    setGalleryUploadError(null)
+    try {
+      const url = await uploadShopImage('shop-promotions', shopId, file)
+      setGallery((current) => [...current, url])
+    } catch (error) {
+      console.error('LandingSectionsEditor: fallo al subir imagen de la galería', { error })
+      setGalleryUploadError(error instanceof Error ? error.message : 'No pudimos subir la imagen')
+    } finally {
+      setIsUploadingGallery(false)
+    }
+  }
+
+  function removeGalleryImage(index: number) {
+    setGallery((current) => current.filter((_, i) => i !== index))
   }
 
   async function handleVideoFileUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -158,6 +213,7 @@ export function LandingSectionsEditor({
     <div className="space-y-6">
       <input type="hidden" name="landing_banner_text" value={bannerJson} />
       <input type="hidden" name="landing_services_text" value={servicesJson} />
+      <input type="hidden" name="landing_gallery_text" value={galleryJson} />
 
       <div className={cn('space-y-3 rounded-lg border border-border p-3', visibleSection !== 'all' && visibleSection !== 'banner' && 'hidden')}>
         <div className="flex items-center justify-between gap-2">
@@ -195,25 +251,33 @@ export function LandingSectionsEditor({
               onChange={(event) => setBanner((current) => ({ ...current, subtitle: event.target.value }))}
               maxLength={200}
             />
-            <div className="flex items-center gap-3">
-              <Input type="file" accept="image/*" onChange={handleBannerImageUpload} disabled={isUploadingBanner} />
-              {banner.image_url && (
-                <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
-                  <Image src={banner.image_url} alt="Banner" fill className="object-cover" sizes="48px" />
+            <div className="flex flex-wrap items-center gap-3">
+              {banner.images.map((image, index) => (
+                <div key={index} className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <Image src={image} alt="Banner" fill className="object-cover" sizes="48px" />
                   <button
                     type="button"
-                    onClick={() => setBanner((current) => ({ ...current, image_url: '' }))}
+                    onClick={() => removeBannerImage(index)}
                     aria-label="Quitar imagen del banner"
                     className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-destructive"
                   >
                     <X className="size-2.5" aria-hidden />
                   </button>
                 </div>
+              ))}
+              {banner.images.length < 6 && (
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBannerImageUpload}
+                  disabled={isUploadingBanner}
+                  className="max-w-[220px]"
+                />
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Si subís una imagen, se usa como fondo del banner (ideal apaisada, ej: 1200x500px). Sin
-              imagen, se muestra solo el texto.
+              Subí hasta 6 imágenes (ideal apaisadas, ej: 1200x500px). Con más de una, se muestran en
+              carrusel. Sin imágenes, se muestra solo el texto.
             </p>
             {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
             <div className="grid grid-cols-2 gap-2">
@@ -305,6 +369,51 @@ export function LandingSectionsEditor({
             ))}
           </div>
         )}
+      </div>
+
+      <div className={cn('space-y-3 rounded-xl border border-border p-4 lg:p-5', visibleSection !== 'all' && visibleSection !== 'gallery' && 'hidden')}>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Galería de fotos</p>
+            <p className="text-xs text-muted-foreground">
+              Mostrá fotos de tu local o trabajos. Hasta 8.
+            </p>
+          </div>
+          <span
+            className={cn(
+              'rounded-full px-2 py-0.5 text-xs font-medium',
+              gallery.length >= 8 ? 'bg-amber-500/15 text-amber-600' : 'bg-muted text-muted-foreground'
+            )}
+          >
+            {gallery.length}/8
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {gallery.map((image, index) => (
+            <div key={index} className="relative size-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+              <Image src={image} alt="Foto de la galería" fill className="object-cover" sizes="64px" />
+              <button
+                type="button"
+                onClick={() => removeGalleryImage(index)}
+                aria-label="Quitar foto de la galería"
+                className="absolute right-0.5 top-0.5 flex size-4 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-destructive"
+              >
+                <X className="size-2.5" aria-hidden />
+              </button>
+            </div>
+          ))}
+          {gallery.length < 8 && (
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleGalleryImageUpload}
+              disabled={isUploadingGallery}
+              className="max-w-[220px]"
+            />
+          )}
+        </div>
+        {galleryUploadError && <p className="text-xs text-destructive">{galleryUploadError}</p>}
       </div>
 
       <div className={cn('space-y-2 rounded-lg border border-border p-3', visibleSection !== 'all' && visibleSection !== 'video' && 'hidden')}>

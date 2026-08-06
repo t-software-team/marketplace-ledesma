@@ -23,6 +23,7 @@ import {
   createShopSchema,
   landingBannerSchema,
   landingServicesSchema,
+  landingGallerySchema,
   personalizationSchema,
   productSchema,
   promotionSchema,
@@ -351,6 +352,7 @@ export async function updateShopPersonalization(
     accent_color: formData.get('accent_color') ?? '',
     landing_banner_text: formData.get('landing_banner_text') ?? '',
     landing_services_text: formData.get('landing_services_text') ?? '',
+    landing_gallery_text: formData.get('landing_gallery_text') ?? '',
     landing_video_url: formData.get('landing_video_url') ?? '',
   })
 
@@ -392,33 +394,69 @@ export async function updateShopPersonalization(
 
   let landingBanner: unknown = null
   if (parsed.data.landing_banner_text) {
+    let rawBanner: unknown
     try {
-      const rawBanner = JSON.parse(parsed.data.landing_banner_text)
-      const bannerResult = landingBannerSchema.safeParse(rawBanner)
-      if (bannerResult.success) {
-        landingBanner = {
-          title: bannerResult.data.title,
-          subtitle: bannerResult.data.subtitle || null,
-          image_url: bannerResult.data.image_url || null,
-          cta_label: bannerResult.data.cta_label || null,
-          cta_url: bannerResult.data.cta_url || null,
-        }
-      }
+      rawBanner = JSON.parse(parsed.data.landing_banner_text)
     } catch (error) {
-      console.error('updateShopPersonalization: landing_banner_text inválido', { error })
+      console.error('updateShopPersonalization: landing_banner_text no es JSON válido', { error })
+      return { error: 'No pudimos guardar el banner, probá de nuevo' }
+    }
+    const bannerResult = landingBannerSchema.safeParse(rawBanner)
+    if (!bannerResult.success) {
+      console.error('updateShopPersonalization: landing_banner_text inválido', {
+        issues: bannerResult.error.issues,
+      })
+      return { error: 'Revisá los datos del banner' }
+    }
+    landingBanner = {
+      title: bannerResult.data.title,
+      subtitle: bannerResult.data.subtitle || null,
+      image_url: bannerResult.data.image_url || null,
+      images: bannerResult.data.images ?? [],
+      cta_label: bannerResult.data.cta_label || null,
+      cta_url: bannerResult.data.cta_url || null,
     }
   }
 
   let landingServices: unknown = null
   if (parsed.data.landing_services_text) {
+    let rawServices: unknown
     try {
-      const rawServices = JSON.parse(parsed.data.landing_services_text)
-      const servicesResult = landingServicesSchema.safeParse(rawServices)
-      if (servicesResult.success && servicesResult.data.length > 0) {
-        landingServices = servicesResult.data
-      }
+      rawServices = JSON.parse(parsed.data.landing_services_text)
     } catch (error) {
-      console.error('updateShopPersonalization: landing_services_text inválido', { error })
+      console.error('updateShopPersonalization: landing_services_text no es JSON válido', { error })
+      return { error: 'No pudimos guardar los servicios, probá de nuevo' }
+    }
+    const servicesResult = landingServicesSchema.safeParse(rawServices)
+    if (!servicesResult.success) {
+      console.error('updateShopPersonalization: landing_services_text inválido', {
+        issues: servicesResult.error.issues,
+      })
+      return { error: 'Revisá los servicios destacados' }
+    }
+    if (servicesResult.data.length > 0) {
+      landingServices = servicesResult.data
+    }
+  }
+
+  let landingGallery: unknown = null
+  if (parsed.data.landing_gallery_text) {
+    let rawGallery: unknown
+    try {
+      rawGallery = JSON.parse(parsed.data.landing_gallery_text)
+    } catch (error) {
+      console.error('updateShopPersonalization: landing_gallery_text no es JSON válido', { error })
+      return { error: 'No pudimos guardar la galería, probá de nuevo' }
+    }
+    const galleryResult = landingGallerySchema.safeParse(rawGallery)
+    if (!galleryResult.success) {
+      console.error('updateShopPersonalization: landing_gallery_text inválido', {
+        issues: galleryResult.error.issues,
+      })
+      return { error: 'Revisá las fotos de la galería' }
+    }
+    if (galleryResult.data.length > 0) {
+      landingGallery = galleryResult.data
     }
   }
 
@@ -428,6 +466,7 @@ export async function updateShopPersonalization(
       accent_color: accentColor,
       landing_banner: landingBanner as never,
       landing_services: landingServices as never,
+      landing_gallery: landingGallery as never,
       landing_video_url: parsed.data.landing_video_url || null,
     })
     .eq('owner_id', user.id)

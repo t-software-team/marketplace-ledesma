@@ -20,7 +20,7 @@ export async function getMyShop() {
       verification_status, verification_document_url, verified_by, verified_at,
       subscription_status, subscription_expires_at,
       is_active, is_paused, paused_reason, business_hours, accent_color,
-      landing_banner, landing_services, landing_video_url,
+      landing_banner, landing_services, landing_gallery, landing_video_url,
       profile_views, whatsapp_clicks, created_at, updated_at, deleted_at,
       categories ( slug )
     `
@@ -295,7 +295,9 @@ export const getShopBySlug = unstable_cache(
         accent_color,
         landing_banner,
         landing_services,
+        landing_gallery,
         landing_video_url,
+        business_hours,
         categories ( name, is_service )
       `
       )
@@ -320,7 +322,7 @@ export const getRelatedShops = unstable_cache(
 
     const filters = [
       categoryId ? `category_id.eq.${categoryId}` : null,
-      city ? `city.eq.${city}` : null,
+      city ? `city.eq."${city.replace(/"/g, '\\"')}"` : null,
     ].filter(Boolean)
 
     const { data } = await supabase

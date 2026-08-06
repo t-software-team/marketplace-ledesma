@@ -799,6 +799,7 @@ export type Database = {
           is_active: boolean
           is_paused: boolean
           landing_banner: Json | null
+          landing_gallery: Json | null
           landing_services: Json | null
           landing_video_url: string | null
           location: unknown
@@ -837,6 +838,7 @@ export type Database = {
           is_active?: boolean
           is_paused?: boolean
           landing_banner?: Json | null
+          landing_gallery?: Json | null
           landing_services?: Json | null
           landing_video_url?: string | null
           location?: unknown
@@ -875,6 +877,7 @@ export type Database = {
           is_active?: boolean
           is_paused?: boolean
           landing_banner?: Json | null
+          landing_gallery?: Json | null
           landing_services?: Json | null
           landing_video_url?: string | null
           location?: unknown
