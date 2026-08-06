@@ -87,16 +87,14 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
 
 export default async function ShopPage({ params }: ShopPageProps) {
   const { slug } = await params
-  const shop = await getShopBySlug(slug)
+  const supabase = await createClient()
+  const [shop, {
+    data: { user },
+  }] = await Promise.all([getShopBySlug(slug), supabase.auth.getUser()])
 
   if (!shop) {
     notFound()
   }
-
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
   const [products, shopUrl, rating, reviews, myReview, followerCount, isFollowing, relatedShops] =
     await Promise.all([

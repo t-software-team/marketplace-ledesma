@@ -1,67 +1,16 @@
 'use client'
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { TrendAreaChart } from '@/components/shared/trend-area-chart'
+import dynamic from 'next/dynamic'
+import { Skeleton } from '@/components/ui/skeleton'
 
-const CHART_COLOR = 'var(--color-primary)'
+const chartLoading = () => <Skeleton className="h-[220px] w-full rounded-lg" />
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+export const ShopsGrowthChart = dynamic(
+  () => import('./dashboard-charts-impl').then((mod) => mod.ShopsGrowthChart),
+  { ssr: false, loading: chartLoading }
+)
 
-export function ShopsGrowthChart({ data }: { data: { date: string; comercios: number }[] }) {
-  return (
-    <TrendAreaChart
-      data={data}
-      dataKey="comercios"
-      label="Nuevos comercios"
-      gradientId="shopsGrowth"
-      height={220}
-    />
-  )
-}
-
-export function RevenueByPlanChart({ data }: { data: { name: string; revenue: number }[] }) {
-  if (data.length === 0) {
-    return (
-      <p className="flex h-[220px] items-center justify-center text-sm text-muted-foreground">
-        Todavía no hay ingresos registrados.
-      </p>
-    )
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
-        <XAxis
-          dataKey="name"
-          tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-          axisLine={false}
-          tickLine={false}
-          width={40}
-          tickFormatter={(value: number) => `$${value / 1000}k`}
-        />
-        <Tooltip
-          contentStyle={{
-            fontSize: 12,
-            borderRadius: 8,
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface)',
-          }}
-          formatter={(value) => [formatMoney(Number(value)), 'Ingresos']}
-        />
-        <Bar dataKey="revenue" fill={CHART_COLOR} radius={[6, 6, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
-  )
-}
+export const RevenueByPlanChart = dynamic(
+  () => import('./dashboard-charts-impl').then((mod) => mod.RevenueByPlanChart),
+  { ssr: false, loading: chartLoading }
+)
