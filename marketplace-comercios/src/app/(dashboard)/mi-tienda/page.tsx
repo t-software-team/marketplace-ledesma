@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { Check, Eye, MessageCircle, Package, Store } from 'lucide-react'
+import { Eye, MessageCircle, Package, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,6 +23,7 @@ import {
 } from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
 import { OnboardingChecklist } from './onboarding-checklist'
+import { SubscriptionBenefits } from './subscription-benefits'
 
 const subscriptionLabels: Record<string, string> = {
   none: 'Sin suscripción',
@@ -253,16 +254,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
             </Button>
           </div>
-          {benefitLines.length > 0 && (
-            <ul className="grid gap-1.5 border-t border-border pt-3 text-xs text-muted-foreground sm:grid-cols-2">
-              {benefitLines.map((line) => (
-                <li key={line} className="flex items-start gap-1.5">
-                  <Check className="mt-0.5 size-3.5 shrink-0 text-success" aria-hidden />
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <SubscriptionBenefits lines={benefitLines} />
         </CardContent>
       </Card>
 

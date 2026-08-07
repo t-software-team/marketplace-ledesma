@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Bell, Compass, Heart, Home, Package, Search, User } from 'lucide-react'
+import { ArrowLeft, Bell, Compass, Heart, Home, Package, Search, Store, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -164,7 +164,7 @@ export function PublicHeader({
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 md:px-6">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 font-heading text-lg">
           <span className="relative flex size-8 shrink-0 items-center justify-center">
-            <Image src="/brand/logo.png" alt="" fill className="object-contain" priority />
+            <Image src="/brand/logo.png" alt="" fill sizes="28px" className="object-contain" priority />
           </span>
           <span className="truncate">
             <span className="sm:hidden">Proxi</span>
@@ -199,13 +199,25 @@ export function PublicHeader({
           {user ? (
             <>
               {profileRole === 'shop_admin' && (
-                <Button variant="ghost" size="sm" render={<Link href="/mi-tienda" />} nativeButton={false}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  render={<Link href="/mi-tienda" />}
+                  nativeButton={false}
+                  className="hidden sm:inline-flex"
+                >
                   Mi tienda
                 </Button>
               )}
               <ThemeToggle />
               {profileRole === 'superadmin' && (
-                <Button variant="ghost" size="sm" render={<Link href="/admin/shops" />} nativeButton={false}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  render={<Link href="/admin/shops" />}
+                  nativeButton={false}
+                  className="hidden sm:inline-flex"
+                >
                   Admin
                 </Button>
               )}
@@ -280,13 +292,15 @@ export function PublicHeader({
               )}
               {!profileRole && (
                 <Button size="sm" render={<Link href="/onboarding" />} nativeButton={false}>
-                  Completar perfil
+                  <span className="sm:hidden">Perfil</span>
+                  <span className="hidden sm:inline">Completar perfil</span>
                 </Button>
               )}
               <UserMenu
                 userEmail={user.email}
                 userFullName={profileFullName}
                 userAvatarUrl={profileAvatarUrl}
+                profileRole={profileRole}
               />
             </>
           ) : (
@@ -326,25 +340,33 @@ export function PublicMain({ children }: { children: React.ReactNode }) {
 
 interface BottomNavProps {
   isLoggedIn: boolean
+  profileRole?: string | null
 }
 
 const NAV_ITEMS = [
   { href: '/', label: 'Inicio', icon: Home, exact: true },
   { href: '/favoritos', label: 'Favoritos', icon: Heart, exact: false },
   { href: '/siguiendo', label: 'Siguiendo', icon: Compass, exact: false },
-  { href: '/perfil', label: 'Perfil', icon: User, exact: false },
 ] as const
 
-export function BottomNav({ isLoggedIn }: BottomNavProps) {
+const LAST_ITEM_SHOP_ADMIN = { href: '/mi-tienda', label: 'Mi tienda', icon: Store, exact: false } as const
+const LAST_ITEM_DEFAULT = { href: '/perfil', label: 'Perfil', icon: User, exact: false } as const
+
+export function BottomNav({ isLoggedIn, profileRole }: BottomNavProps) {
   const pathname = usePathname()
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (isMinimal) return null
 
+  const items = [
+    ...NAV_ITEMS,
+    profileRole === 'shop_admin' ? LAST_ITEM_SHOP_ADMIN : LAST_ITEM_DEFAULT,
+  ]
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 px-3 pb-3 sm:hidden [padding-bottom:calc(env(safe-area-inset-bottom)+0.75rem)]">
       <div className="mx-auto flex max-w-5xl items-center justify-around gap-1 rounded-2xl bg-background/80 p-1.5 shadow-sm shadow-black/5 backdrop-blur-xl">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href)
           const href = isLoggedIn || item.href === '/' ? item.href : '/login'
           const Icon = item.icon

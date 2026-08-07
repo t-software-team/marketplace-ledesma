@@ -129,7 +129,13 @@ export function FeedClient({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
 
-  const displayProducts = products ? products.pages.flat() : initialProducts
+  const rawProducts = products ? products.pages.flat() : initialProducts
+  // get_products_feed pagina con OFFSET sobre un orden con semilla random; si dos
+  // productos empatan en el score de orden, Postgres no garantiza el mismo orden
+  // entre llamadas y el mismo producto puede aparecer en dos páginas seguidas.
+  const displayProducts = Array.from(
+    new Map(rawProducts.map((product) => [product.product_id, product])).values()
+  )
   const showLoading = isLoading || (isFetching && !isFetchingNextPage && !products)
 
   return (
@@ -295,6 +301,7 @@ export function FeedClient({
                   product={product}
                   isLoggedIn={isLoggedIn}
                   initialIsFavorite={favoriteIdSet.has(product.product_id)}
+                  priority={index < 4}
                 />
               </div>
             ))}

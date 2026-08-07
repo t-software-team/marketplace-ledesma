@@ -47,6 +47,7 @@ interface ProductCardProps {
   className?: string;
   isLoggedIn?: boolean;
   initialIsFavorite?: boolean;
+  priority?: boolean;
 }
 
 function formatPrice(price: number | null) {
@@ -69,6 +70,7 @@ export function ProductCard({
   className,
   isLoggedIn = false,
   initialIsFavorite = false,
+  priority = false,
 }: ProductCardProps) {
   const isVerified = Boolean(product.shop_is_verified);
   const distance = formatDistance(product.distance_km);
@@ -103,6 +105,7 @@ export function ProductCard({
                 fill
                 className="object-cover transition-transform duration-500 group-hover/card:scale-110"
                 sizes="(max-width: 768px) 50vw, 25vw"
+                priority={priority}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">

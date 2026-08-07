@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { BookUser, Download, Share, User, Users } from 'lucide-react'
+import { BookUser, Download, Share, Shield, Store, User, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -27,6 +27,7 @@ interface UserMenuProps {
   userEmail: string
   userFullName: string | null
   userAvatarUrl: string | null
+  profileRole?: string | null
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -41,7 +42,7 @@ function getInitials(fullName: string | null, email: string) {
   return email[0]?.toUpperCase() ?? '?'
 }
 
-export function UserMenu({ userEmail, userFullName, userAvatarUrl }: UserMenuProps) {
+export function UserMenu({ userEmail, userFullName, userAvatarUrl, profileRole }: UserMenuProps) {
   const { canInstall, isIos, promptInstall } = useInstallPrompt()
   const [showIosInstructions, setShowIosInstructions] = useState(false)
 
@@ -75,6 +76,18 @@ export function UserMenu({ userEmail, userFullName, userAvatarUrl }: UserMenuPro
             <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {profileRole === 'shop_admin' && (
+            <DropdownMenuItem render={<Link href="/mi-tienda" />} className="sm:hidden">
+              <Store className="size-4" aria-hidden />
+              Mi tienda
+            </DropdownMenuItem>
+          )}
+          {profileRole === 'superadmin' && (
+            <DropdownMenuItem render={<Link href="/admin/shops" />} className="sm:hidden">
+              <Shield className="size-4" aria-hidden />
+              Admin
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem render={<Link href="/perfil" />}>
             <User className="size-4" aria-hidden />
             Mi perfil
