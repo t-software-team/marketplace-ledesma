@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
@@ -19,6 +20,7 @@ export default async function MiTiendaLayout({
   let rubroSlug: string | null = null
   let planName = 'Free'
   let hasCustomBranding = false
+  let reviewInvite: { shopName: string; shopUrl: string } | null = null
 
   if (user) {
     const { data: profile } = await supabase
@@ -32,13 +34,18 @@ export default async function MiTiendaLayout({
 
     const { data: shop } = await supabase
       .from('shops')
-      .select('id, categories ( slug )')
+      .select('id, name, slug, categories ( slug )')
       .eq('owner_id', user.id)
       .maybeSingle()
 
     rubroSlug = shop?.categories?.slug ?? null
 
     if (shop) {
+      const headersList = await headers()
+      const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
+      const protocol = headersList.get('x-forwarded-proto') ?? 'http'
+      reviewInvite = { shopName: shop.name, shopUrl: `${protocol}://${host}/tienda/${shop.slug}` }
+
       const activeSubscription = await getMyActiveSubscription(shop.id)
       planName = activeSubscription?.subscription_plans?.name ?? 'Free'
       hasCustomBranding = Boolean(
@@ -73,6 +80,7 @@ export default async function MiTiendaLayout({
       sectionTitle="Mi tienda"
       rootHref="/mi-tienda"
       showInstallButton={false}
+      reviewInvite={reviewInvite ?? undefined}
     >
       {children}
     </DashboardShell>

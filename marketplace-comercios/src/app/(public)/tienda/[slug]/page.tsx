@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
-import { ArrowLeft, MapPin } from 'lucide-react'
+import { ArrowLeft, MapPin, Store } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
 import { notFound } from 'next/navigation'
@@ -155,7 +155,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
       <ShopViewTracker shopId={shop.id} />
 
       <div className="-mx-4 overflow-hidden rounded-xl bg-surface md:-mx-6">
-        <div className="relative h-36 bg-muted md:h-44">
+        <div className="relative h-28 bg-muted md:h-36">
           {shop.cover_url ? (
             <Image
               src={shop.cover_url}
@@ -180,18 +180,18 @@ export default async function ShopPage({ params }: ShopPageProps) {
 
         <div className="relative px-4 pb-5 md:px-6 pt-2">
           <div className="flex items-end gap-3">
-            <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-xl border-2 border-surface bg-muted shadow-md ring-1 ring-border">
+            <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-muted md:size-20">
               {shop.logo_url ? (
                 <Image
                   src={shop.logo_url}
                   alt={`Logo de ${shop.name}`}
                   fill
                   className="object-cover"
-                  sizes="64px"
+                  sizes="80px"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-lg font-heading text-muted-foreground">
-                  {shop.name.charAt(0)}
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <Store className="size-6" aria-hidden />
                 </div>
               )}
             </div>

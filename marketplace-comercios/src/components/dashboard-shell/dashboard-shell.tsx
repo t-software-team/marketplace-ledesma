@@ -15,6 +15,7 @@ interface DashboardShellProps {
   unreadNotificationsCount?: number
   showSiteLink?: boolean
   showInstallButton?: boolean
+  reviewInvite?: { shopName: string; shopUrl: string }
   children: React.ReactNode
 }
 
@@ -30,6 +31,7 @@ export function DashboardShell({
   unreadNotificationsCount,
   showSiteLink,
   showInstallButton,
+  reviewInvite,
   children,
 }: DashboardShellProps) {
   return (
@@ -45,6 +47,7 @@ export function DashboardShell({
           unreadNotificationsCount={unreadNotificationsCount}
           showSiteLink={showSiteLink}
           showInstallButton={showInstallButton}
+          reviewInvite={reviewInvite}
           accent={accent}
         />
         <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">

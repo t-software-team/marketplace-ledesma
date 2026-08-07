@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { MapPin, Search, Store } from 'lucide-react'
+import { MapPin, Search, Store, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryGrid } from './category-grid'
 import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
@@ -15,8 +15,14 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from '@/components/ui/toast'
 import { useCategoryAttributes, useProductsFeed, useShopSearch } from '@/hooks/use-products'
+import { useScrolled } from '@/hooks/use-scrolled'
+import { useHideOnScrollDown } from '@/hooks/use-hide-on-scroll-down'
 import { useFiltersStore } from '@/stores/use-filters-store'
+import { cn } from '@/lib/utils'
+
+const SELL_BANNER_DISMISSED_KEY = 'sell-banner-dismissed'
 
 interface Category {
   id: string
@@ -43,6 +49,9 @@ export function FeedClient({
   isLoggedIn = false,
   favoriteIds = [],
 }: FeedClientProps) {
+  const scrolled = useScrolled()
+  const hideOnScrollDown = useHideOnScrollDown()
+  const [sellBannerDismissed, setSellBannerDismissed] = useState(true)
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const {
     categoryId,
@@ -88,6 +97,15 @@ export function FeedClient({
   }
 
   useEffect(() => {
+    setSellBannerDismissed(window.localStorage.getItem(SELL_BANNER_DISMISSED_KEY) === '1')
+  }, [])
+
+  function handleDismissSellBanner() {
+    window.localStorage.setItem(SELL_BANNER_DISMISSED_KEY, '1')
+    setSellBannerDismissed(true)
+  }
+
+  useEffect(() => {
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
     }
@@ -116,57 +134,86 @@ export function FeedClient({
 
   return (
     <div className="space-y-4">
-      {!isLoggedIn && (
-        <Link
-          href="/login"
-          className="flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10"
-        >
-          <div>
-            <p className="text-sm font-semibold">Vendé tus productos en Proxi</p>
-            <p className="text-xs text-muted-foreground">
-              Creá tu cuenta gratis, abrí tu tienda y empezá a vender hoy mismo.
-            </p>
-          </div>
-          <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
-            Crear cuenta gratis
-          </span>
-        </Link>
+      {!isLoggedIn && !sellBannerDismissed && (
+        <div className="relative flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
+          <Link href="/login" className="flex min-w-0 flex-1 items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">Vendé tus productos en Proxi</p>
+              <p className="text-xs text-muted-foreground">
+                Creá tu cuenta gratis, abrí tu tienda y empezá a vender hoy mismo.
+              </p>
+            </div>
+            <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
+              Crear cuenta gratis
+            </span>
+          </Link>
+          <button
+            type="button"
+            onClick={handleDismissSellBanner}
+            aria-label="Cerrar"
+            className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </div>
       )}
 
-      <div className="sticky top-14 z-10 -mx-4 flex gap-2 bg-background/95 px-4 py-2 backdrop-blur-sm md:-mx-6 md:px-6">
-        <div className="relative flex-1">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar productos, servicios o comercios..."
-            value={searchInput}
-            onChange={(event) => handleSearchChange(event.target.value)}
-            className="h-11 pl-9"
-            aria-label="Buscar productos, servicios o comercios"
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (!navigator.geolocation) return
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                setLocation({
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                })
-              },
-              () => setLocation(null)
-            )
-          }}
-          className={`flex size-11 shrink-0 items-center justify-center rounded-lg border bg-surface transition-colors ${
-            userLocation
-              ? 'border-primary text-primary'
-              : 'border-border text-muted-foreground hover:text-foreground'
-          }`}
-          aria-label="Usar mi ubicación"
+      <div
+        className={cn(
+          'sticky top-14 z-10 -mx-4 overflow-hidden transition-[max-height,opacity] duration-200 md:-mx-6',
+          hideOnScrollDown ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'
+        )}
+      >
+        <div
+          className={cn(
+            'flex gap-2 px-4 py-2 transition-colors duration-200 md:px-6',
+            scrolled ? 'bg-background/95 backdrop-blur-sm' : 'bg-transparent backdrop-blur-md'
+          )}
         >
-          <MapPin className="size-4" />
-        </button>
+          <div className="relative flex-1">
+            <Search className="absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar productos, servicios o comercios..."
+              value={searchInput}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              className="h-11 rounded-full border-transparent bg-muted pl-10 focus-visible:bg-surface"
+              aria-label="Buscar productos, servicios o comercios"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (!navigator.geolocation) {
+                toast.add({ title: 'Tu navegador no soporta geolocalización', type: 'error' })
+                return
+              }
+              navigator.geolocation.getCurrentPosition(
+                (position) => {
+                  setLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                  })
+                },
+                () => {
+                  setLocation(null)
+                  toast.add({
+                    title: 'No pudimos acceder a tu ubicación',
+                    description: 'Revisá los permisos de ubicación en tu navegador e intentá de nuevo.',
+                    type: 'error',
+                  })
+                }
+              )
+            }}
+            className={`flex size-11 shrink-0 items-center justify-center rounded-full transition-colors ${
+              userLocation
+                ? 'bg-primary/10 text-primary'
+                : 'bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+            aria-label="Usar mi ubicación"
+          >
+            <MapPin className="size-4" />
+          </button>
+        </div>
       </div>
 
       <CategoryGrid

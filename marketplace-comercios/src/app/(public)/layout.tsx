@@ -31,7 +31,15 @@ export default async function PublicLayout({
     : { notifications: [], unreadCount: 0 }
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="relative flex min-h-dvh flex-col">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-gradient-to-b from-primary/[0.16] to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute top-[-12%] left-1/2 -z-10 size-[30rem] -translate-x-1/2 rounded-full bg-primary/[0.18] blur-3xl"
+        aria-hidden
+      />
       <PublicHeader
         user={user ? { email: user.email ?? '' } : null}
         profileRole={profileRole}

@@ -21,6 +21,7 @@ import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppBanner } from '@/components/shared/install-app-banner'
 import { markClientNotificationsRead } from '@/lib/notifications/actions'
 import { useFiltersStore } from '@/stores/use-filters-store'
+import { useScrolled } from '@/hooks/use-scrolled'
 import { cn } from '@/lib/utils'
 
 interface ClientNotification {
@@ -72,6 +73,7 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const scrolled = useScrolled()
   const setSearch = useFiltersStore((state) => state.setSearch)
   const [isMarkingRead, startMarkingRead] = useTransition()
   const [searchInput, setSearchInput] = useState('')
@@ -153,7 +155,12 @@ export function PublicHeader({
   if (isMinimal) return null
 
   return (
-    <header className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
+    <header
+      className={cn(
+        'sticky top-0 z-10 transition-colors duration-200',
+        scrolled ? 'bg-background/95 backdrop-blur-sm' : 'bg-transparent backdrop-blur-md'
+      )}
+    >
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 md:px-6">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 font-heading text-lg">
           <span className="relative flex size-8 shrink-0 items-center justify-center">

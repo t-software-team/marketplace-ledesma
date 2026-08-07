@@ -29,6 +29,7 @@ import { markAllNotificationsRead } from '@/lib/admin/actions'
 import { createClient } from '@/lib/supabase/client'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppButton } from '@/components/shared/install-app-button'
+import { ShareButton } from '@/components/shared/share-button'
 import { cn } from '@/lib/utils'
 
 export interface AdminNotification {
@@ -75,6 +76,7 @@ interface DashboardHeaderProps {
   unreadNotificationsCount?: number
   showSiteLink?: boolean
   showInstallButton?: boolean
+  reviewInvite?: { shopName: string; shopUrl: string }
   accent?: boolean
 }
 
@@ -106,6 +108,7 @@ export function DashboardHeader({
   unreadNotificationsCount,
   showSiteLink = true,
   showInstallButton = true,
+  reviewInvite,
   accent = false,
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -188,6 +191,7 @@ export function DashboardHeader({
         </div>
 
         <div className="flex items-center gap-1">
+          
           {showInstallButton && <InstallAppButton />}
           {showSiteLink && (
             <Button
@@ -200,6 +204,17 @@ export function DashboardHeader({
               <ArrowLeft className="size-4" aria-hidden />
               <span>Volver al sitio</span>
             </Button>
+          )}
+          {reviewInvite && (
+            <ShareButton
+              title={reviewInvite.shopName}
+              text={`¿Nos regalás una reseña en Proxi? Contanos cómo te fue con ${reviewInvite.shopName}:`}
+              url={reviewInvite.shopUrl}
+              variant="ghost"
+              size="icon"
+              icon="star"
+              label="Invitar a reseñar"
+            />
           )}
           <Button
             render={<Link href="/favoritos" aria-label="Favoritos" />}

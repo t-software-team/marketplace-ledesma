@@ -55,11 +55,16 @@ export function UserMenu({ userEmail, userFullName, userAvatarUrl }: UserMenuPro
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menú de cuenta" />
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              className="rounded-full"
+              aria-label="Menú de cuenta"
+            />
           }
           nativeButton={true}
         >
-          <Avatar>
+          <Avatar className="size-9">
             {userAvatarUrl && <AvatarImage src={userAvatarUrl} alt={userFullName ?? userEmail} />}
             <AvatarFallback>{getInitials(userFullName, userEmail)}</AvatarFallback>
           </Avatar>

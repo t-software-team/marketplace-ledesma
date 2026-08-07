@@ -202,16 +202,6 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               variant="outline"
               size="icon"
             />
-            <ShareButton
-              title={shop.name}
-              text={`¿Nos regalás una reseña en Proxi? Contanos cómo te fue con ${shop.name}:`}
-              url={shopUrl}
-              variant="outline"
-              size="sm"
-              icon="star"
-              label="Invitar a reseñar"
-              copiedLabel="Link copiado"
-            />
             <Button
               render={<Link href={`/tienda/${shop.slug}`} target="_blank" />}
               nativeButton={false}
@@ -221,6 +211,20 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
               Ver tienda pública
             </Button>
           </div>
+        </div>
+
+        <div className="border-t border-border px-4 py-3 md:px-6">
+          <ShareButton
+            title={shop.name}
+            text={`¿Nos regalás una reseña en Proxi? Contanos cómo te fue con ${shop.name}:`}
+            url={shopUrl}
+            variant="ghost"
+            size="sm"
+            icon="star"
+            label="Invitar a reseñar"
+            copiedLabel="Link copiado"
+            className="w-full justify-center sm:w-auto"
+          />
         </div>
       </div>
 
