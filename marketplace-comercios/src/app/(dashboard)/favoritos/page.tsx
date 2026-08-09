@@ -8,7 +8,7 @@ export default async function FavoritesPage() {
   const favorites = await getMyFavorites()
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 px-4 py-8">
+    <div className="space-y-4 px-4 py-8">
       <BackLink href="/" />
       <h1 className="text-2xl font-heading">Favoritos</h1>
 
