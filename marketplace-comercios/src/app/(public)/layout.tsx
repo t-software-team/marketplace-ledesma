@@ -32,10 +32,6 @@ export default async function PublicLayout({
 
   return (
     <div className="relative flex min-h-dvh flex-col">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
-        <div className="absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/[0.16] to-transparent" />
-        <div className="absolute top-[-12%] left-1/2 size-[30rem] -translate-x-1/2 rounded-full bg-primary/[0.18] blur-3xl" />
-      </div>
       <PublicHeader
         user={user ? { email: user.email ?? '' } : null}
         profileRole={profileRole}

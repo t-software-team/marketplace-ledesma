@@ -166,7 +166,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
               sizes="(max-width: 768px) 100vw, 1024px"
             />
           ) : (
-            <div className="h-full bg-gradient-to-br from-primary/20 to-muted" />
+            <div className="h-full bg-background" />
           )}
           <Link
             href="/"

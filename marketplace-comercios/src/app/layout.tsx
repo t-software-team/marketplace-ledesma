@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
 import { ScrollToTopOnNavigate } from '@/components/shared/scroll-to-top-on-navigate'
+import { SplashScreen } from '@/components/shared/splash-screen'
 import { getBaseUrl } from '@/lib/site-url'
 import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script'
 
@@ -75,6 +76,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />
         <ThemeProvider>
+          <SplashScreen />
           <Toaster>
             <ScrollToTopOnNavigate />
             <AuthListener />
