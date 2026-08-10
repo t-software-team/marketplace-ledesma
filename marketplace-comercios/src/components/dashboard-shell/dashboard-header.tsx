@@ -113,6 +113,7 @@ export function DashboardHeader({
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [isMarkingRead, startMarkingRead] = useTransition()
+  const [isSigningOut, startSignOut] = useTransition()
   const router = useRouter()
   const [extraNotifications, setExtraNotifications] = useState<AdminNotification[]>([])
   const [extraUnreadCount, setExtraUnreadCount] = useState(0)
@@ -322,7 +323,11 @@ export function DashboardHeader({
                 <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={() => signOut()}>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={isSigningOut}
+                onClick={() => startSignOut(() => signOut())}
+              >
                 Cerrar sesión
               </DropdownMenuItem>
             </DropdownMenuContent>

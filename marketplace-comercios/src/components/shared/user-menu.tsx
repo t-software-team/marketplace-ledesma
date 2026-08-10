@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { BookUser, Download, Share, Shield, Store, User, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -45,6 +45,7 @@ function getInitials(fullName: string | null, email: string) {
 export function UserMenu({ userEmail, userFullName, userAvatarUrl, profileRole }: UserMenuProps) {
   const { canInstall, isIos, promptInstall } = useInstallPrompt()
   const [showIosInstructions, setShowIosInstructions] = useState(false)
+  const [isSigningOut, startSignOut] = useTransition()
 
   async function handleInstallClick() {
     const result = await promptInstall()
@@ -110,7 +111,11 @@ export function UserMenu({ userEmail, userFullName, userAvatarUrl, profileRole }
             </>
           )}
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => signOut()}>
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isSigningOut}
+            onClick={() => startSignOut(() => signOut())}
+          >
             Cerrar sesión
           </DropdownMenuItem>
         </DropdownMenuContent>
