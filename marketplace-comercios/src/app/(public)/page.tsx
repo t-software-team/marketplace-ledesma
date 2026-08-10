@@ -6,18 +6,17 @@ import { getActivePromotions, getFeedData } from '@/lib/shops/queries'
 export default async function HomePage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [
+    {
+      data: { user },
+    },
+    { categories, subcategories, products: initialProducts },
+    promotions,
+  ] = await Promise.all([supabase.auth.getUser(), getFeedData(20, 0), getActivePromotions()])
 
-  const [{ categories, subcategories, products: initialProducts }, favorites, promotions] =
-    await Promise.all([
-      getFeedData(20, 0),
-      user
-        ? supabase.from('favorites').select('product_id').eq('client_id', user.id)
-        : Promise.resolve({ data: null }),
-      getActivePromotions(),
-    ])
+  const favorites = user
+    ? await supabase.from('favorites').select('product_id').eq('client_id', user.id)
+    : { data: null }
 
   const favoriteIds = (favorites.data ?? []).map((favorite) => favorite.product_id)
 
