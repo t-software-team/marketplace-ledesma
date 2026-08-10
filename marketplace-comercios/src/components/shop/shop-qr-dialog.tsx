@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
+import dynamic from 'next/dynamic'
 import { Download, QrCode } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,6 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+
+const QRCodeSVG = dynamic(() => import('qrcode.react').then((mod) => mod.QRCodeSVG), {
+  ssr: false,
+})
 
 interface ShopQrDialogProps {
   shopName: string

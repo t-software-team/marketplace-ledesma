@@ -166,8 +166,8 @@ export function FeedClient({
 
       <div
         className={cn(
-          'sticky top-14 z-10 -mx-4 overflow-hidden transition-[max-height,opacity] duration-200 md:-mx-6',
-          hideOnScrollDown ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100'
+          'sticky top-14 z-10 -mx-4 overflow-hidden transition-transform duration-200 will-change-transform md:-mx-6',
+          hideOnScrollDown ? '-translate-y-full' : 'translate-y-0'
         )}
       >
         <div
@@ -307,15 +307,7 @@ export function FeedClient({
             ))}
           </div>
 
-          <div ref={loadMoreRef} aria-hidden className="h-1" />
-
-          {isFetchingNextPage && (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
-              ))}
-            </div>
-          )}
+          <div ref={loadMoreRef} aria-hidden className="h-24" />
 
           {!hasNextPage && displayProducts.length > 0 && (
             <p className="py-4 text-center text-xs text-muted-foreground">
