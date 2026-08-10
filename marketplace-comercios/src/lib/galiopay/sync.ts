@@ -1,5 +1,7 @@
 import { getPaymentLinkStatus } from './client'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
+import { sendEmail } from '@/lib/email/client'
+import { subscriptionApprovedEmail } from '@/lib/email/templates'
 
 export async function syncGalioPaySubscription(
   subscriptionId: string,
@@ -20,5 +22,42 @@ export async function syncGalioPaySubscription(
 
   if (error) throw new Error('No pudimos activar la suscripción')
 
+  await notifySubscriptionActivated(service, subscriptionId)
+
   return { activated: true, status: status.status }
+}
+
+async function notifySubscriptionActivated(
+  service: ReturnType<typeof createServiceRoleClient>,
+  subscriptionId: string
+) {
+  try {
+    const { data: subscription } = await service
+      .from('subscriptions')
+      .select('shop_id, subscription_plans ( name )')
+      .eq('id', subscriptionId)
+      .maybeSingle()
+
+    if (!subscription) return
+
+    const { data: shop } = await service
+      .from('shops')
+      .select('name, owner_id')
+      .eq('id', subscription.shop_id)
+      .maybeSingle()
+
+    if (!shop) return
+
+    const { data: userResult } = await service.auth.admin.getUserById(shop.owner_id)
+    const email = userResult?.user?.email
+    if (!email) return
+
+    const { subject, html } = subscriptionApprovedEmail(
+      shop.name,
+      subscription.subscription_plans?.name ?? 'tu plan'
+    )
+    await sendEmail(email, subject, html)
+  } catch (error) {
+    console.error('galiopay sync: fallo al notificar (best effort)', { subscriptionId, error })
+  }
 }

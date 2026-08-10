@@ -38,17 +38,11 @@ function layout(title: string, bodyHtml: string, ctaHref?: string, ctaLabel?: st
                 <td style="padding:24px 32px 8px 32px;">
                   <h1 style="margin:0 0 12px 0; font-size:20px; line-height:1.3; color:${COLOR_FOREGROUND};">${title}</h1>
                   <div style="font-size:14px; line-height:1.6; color:${COLOR_FOREGROUND};">${bodyHtml}</div>
-                  <!--
-                    Botón CTA desactivado temporalmente: el dominio todavía es de prueba
-                    (VERCEL_URL cambia entre deployments), así que el link rompía con
-                    "DEPLOYMENT_NOT_FOUND". Reactivar seteando NEXT_PUBLIC_SITE_URL con
-                    el dominio estable y descomentando este bloque.
-                    ${
-                      ctaHref && ctaLabel
-                        ? `<a href="${baseUrl}${ctaHref}" style="display:inline-block; margin-top:20px; padding:12px 22px; background:${COLOR_PRIMARY}; color:${COLOR_PRIMARY_FOREGROUND}; text-decoration:none; border-radius:10px; font-size:14px; font-weight:600;">${ctaLabel}</a>`
-                        : ''
-                    }
-                  -->
+                  ${
+                    ctaHref && ctaLabel
+                      ? `<a href="${baseUrl}${ctaHref}" style="display:inline-block; margin-top:20px; padding:12px 22px; background:${COLOR_PRIMARY}; color:${COLOR_PRIMARY_FOREGROUND}; text-decoration:none; border-radius:10px; font-size:14px; font-weight:600;">${ctaLabel}</a>`
+                      : ''
+                  }
                 </td>
               </tr>
               <tr>
