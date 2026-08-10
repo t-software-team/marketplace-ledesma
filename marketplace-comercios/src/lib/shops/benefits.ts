@@ -7,6 +7,7 @@ function getBenefitLabels(noun: string, nounPlural: string): Record<string, (val
     priority_support: (value) => (value ? 'Soporte prioritario' : null),
     custom_branding: (value) => (value ? 'Personalizá tu tienda pública (color, banner, servicios, video)' : null),
     promotions: (value) => (value ? 'Creá promociones destacadas en el feed' : null),
+    verified_badge: (value) => (value ? 'Ícono de comercio verificado en tu perfil' : null),
   }
 }
 
