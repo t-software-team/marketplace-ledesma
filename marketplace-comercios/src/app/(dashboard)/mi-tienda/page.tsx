@@ -13,6 +13,7 @@ import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getBenefitLines } from '@/lib/shops/benefits'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
   getActiveCategories,
   getActiveSubscriptionPlans,
@@ -183,7 +184,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
             <div className="pb-0.5">
               <div className="flex items-center gap-1.5">
                 <h1 className="text-xl font-heading sm:text-2xl">{shop.name}</h1>
-                {shop.verification_status === 'verified' && <VerifiedStamp className="size-6" />}
+                {hasVerifiedBadge(shop) && <VerifiedStamp className="size-6" />}
               </div>
               {shop.is_paused ? (
                 <Badge variant="warning" className="mt-1">

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { getBaseUrl } from '@/lib/site-url'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { PromotionStoryDialog, type StoryPromotion } from './promotion-story-dialog'
 import type { TextPosition, TextSize } from './story-preview'
 
@@ -23,6 +24,7 @@ interface Promotion {
     logo_url: string | null
     whatsapp_number: string
     verification_status: string
+    subscription_status: string
   } | null
   products: { id: string; name: string } | null
 }
@@ -47,7 +49,7 @@ export function PromotionsRow({ promotions }: { promotions: Promotion[] }) {
       shopSlug: promotion.shops.slug,
       shopLogoUrl: promotion.shops.logo_url,
       shopWhatsapp: promotion.shops.whatsapp_number,
-      isVerified: promotion.shops.verification_status === 'verified',
+      isVerified: hasVerifiedBadge(promotion.shops),
       productName: promotion.products?.name,
       shopUrl: `${getBaseUrl()}/tienda/${promotion.shops.slug}`,
       textPosition: (promotion.text_position as TextPosition) || 'bottom',

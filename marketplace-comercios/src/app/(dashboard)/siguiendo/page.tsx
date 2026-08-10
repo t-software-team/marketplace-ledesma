@@ -5,6 +5,7 @@ import { BackLink } from '@/components/shared/back-link'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { EmptyState } from '@/components/shared/empty-state'
 import { getMyFollowedShops } from '@/lib/shops/queries'
+import { hasVerifiedBadge } from '@/lib/shops/badge'
 
 export default async function FollowingPage() {
   const shops = await getMyFollowedShops()
@@ -36,7 +37,7 @@ export default async function FollowingPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
                   <p className="truncate text-sm font-medium">{shop.name}</p>
-                  {shop.verification_status === 'verified' && <VerifiedStamp className="size-4" />}
+                  {hasVerifiedBadge(shop) && <VerifiedStamp className="size-4" />}
                 </div>
                 {shop.city && <p className="truncate text-xs text-muted-foreground">{shop.city}</p>}
               </div>
