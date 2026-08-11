@@ -62,14 +62,18 @@ async function compressImage(file: File): Promise<File> {
   ctx.drawImage(bitmap, 0, 0, width, height)
   bitmap.close()
 
-  const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg'
+  // WebP en vez de JPEG/PNG: mismo pipeline de resize, bien menos peso por
+  // imagen. Relevante ahora que Vercel Image Optimization está desactivada
+  // (unoptimized: true en next.config.ts) y las imágenes se sirven tal cual
+  // se guardaron, sin recompresión del lado del servidor.
+  const outputType = 'image/webp'
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, outputType, outputType === 'image/jpeg' ? COMPRESS_JPEG_QUALITY : undefined)
+    canvas.toBlob(resolve, outputType, COMPRESS_JPEG_QUALITY)
   )
 
   if (!blob || blob.size >= file.size) return file
 
-  const newName = file.name.replace(/\.\w+$/, outputType === 'image/png' ? '.png' : '.jpg')
+  const newName = file.name.replace(/\.\w+$/, '.webp')
   return new File([blob], newName, { type: outputType })
 }
 
