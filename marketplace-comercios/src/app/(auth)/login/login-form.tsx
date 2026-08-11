@@ -78,6 +78,14 @@ export default function LoginForm() {
         <p className="text-sm text-muted-foreground">Accedé a tu cuenta del marketplace</p>
       </div>
 
+      <GoogleButton next={searchParams.get('next') ?? '/'} />
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-xs text-muted-foreground">o</span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-1.5">
           <label htmlFor="email" className="text-sm font-medium">
@@ -142,14 +150,6 @@ export default function LoginForm() {
           {isSubmitting ? 'Ingresando...' : 'Ingresar'}
         </Button>
       </form>
-
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">o</span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-
-      <GoogleButton next={searchParams.get('next') ?? '/'} />
 
       <p className="text-center text-sm text-muted-foreground">
         ¿No tenés cuenta?{' '}
