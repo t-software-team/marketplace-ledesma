@@ -4,12 +4,22 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 const SPLASH_DURATION_MS = 1000
+const SPLASH_SESSION_KEY = 'splash-shown'
 
 export function SplashScreen() {
   const [visible, setVisible] = useState(true)
   const [fadingOut, setFadingOut] = useState(false)
 
   useEffect(() => {
+    // Solo una vez por sesión de navegador: en navegaciones internas este
+    // componente no se remonta (el layout persiste), así que este check solo
+    // corre en cargas completas (F5, abrir la PWA de cero).
+    if (sessionStorage.getItem(SPLASH_SESSION_KEY)) {
+      setVisible(false)
+      return
+    }
+    sessionStorage.setItem(SPLASH_SESSION_KEY, '1')
+
     const fadeTimer = setTimeout(() => setFadingOut(true), SPLASH_DURATION_MS)
     const hideTimer = setTimeout(() => setVisible(false), SPLASH_DURATION_MS + 300)
     return () => {
