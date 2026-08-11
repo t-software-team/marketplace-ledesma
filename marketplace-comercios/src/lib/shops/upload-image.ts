@@ -23,6 +23,8 @@ function assertValidImage(bucket: keyof typeof BUCKET_LIMITS, file: File) {
 const COMPRESS_MAX_DIMENSION = 1600
 const COMPRESS_JPEG_QUALITY = 0.82
 const COMPRESS_SKIP_BELOW_BYTES = 800 * 1024
+const THUMB_MAX_DIMENSION = 600
+const THUMB_SUFFIX = '-thumb'
 
 /**
  * Downscales and re-encodes an image client-side before upload. Phone
@@ -31,19 +33,19 @@ const COMPRESS_SKIP_BELOW_BYTES = 800 * 1024
  * to keep animation; if compression doesn't actually shrink the file
  * (already-optimized images), the original is kept.
  */
-async function compressImage(file: File): Promise<File> {
+async function resizeImage(file: File, maxDimension: number, skipBelowBytes: number): Promise<File> {
   if (file.type === 'image/gif') return file
 
   let bitmap: ImageBitmap
   try {
     bitmap = await createImageBitmap(file)
   } catch (error) {
-    console.error('compressImage: no pudimos leer la imagen, se sube sin comprimir', { error })
+    console.error('resizeImage: no pudimos leer la imagen, se sube sin comprimir', { error })
     return file
   }
 
-  const scale = Math.min(1, COMPRESS_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height))
-  if (scale === 1 && file.size <= COMPRESS_SKIP_BELOW_BYTES) {
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height))
+  if (scale === 1 && file.size <= skipBelowBytes) {
     bitmap.close()
     return file
   }
@@ -77,6 +79,60 @@ async function compressImage(file: File): Promise<File> {
   return new File([blob], newName, { type: outputType })
 }
 
+function compressImage(file: File): Promise<File> {
+  return resizeImage(file, COMPRESS_MAX_DIMENSION, COMPRESS_SKIP_BELOW_BYTES)
+}
+
+/**
+ * Genera una miniatura .webp de máx 600px para grillas/feed, donde la misma
+ * foto se descarga muchas veces por vista. A diferencia de compressImage,
+ * siempre re-codifica (nunca "da por bueno" el archivo original) así el
+ * resultado es predeciblemente .webp — necesario para que getThumbnailUrl
+ * pueda derivar el nombre del archivo sin consultar la base de datos.
+ * Devuelve null para GIFs (se pierde la animación al recodificar) y cuando
+ * el canvas no está disponible; en esos casos no se sube miniatura y
+ * ProductImage cae de vuelta a la imagen grande.
+ */
+async function buildThumbnail(file: File): Promise<File | null> {
+  if (file.type === 'image/gif') return null
+
+  let bitmap: ImageBitmap
+  try {
+    bitmap = await createImageBitmap(file)
+  } catch (error) {
+    console.error('buildThumbnail: no pudimos leer la imagen', { error })
+    return null
+  }
+
+  const scale = Math.min(1, THUMB_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height))
+  const width = Math.round(bitmap.width * scale)
+  const height = Math.round(bitmap.height * scale)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    bitmap.close()
+    return null
+  }
+  ctx.drawImage(bitmap, 0, 0, width, height)
+  bitmap.close()
+
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, 'image/webp', COMPRESS_JPEG_QUALITY)
+  )
+  if (!blob) return null
+
+  const newName = file.name.replace(/\.\w+$/, `${THUMB_SUFFIX}.webp`)
+  return new File([blob], newName, { type: 'image/webp' })
+}
+
+export function getThumbnailUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  return url.replace(/\.\w+(\?.*)?$/, `${THUMB_SUFFIX}.webp$1`)
+}
+
 export async function uploadShopImage(
   bucket: 'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions',
   shopId: string,
@@ -87,7 +143,8 @@ export async function uploadShopImage(
 
   const supabase = createClient()
   const extension = processedFile.name.split('.').pop() ?? 'jpg'
-  const path = `${shopId}/${crypto.randomUUID()}.${extension}`
+  const id = crypto.randomUUID()
+  const path = `${shopId}/${id}.${extension}`
 
   const { error } = await supabase.storage.from(bucket).upload(path, processedFile, {
     upsert: false,
@@ -96,6 +153,24 @@ export async function uploadShopImage(
   if (error) {
     console.error('uploadShopImage: fallo al subir a Storage', { bucket, shopId, error })
     throw new Error('No pudimos subir la imagen')
+  }
+
+  // Solo para fotos de producto: se ven repetidas veces en el feed/grilla en
+  // tamaño chico, así que vale la pena una miniatura aparte para no gastar
+  // ancho de banda sirviendo el archivo grande donde no hace falta.
+  if (bucket === 'product-images') {
+    const thumbFile = await buildThumbnail(file)
+    const thumbPath = `${shopId}/${id}${THUMB_SUFFIX}.webp`
+    const { error: thumbError } = thumbFile
+      ? await supabase.storage.from(bucket).upload(thumbPath, thumbFile, { upsert: false })
+      : { error: null }
+    if (thumbError) {
+      console.error('uploadShopImage: fallo al subir la miniatura (best effort)', {
+        bucket,
+        shopId,
+        thumbError,
+      })
+    }
   }
 
   const {

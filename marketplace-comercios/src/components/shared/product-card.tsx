@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import { createElement } from "react";
+import { ProductImage } from "@/components/shared/product-image";
 import { MapPin } from "lucide-react";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { FeaturedRibbon } from "@/components/shared/featured-ribbon";
@@ -99,10 +99,9 @@ export function ProductCard({
           {isFeatured && <FeaturedRibbon variant="floating" />}
           <div className="relative aspect-square overflow-hidden bg-muted">
             {product.main_image ? (
-              <Image
+              <ProductImage
                 src={product.main_image}
                 alt={product.product_name}
-                fill
                 className="object-cover transition-transform duration-500 group-hover/card:scale-110"
                 sizes="(max-width: 768px) 50vw, 25vw"
                 priority={priority}
