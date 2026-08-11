@@ -28,17 +28,20 @@ function applyTheme(resolved: ResolvedTheme) {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light')
-
-  useEffect(() => {
-    // Reads the value the inline beforeInteractive script already applied to
-    // the DOM, so React state matches reality — can't be known during SSR.
-    const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'system'
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs from localStorage/DOM (external systems), only knowable client-side
-    setThemeState(stored)
-    setResolvedTheme(stored === 'system' ? getSystemTheme() : stored)
-  }, [])
+  // Lazy initializers run during the client's first render (before any
+  // effect), so they pick up the class the inline beforeInteractive script
+  // already applied to <html> — avoids a stale 'light' default that made
+  // ThemeToggle's first click a no-op. On the server window/document don't
+  // exist, so this still matches the SSR-rendered HTML (only consumer,
+  // ThemeToggle, defers real rendering until after its own mount effect).
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'system'
+    return (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? 'system'
+  })
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
+    if (typeof document === 'undefined') return 'light'
+    return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  })
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')

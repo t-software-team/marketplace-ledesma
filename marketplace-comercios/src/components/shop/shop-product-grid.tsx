@@ -85,7 +85,7 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
   return (
     <>
       {showSearch && (
-        <div className="sticky top-14 z-10 mb-3 bg-background/95 py-2 backdrop-blur-sm sm:static sm:bg-transparent sm:py-0 sm:backdrop-blur-none">
+        <div className="sticky top-0 z-10 mb-3 bg-background/95 py-2 backdrop-blur-sm sm:static sm:bg-transparent sm:py-0 sm:backdrop-blur-none">
           <div className="relative">
             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
