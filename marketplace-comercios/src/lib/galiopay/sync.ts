@@ -12,6 +12,19 @@ export async function syncGalioPaySubscription(
   const isPaid = status.status === 'approved' || status.status === 'paid'
 
   if (!isPaid) {
+    if (status.status === 'expired' || status.status === 'cancelled') {
+      const service = createServiceRoleClient()
+      const { error } = await service
+        .from('subscriptions')
+        .update({ status: 'expired', galiopay_status: status.status })
+        .eq('id', subscriptionId)
+        .eq('status', 'pending')
+
+      if (error) {
+        console.error('galiopay sync: fallo al marcar suscripción vencida', { subscriptionId, error })
+      }
+    }
+
     return { activated: false, status: status.status }
   }
 
