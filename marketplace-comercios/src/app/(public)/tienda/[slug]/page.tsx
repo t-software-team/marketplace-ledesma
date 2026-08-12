@@ -179,7 +179,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
         </div>
 
         <div className="relative px-4 pb-5 md:px-6">
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-muted md:size-20">
               {shop.logo_url ? (
                 <Image
