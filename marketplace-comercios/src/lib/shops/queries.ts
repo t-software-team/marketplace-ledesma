@@ -515,7 +515,7 @@ export async function getMyPendingSubscription(shopId: string) {
   const { data: subscription } = await supabase
     .from('subscriptions')
     .select(
-      'id, status, created_at, galiopay_link_id, galiopay_proof_token, galiopay_checkout_url, subscription_plans ( id, name )'
+      'id, status, created_at, payment_provider, galiopay_link_id, galiopay_proof_token, galiopay_checkout_url, mercadopago_reference_id, mercadopago_checkout_url, subscription_plans ( id, name )'
     )
     .eq('shop_id', shopId)
     .eq('status', 'pending')

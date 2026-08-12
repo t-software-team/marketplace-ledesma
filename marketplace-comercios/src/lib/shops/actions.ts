@@ -7,6 +7,7 @@ import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
+import { createPreference } from '@/lib/mercadopago/client'
 import {
   getMyActiveSubscription,
   getProductImageLimitInfo,
@@ -1311,6 +1312,7 @@ export async function startSubscriptionCheckout(
     status: 'pending' as const,
     start_date: null,
     end_date: endDate.toISOString(),
+    payment_provider: 'galiopay',
     galiopay_reference_id: referenceId,
     galiopay_link_id: link.linkId,
     galiopay_proof_token: link.proofToken,
@@ -1338,6 +1340,122 @@ export async function startSubscriptionCheckout(
 
   revalidatePath('/mi-tienda/suscripcion')
   redirect(link.url)
+}
+
+export async function startMercadoPagoCheckout(
+  planId: string,
+  _prevState: ActionState,
+  _formData: FormData
+): Promise<ActionState> {
+  const { supabase, user } = await requireUser()
+
+  const { data: shop } = await supabase
+    .from('shops')
+    .select('id')
+    .eq('owner_id', user.id)
+    .maybeSingle()
+
+  if (!shop) return { error: 'No tenés una tienda creada' }
+
+  const { data: pending } = await supabase
+    .from('subscriptions')
+    .select('id, plan_id, mercadopago_checkout_url')
+    .eq('shop_id', shop.id)
+    .eq('status', 'pending')
+    .eq('payment_provider', 'mercadopago')
+    .not('mercadopago_checkout_url', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (pending && pending.plan_id !== planId) {
+    await supabase.from('subscriptions').update({ status: 'expired' }).eq('id', pending.id)
+  }
+
+  if (pending?.plan_id === planId && pending.mercadopago_checkout_url) {
+    redirect(pending.mercadopago_checkout_url)
+  }
+
+  const { data: plan } = await supabase
+    .from('subscription_plans')
+    .select('id, name, price, duration_days')
+    .eq('id', planId)
+    .maybeSingle()
+
+  if (!plan) return { error: 'El plan seleccionado no existe' }
+
+  const endDate = new Date()
+  endDate.setDate(endDate.getDate() + plan.duration_days)
+
+  const headersList = await headers()
+  const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
+  const protocol = headersList.get('x-forwarded-proto') ?? 'http'
+  const origin = `${protocol}://${host}`
+
+  const referenceId = `sub-${shop.id}-${crypto.randomUUID()}`
+
+  let preference: Awaited<ReturnType<typeof createPreference>>
+  try {
+    preference = await createPreference({
+      items: [
+        {
+          title: `Plan ${plan.name} — Proxi Marketplace`,
+          quantity: 1,
+          unit_price: plan.price,
+          currency_id: 'ARS',
+        },
+      ],
+      externalReference: referenceId,
+      backUrls: {
+        success: `${origin}/mi-tienda/suscripcion?status=success`,
+        failure: `${origin}/mi-tienda/suscripcion?status=failure`,
+      },
+      notificationUrl: `${origin}/api/webhooks/mercadopago`,
+    })
+  } catch (preferenceError) {
+    console.error('startMercadoPagoCheckout: fallo al crear la preferencia en Mercado Pago', {
+      referenceId,
+      error: preferenceError,
+    })
+    return {
+      error:
+        'No pudimos conectar con Mercado Pago para iniciar el pago. Intentá de nuevo en unos minutos.',
+    }
+  }
+
+  const subscriptionRow = {
+    shop_id: shop.id,
+    plan_id: planId,
+    status: 'pending' as const,
+    start_date: null,
+    end_date: endDate.toISOString(),
+    payment_provider: 'mercadopago',
+    mercadopago_reference_id: referenceId,
+    mercadopago_preference_id: preference.id,
+    mercadopago_checkout_url: preference.init_point,
+    mercadopago_status: 'pending',
+  }
+
+  let { error } = await supabase.from('subscriptions').insert(subscriptionRow)
+
+  if (error) {
+    // Reintento único: la preferencia ya existe en Mercado Pago, un blip
+    // transitorio de red/DB no debería dejarla huérfana si podemos evitarlo.
+    ;({ error } = await supabase.from('subscriptions').insert(subscriptionRow))
+  }
+
+  if (error) {
+    console.error('startMercadoPagoCheckout: fallo al crear solicitud (preferencia huérfana)', {
+      referenceId,
+      preferenceId: preference.id,
+      checkoutUrl: preference.init_point,
+      error,
+    })
+    return { error: 'No pudimos iniciar el pago' }
+  }
+
+  revalidatePath('/mi-tienda/suscripcion')
+  redirect(preference.init_point)
 }
 
 export async function toggleFavorite(productId: string) {

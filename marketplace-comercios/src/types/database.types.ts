@@ -434,12 +434,14 @@ export type Database = {
           id: string
           is_active: boolean
           is_featured: boolean
+          min_order_qty: number | null
           name: string
           price: number | null
           search_vector: unknown
           shop_id: string
           updated_at: string
           video_url: string | null
+          wholesale_price: number | null
         }
         Insert: {
           category_id?: string | null
@@ -449,12 +451,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          min_order_qty?: number | null
           name: string
           price?: number | null
           search_vector?: unknown
           shop_id: string
           updated_at?: string
           video_url?: string | null
+          wholesale_price?: number | null
         }
         Update: {
           category_id?: string | null
@@ -464,12 +468,14 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          min_order_qty?: number | null
           name?: string
           price?: number | null
           search_vector?: unknown
           shop_id?: string
           updated_at?: string
           video_url?: string | null
+          wholesale_price?: number | null
         }
         Relationships: [
           {
@@ -798,6 +804,7 @@ export type Database = {
           instagram_url: string | null
           is_active: boolean
           is_paused: boolean
+          is_wholesale: boolean
           landing_banner: Json | null
           landing_gallery: Json | null
           landing_services: Json | null
@@ -837,6 +844,7 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean
           is_paused?: boolean
+          is_wholesale?: boolean
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
@@ -876,6 +884,7 @@ export type Database = {
           instagram_url?: string | null
           is_active?: boolean
           is_paused?: boolean
+          is_wholesale?: boolean
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
@@ -995,7 +1004,13 @@ export type Database = {
           galiopay_reference_id: string | null
           galiopay_status: string | null
           id: string
+          mercadopago_checkout_url: string | null
+          mercadopago_payment_id: string | null
+          mercadopago_preference_id: string | null
+          mercadopago_reference_id: string | null
+          mercadopago_status: string | null
           payment_proof_url: string | null
+          payment_provider: string | null
           plan_id: string
           rejection_reason: string | null
           shop_id: string
@@ -1013,7 +1028,13 @@ export type Database = {
           galiopay_reference_id?: string | null
           galiopay_status?: string | null
           id?: string
+          mercadopago_checkout_url?: string | null
+          mercadopago_payment_id?: string | null
+          mercadopago_preference_id?: string | null
+          mercadopago_reference_id?: string | null
+          mercadopago_status?: string | null
           payment_proof_url?: string | null
+          payment_provider?: string | null
           plan_id: string
           rejection_reason?: string | null
           shop_id: string
@@ -1031,7 +1052,13 @@ export type Database = {
           galiopay_reference_id?: string | null
           galiopay_status?: string | null
           id?: string
+          mercadopago_checkout_url?: string | null
+          mercadopago_payment_id?: string | null
+          mercadopago_preference_id?: string | null
+          mercadopago_reference_id?: string | null
+          mercadopago_status?: string | null
           payment_proof_url?: string | null
+          payment_provider?: string | null
           plan_id?: string
           rejection_reason?: string | null
           shop_id?: string
