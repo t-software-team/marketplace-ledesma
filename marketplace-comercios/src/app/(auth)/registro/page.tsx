@@ -29,19 +29,28 @@ export default function RegisterPage() {
   async function onSubmit(values: RegisterFormValues) {
     setAuthError(null)
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
         data: {
           full_name: values.fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?type=signup&next=/onboarding`,
       },
     })
 
     if (error) {
       setAuthError(error.message)
+      return
+    }
+
+    // Supabase no devuelve error si el email ya está registrado (para no
+    // filtrar qué emails existen a un atacante), simplemente no crea nada
+    // ni manda mail. La única señal disponible es que "identities" viene
+    // vacío en ese caso — a diferencia de un registro nuevo real.
+    if (data.user && data.user.identities?.length === 0) {
+      setAuthError('Ya existe una cuenta con ese email. Probá iniciar sesión o recuperar tu contraseña.')
       return
     }
 
