@@ -20,7 +20,7 @@
             </tr>
             <tr>
               <td style="padding:0 32px 32px 32px; text-align:center;">
-                <a href="{{ .ConfirmationURL }}" style="display:inline-block; background-color:#7c3aed; color:#ffffff; text-decoration:none; font-weight:600; font-size:15px; padding:12px 28px; border-radius:8px;">
+                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email_change&next=/perfil" style="display:inline-block; background-color:#7c3aed; color:#ffffff; text-decoration:none; font-weight:600; font-size:15px; padding:12px 28px; border-radius:8px;">
                   Confirmar email
                 </a>
               </td>
