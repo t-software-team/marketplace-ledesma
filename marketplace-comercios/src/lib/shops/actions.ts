@@ -484,6 +484,12 @@ export async function updateShopPersonalization(
 export async function updateVerificationDocument(documentPath: string): Promise<ActionState> {
   const { supabase, user } = await requireUser()
 
+  // Solo sube el comprobante (dato que el dueño necesita poder enviar para
+  // arrancar el flujo). El flag de aprobación real (verification_status) no
+  // se toca acá — eso solo lo puede cambiar approve_shop_verification, una
+  // RPC security definer que valida is_superadmin(); el UPDATE grant en
+  // "shops" para authenticated está acotado por columna y no incluye
+  // verification_status (ver migración 20260811190000).
   const { error } = await supabase
     .from('shops')
     .update({ verification_document_url: documentPath })
@@ -968,7 +974,7 @@ export async function duplicateProduct(productId: string) {
   const { data: original, error: fetchError } = await supabase
     .from('products')
     .select(
-      '*, product_images(url, sort_order), product_variants(name, price, sort_order)'
+      'shop_id, name, description, price, currency, category_id, video_url, product_images(url, sort_order), product_variants(name, price, sort_order)'
     )
     .eq('id', productId)
     .single()
@@ -1219,11 +1225,13 @@ export async function startSubscriptionCheckout(
     .limit(1)
     .maybeSingle()
 
-  if (pending && pending.plan_id !== planId) {
+  const isSandbox = process.env.GALIOPAY_SANDBOX === 'true'
+
+  if (pending && (pending.plan_id !== planId || isSandbox)) {
     await supabase.from('subscriptions').update({ status: 'expired' }).eq('id', pending.id)
   }
 
-  if (pending?.plan_id === planId && pending.galiopay_link_id && pending.galiopay_proof_token) {
+  if (!isSandbox && pending?.plan_id === planId && pending.galiopay_link_id && pending.galiopay_proof_token) {
     let activated = false
 
     try {

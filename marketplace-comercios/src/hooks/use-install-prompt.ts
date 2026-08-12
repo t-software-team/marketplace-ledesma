@@ -33,7 +33,10 @@ export function useInstallPrompt() {
   const [installed, setInstalled] = useState(false)
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
+    // Nunca registrar el SW en desarrollo: su cache de navegaciones
+    // (staleWhileRevalidate) pelea con el Hot Reload de Turbopack y puede
+    // servir HTML viejo o disparar recargas repetidas contra el dev server.
+    if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {
         // Registration failure is non-fatal — the app still works, it just
         // won't be installable.

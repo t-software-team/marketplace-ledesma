@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { getPaymentLinkStatus } from './client'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { sendEmail } from '@/lib/email/client'
@@ -35,7 +36,11 @@ export async function syncGalioPaySubscription(
 
   if (error) throw new Error('No pudimos activar la suscripción')
 
-  await notifySubscriptionActivated(service, subscriptionId)
+  // No bloquear el redirect al usuario esperando el email — es un efecto
+  // secundario. after() lo corre una vez enviada la respuesta, garantizado
+  // por Vercel (a diferencia de un fire-and-forget común, que el runtime
+  // serverless puede cortar antes de que termine).
+  after(() => notifySubscriptionActivated(service, subscriptionId))
 
   return { activated: true, status: status.status }
 }
