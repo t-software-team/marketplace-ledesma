@@ -1,5 +1,4 @@
-import Image from 'next/image'
-import Link from 'next/link'
+import { AuthBrandHeader } from './auth-brand-header'
 
 export default function AuthLayout({
   children,
@@ -12,12 +11,7 @@ export default function AuthLayout({
         className="pointer-events-none absolute top-[-20%] left-1/2 -z-10 size-[36rem] -translate-x-1/2 rounded-full bg-primary/[0.14] blur-3xl"
         aria-hidden
       />
-      <Link href="/" className="mb-8 flex flex-col items-center gap-2">
-        <span className="relative flex h-14 w-11 shrink-0 items-center justify-center">
-          <Image src="/brand/logo-mark.png" alt="" fill className="object-contain" priority />
-        </span>
-        <span className="font-heading text-lg">Proxi Marketplace</span>
-      </Link>
+      <AuthBrandHeader />
       <div className="w-full max-w-md">{children}</div>
     </div>
   )
