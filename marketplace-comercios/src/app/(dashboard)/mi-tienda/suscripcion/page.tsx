@@ -10,6 +10,7 @@ import {
   getMyShop,
 } from '@/lib/shops/queries'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
+import { syncMercadoPagoSubscription } from '@/lib/mercadopago/sync'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { isServiceRubro } from '@/lib/category-icons'
 import { cn } from '@/lib/utils'
@@ -32,7 +33,7 @@ function formatDate(dateString: string) {
 const PLAN_ICONS = [Sparkles, Zap, Star]
 
 interface SubscriptionPageProps {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<{ status?: string; payment_id?: string; collection_id?: string }>
 }
 
 export default async function MyShopSubscriptionPage({ searchParams }: SubscriptionPageProps) {
@@ -40,13 +41,38 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
 
   if (!shop) redirect('/mi-tienda')
 
-  const { status } = await searchParams
+  const { status, payment_id, collection_id } = await searchParams
 
   const pendingSubscription = await getMyPendingSubscription(shop.id)
   let gatewayStatus: string | null = null
   let syncFailed = false
 
   if (
+    pendingSubscription?.payment_provider === 'mercadopago' &&
+    pendingSubscription.mercadopago_reference_id &&
+    status !== 'failure'
+  ) {
+    const mpPaymentId = payment_id ?? collection_id
+    let activated = false
+
+    try {
+      if (mpPaymentId) {
+        const result = await syncMercadoPagoSubscription(mpPaymentId)
+        activated = result.activated
+        gatewayStatus = result.status
+      }
+    } catch (error) {
+      syncFailed = true
+      console.error('mi-tienda/suscripcion: fallo al verificar pago pendiente (Mercado Pago)', {
+        subscriptionId: pendingSubscription.id,
+        error,
+      })
+    }
+
+    if (activated) {
+      redirect('/mi-tienda?subscription=activada')
+    }
+  } else if (
     pendingSubscription?.galiopay_link_id &&
     pendingSubscription.galiopay_proof_token &&
     status !== 'failure'
@@ -153,20 +179,31 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
             </p>
             {gatewayStatus && gatewayStatus !== 'approved' && gatewayStatus !== 'paid' && (
               <p className="text-xs text-muted-foreground">
-                Último estado informado por GalioPay: <strong>{gatewayStatus}</strong>. Si ya
-                pagaste, puede tardar unos minutos en confirmarse.
+                Último estado informado por{' '}
+                {pendingSubscription.payment_provider === 'mercadopago' ? 'Mercado Pago' : 'GalioPay'}:{' '}
+                <strong>{gatewayStatus}</strong>. Si ya pagaste, puede tardar unos minutos en
+                confirmarse.
               </p>
             )}
             {syncFailed && (
               <p className="text-xs text-destructive">
-                No pudimos consultar el estado del pago con GalioPay. Probá verificar de nuevo en
-                unos segundos.
+                No pudimos consultar el estado del pago. Probá verificar de nuevo en unos segundos.
               </p>
             )}
             <div className="flex flex-wrap gap-2">
-              {pendingSubscription.galiopay_checkout_url && (
+              {(pendingSubscription.payment_provider === 'mercadopago'
+                ? pendingSubscription.mercadopago_checkout_url
+                : pendingSubscription.galiopay_checkout_url) && (
                 <Button
-                  render={<a href={pendingSubscription.galiopay_checkout_url} />}
+                  render={
+                    <a
+                      href={
+                        pendingSubscription.payment_provider === 'mercadopago'
+                          ? pendingSubscription.mercadopago_checkout_url!
+                          : pendingSubscription.galiopay_checkout_url!
+                      }
+                    />
+                  }
                   nativeButton={false}
                   className="flex-1"
                 >
@@ -263,16 +300,31 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
                       Es tu plan mientras no tengas una suscripción activa
                     </div>
                   ) : (
-                    <SubscribeButton
-                      planId={plan.id}
-                      label={
-                        activePlanId
-                          ? plan.price > currentPlanPrice
-                            ? 'Mejorar a este plan'
-                            : 'Cambiar a este plan'
-                          : 'Pagar con GalioPay'
-                      }
-                    />
+                    <div className="space-y-2">
+                      <SubscribeButton
+                        planId={plan.id}
+                        provider="mercadopago"
+                        label={
+                          activePlanId
+                            ? plan.price > currentPlanPrice
+                              ? 'Mejorar con Mercado Pago'
+                              : 'Cambiar con Mercado Pago'
+                            : 'Pagar con Mercado Pago'
+                        }
+                      />
+                      <SubscribeButton
+                        planId={plan.id}
+                        provider="galiopay"
+                        variant="outline"
+                        label={
+                          activePlanId
+                            ? plan.price > currentPlanPrice
+                              ? 'Mejorar con GalioPay'
+                              : 'Cambiar con GalioPay'
+                            : 'Pagar con GalioPay'
+                        }
+                      />
+                    </div>
                   )}
                 </CardContent>
               </Card>
