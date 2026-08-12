@@ -307,8 +307,8 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
                         label={
                           activePlanId
                             ? plan.price > currentPlanPrice
-                              ? 'Mejorar a este plan'
-                              : 'Cambiar a este plan'
+                              ? 'Mejorar con Mercado Pago'
+                              : 'Cambiar con Mercado Pago'
                             : 'Pagar con Mercado Pago'
                         }
                       />
