@@ -178,8 +178,8 @@ export default async function ShopPage({ params }: ShopPageProps) {
           {isFeatured && <FeaturedRibbon variant="floating" />}
         </div>
 
-        <div className="relative px-4 pb-5 md:px-6 pt-2">
-          <div className="flex items-end gap-3">
+        <div className="relative px-4 pb-5 md:px-6">
+          <div className="flex flex-wrap items-end gap-3">
             <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-muted md:size-20">
               {shop.logo_url ? (
                 <Image

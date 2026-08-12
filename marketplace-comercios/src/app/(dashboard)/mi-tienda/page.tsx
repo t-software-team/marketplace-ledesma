@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { headers } from 'next/headers'
-import { Eye, MessageCircle, Package, Store } from 'lucide-react'
+import { Eye, MessageCircle, Package, Percent, Store, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,6 +21,7 @@ import {
   getMyShop,
   getMyShopProducts,
   getShopContactsSeries,
+  getShopFollowStats,
 } from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
 import { OnboardingChecklist } from './onboarding-checklist'
@@ -77,14 +78,17 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const [productsResult, contactsSeries, activeSubscription, allPlans] = await Promise.all([
+  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount] = await Promise.all([
     getMyShopProducts(shop.id, 1, 4),
     getShopContactsSeries(shop.id, 14),
     getMyActiveSubscription(shop.id),
     getActiveSubscriptionPlans(),
+    getShopFollowStats(shop.id),
   ])
   const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
+  const conversionRate =
+    shop.profile_views > 0 ? Math.round((shop.whatsapp_clicks / shop.profile_views) * 100) : null
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
@@ -268,26 +272,42 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:grid-cols-5">
           <Card>
-            <CardContent className="space-y-1 pt-6">
+            <CardContent className="space-y-1 px-3 pt-4 sm:px-6 sm:pt-6">
               <Package className="size-4 text-muted-foreground" aria-hidden />
-              <p className="text-xs text-muted-foreground">{nounPlural}</p>
-              <p className="text-2xl font-heading">{productsCount}</p>
+              <p className="truncate text-xs text-muted-foreground">{nounPlural}</p>
+              <p className="text-xl font-heading sm:text-2xl">{productsCount}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="space-y-1 pt-6">
+            <CardContent className="space-y-1 px-3 pt-4 sm:px-6 sm:pt-6">
               <Eye className="size-4 text-muted-foreground" aria-hidden />
-              <p className="text-xs text-muted-foreground">Vistas</p>
-              <p className="text-2xl font-heading font-mono">{shop.profile_views}</p>
+              <p className="truncate text-xs text-muted-foreground">Vistas</p>
+              <p className="text-xl font-heading font-mono sm:text-2xl">{shop.profile_views}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="space-y-1 pt-6">
+            <CardContent className="space-y-1 px-3 pt-4 sm:px-6 sm:pt-6">
               <MessageCircle className="size-4 text-muted-foreground" aria-hidden />
-              <p className="text-xs text-muted-foreground">Clicks WhatsApp</p>
-              <p className="text-2xl font-heading font-mono">{shop.whatsapp_clicks}</p>
+              <p className="truncate text-xs text-muted-foreground">Clicks WhatsApp</p>
+              <p className="text-xl font-heading font-mono sm:text-2xl">{shop.whatsapp_clicks}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-1 px-3 pt-4 sm:px-6 sm:pt-6">
+              <Users className="size-4 text-muted-foreground" aria-hidden />
+              <p className="truncate text-xs text-muted-foreground">Seguidores</p>
+              <p className="text-xl font-heading font-mono sm:text-2xl">{followerCount}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="space-y-1 px-3 pt-4 sm:px-6 sm:pt-6">
+              <Percent className="size-4 text-muted-foreground" aria-hidden />
+              <p className="truncate text-xs text-muted-foreground">Conversión</p>
+              <p className="text-xl font-heading font-mono sm:text-2xl">
+                {conversionRate === null ? '—' : `${conversionRate}%`}
+              </p>
             </CardContent>
           </Card>
         </div>
