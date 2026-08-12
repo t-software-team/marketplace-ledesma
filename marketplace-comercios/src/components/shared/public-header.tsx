@@ -209,6 +209,17 @@ export function PublicHeader({
                   Mi tienda
                 </Button>
               )}
+              {profileRole === 'client' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  render={<Link href="/perfil" />}
+                  nativeButton={false}
+                  className="hidden sm:inline-flex"
+                >
+                  ¿Querés vender?
+                </Button>
+              )}
               <ThemeToggle />
               {profileRole === 'superadmin' && (
                 <Button
