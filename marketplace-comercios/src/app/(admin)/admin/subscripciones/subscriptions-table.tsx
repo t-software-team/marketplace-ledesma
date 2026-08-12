@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import type { getSubscriptionRequests } from '@/lib/admin/queries'
 import { SubscriptionActions } from './subscription-actions'
 import { GalioPayCheckButton } from './galiopay-check-button'
+import { MercadoPagoCheckButton } from './mercadopago-check-button'
 
 type Subscription = Awaited<ReturnType<typeof getSubscriptionRequests>>[number] & {
   proofUrl: string | null
@@ -51,6 +52,11 @@ export function SubscriptionsTable({ subscriptions }: { subscriptions: Subscript
                     Pago vía GalioPay — se activa solo al confirmarse
                   </p>
                 )}
+                {subscription.payment_provider === 'mercadopago' && (
+                  <p className="text-xs text-muted-foreground">
+                    Pago vía Mercado Pago — se activa solo al confirmarse
+                  </p>
+                )}
                 {subscription.rejection_reason && (
                   <p className="text-xs text-destructive">
                     Motivo: {subscription.rejection_reason}
@@ -87,6 +93,10 @@ export function SubscriptionsTable({ subscriptions }: { subscriptions: Subscript
                     linkId={subscription.galiopay_link_id}
                     proofToken={subscription.galiopay_proof_token ?? ''}
                   />
+                ) : subscription.status === 'pending' &&
+                  subscription.payment_provider === 'mercadopago' &&
+                  subscription.mercadopago_reference_id ? (
+                  <MercadoPagoCheckButton referenceId={subscription.mercadopago_reference_id} />
                 ) : (
                   subscription.status === 'pending' && (
                     <SubscriptionActions subscriptionId={subscription.id} />

@@ -7,6 +7,7 @@ import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { sanitizeRichText } from '@/lib/sanitize-html'
 import { sendEmail } from '@/lib/email/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
+import { syncMercadoPagoSubscriptionByReference } from '@/lib/mercadopago/sync'
 import {
   shopReactivatedEmail,
   shopSuspendedEmail,
@@ -449,6 +450,20 @@ export async function checkGalioPaySubscription(
       error,
     })
     throw new Error('No pudimos consultar el estado del pago con GalioPay')
+  }
+}
+
+export async function checkMercadoPagoSubscription(referenceId: string) {
+  try {
+    const result = await syncMercadoPagoSubscriptionByReference(referenceId)
+    revalidatePath('/admin/subscripciones')
+    return { activated: result.activated, status: result.status }
+  } catch (error) {
+    console.error('checkMercadoPagoSubscription: fallo al verificar con Mercado Pago', {
+      referenceId,
+      error,
+    })
+    throw new Error('No pudimos consultar el estado del pago con Mercado Pago')
   }
 }
 

@@ -131,8 +131,11 @@ export async function getSubscriptionRequests() {
       created_at,
       payment_proof_url,
       rejection_reason,
+      payment_provider,
       galiopay_link_id,
       galiopay_proof_token,
+      mercadopago_payment_id,
+      mercadopago_reference_id,
       shops ( id, name ),
       subscription_plans ( id, name, price )
     `

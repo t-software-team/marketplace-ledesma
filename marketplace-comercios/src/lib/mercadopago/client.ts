@@ -70,3 +70,29 @@ export async function getPayment(paymentId: string): Promise<PaymentResponse> {
 
   return response.json()
 }
+
+/**
+ * Busca el pago más reciente asociado a un external_reference. Necesario
+ * para el chequeo manual del admin: en ese momento puede que todavía no
+ * tengamos guardado el payment id (solo lo conocemos recién cuando el
+ * usuario paga o llega el webhook), pero sí la referencia que generamos
+ * nosotros al crear la preferencia.
+ */
+export async function findPaymentByExternalReference(
+  externalReference: string
+): Promise<PaymentResponse | null> {
+  const url = new URL(`${BASE_URL}/v1/payments/search`)
+  url.searchParams.set('external_reference', externalReference)
+  url.searchParams.set('sort', 'date_created')
+  url.searchParams.set('criteria', 'desc')
+
+  const response = await fetch(url, { headers: authHeaders(), cache: 'no-store' })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`MercadoPago findPaymentByExternalReference falló (${response.status}): ${body}`)
+  }
+
+  const data = (await response.json()) as { results: PaymentResponse[] }
+  return data.results[0] ?? null
+}

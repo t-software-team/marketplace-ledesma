@@ -1,11 +1,31 @@
 import { after } from 'next/server'
-import { getPayment } from './client'
+import { getPayment, findPaymentByExternalReference } from './client'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { sendEmail } from '@/lib/email/client'
 import { subscriptionApprovedEmail } from '@/lib/email/templates'
 
 export async function syncMercadoPagoSubscription(paymentId: string) {
   const payment = await getPayment(paymentId)
+  return applyPaymentStatus(payment)
+}
+
+/**
+ * Para el chequeo manual del admin: antes de que exista un pago (o si el
+ * webhook nunca llegó), solo tenemos la referencia que generamos al crear
+ * la preferencia, no un payment id.
+ */
+export async function syncMercadoPagoSubscriptionByReference(referenceId: string) {
+  const payment = await findPaymentByExternalReference(referenceId)
+
+  if (!payment) {
+    return { found: false, activated: false, status: 'no_payment_found' }
+  }
+
+  return applyPaymentStatus(payment)
+}
+
+async function applyPaymentStatus(payment: Awaited<ReturnType<typeof getPayment>>) {
+  const paymentId = String(payment.id)
   const service = createServiceRoleClient()
 
   const { data: subscription } = await service
