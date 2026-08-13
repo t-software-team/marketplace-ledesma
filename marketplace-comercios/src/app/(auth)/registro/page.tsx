@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
@@ -16,7 +16,36 @@ export default function RegisterPage() {
   const router = useRouter()
   const [authError, setAuthError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [pendingConfirmation, setPendingConfirmation] = useState<string | null>(null)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const [resent, setResent] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+
+    const timer = setInterval(() => {
+      setResendCooldown((current) => Math.max(0, current - 1))
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [resendCooldown])
+
+  async function handleResend() {
+    if (!pendingConfirmation || resendCooldown > 0) return
+
+    setResendCooldown(30)
+    setResent(false)
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: pendingConfirmation,
+    })
+
+    if (!error) {
+      setResent(true)
+    }
+  }
 
   const {
     register,
@@ -64,8 +93,30 @@ export default function RegisterPage() {
       return
     }
 
-    setAuthError(
-      'Te enviamos un email de confirmación. Revisá tu bandeja para continuar.'
+    setPendingConfirmation(values.email)
+  }
+
+  if (pendingConfirmation) {
+    return (
+      <div className="space-y-3 text-center">
+        <h1 className="font-heading text-3xl">Revisá tu email</h1>
+        <p className="text-sm text-muted-foreground">
+          Te enviamos un link de confirmación a <span className="font-medium">{pendingConfirmation}</span>. Hacé clic
+          en el link para activar tu cuenta.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 w-full"
+          disabled={resendCooldown > 0}
+          onClick={handleResend}
+        >
+          {resendCooldown > 0 ? `Reenviado (${resendCooldown}s)` : resent ? 'Reenviado' : 'Reenviar email'}
+        </Button>
+        <Link href="/login" className="inline-block text-sm font-medium underline-offset-4 hover:underline">
+          Volver a Ingresar
+        </Link>
+      </div>
     )
   }
 
@@ -141,6 +192,14 @@ export default function RegisterPage() {
         </div>
 
         {authError && <p className="text-sm text-muted-foreground">{authError}</p>}
+
+        <p className="text-xs text-muted-foreground">
+          Al crear tu cuenta vas a poder revisar los{' '}
+          <Link href="/terminos" className="underline" target="_blank">
+            Términos y Condiciones
+          </Link>
+          .
+        </p>
 
         <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
           {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}

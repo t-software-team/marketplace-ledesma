@@ -7,6 +7,7 @@ import { QueryProvider } from '@/components/providers/query-provider'
 import { ThemeProvider } from '@/components/providers/theme-provider'
 import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
+import { CookieNotice } from '@/components/shared/cookie-notice'
 import { ScrollToTopOnNavigate } from '@/components/shared/scroll-to-top-on-navigate'
 import { SplashScreen } from '@/components/shared/splash-screen'
 import { getBaseUrl } from '@/lib/site-url'
@@ -85,6 +86,7 @@ export default function RootLayout({
             <QueryProvider>{children}</QueryProvider>
           </Toaster>
         </ThemeProvider>
+        <CookieNotice />
         <Analytics />
         <SpeedInsights />
       </body>
