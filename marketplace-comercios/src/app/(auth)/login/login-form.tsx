@@ -1,15 +1,16 @@
 'use client'
 
 import Link from 'next/link'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
-import { createClient } from '@/lib/supabase/client'
+import { signIn } from '@/lib/auth/actions'
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
 import { GoogleButton } from '@/components/auth/google-button'
 
@@ -17,58 +18,33 @@ export default function LoginForm() {
   const searchParams = useSearchParams()
   const [authError, setAuthError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const supabase = createClient()
+  const [isPending, startTransition] = useTransition()
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   })
 
-  async function onSubmit(values: LoginFormValues) {
+  function onSubmit(values: LoginFormValues) {
     setAuthError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
+    startTransition(async () => {
+      try {
+        const result = await signIn(values.email, values.password, searchParams.get('next'))
+
+        if (result?.error) {
+          setAuthError(result.error)
+        }
+      } catch (err) {
+        if (isRedirectError(err)) {
+          toast.add({ title: '¡Bienvenido de nuevo!', type: 'success' })
+        }
+        throw err
+      }
     })
-
-    if (error) {
-      setAuthError('Email o contraseña incorrectos')
-      return
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      window.location.href = '/'
-      return
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (!profile?.role) {
-      window.location.href = '/onboarding'
-      return
-    }
-
-    toast.add({ title: `¡Bienvenido de nuevo!`, type: 'success' })
-    const next = searchParams.get('next')
-    const roleDestination =
-      profile.role === 'shop_admin'
-        ? '/mi-tienda'
-        : profile.role === 'superadmin'
-          ? '/admin/dashboard'
-          : '/'
-    window.location.href = next ?? roleDestination
   }
 
   return (
@@ -146,8 +122,8 @@ export default function LoginForm() {
           </p>
         )}
 
-        <Button type="submit" className="h-11 w-full" disabled={isSubmitting}>
-          {isSubmitting ? 'Ingresando...' : 'Ingresar'}
+        <Button type="submit" className="h-11 w-full" disabled={isPending}>
+          {isPending ? 'Ingresando...' : 'Ingresar'}
         </Button>
       </form>
 

@@ -14,6 +14,43 @@ export async function signOut() {
   redirect('/login')
 }
 
+export async function signIn(email: string, password: string, next?: string | null) {
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+
+  if (error) {
+    return { error: 'Email o contraseña incorrectos' }
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.role) {
+    redirect('/onboarding')
+  }
+
+  const roleDestination =
+    profile.role === 'shop_admin'
+      ? '/mi-tienda'
+      : profile.role === 'superadmin'
+        ? '/admin/dashboard'
+        : '/'
+
+  redirect(next ?? roleDestination)
+}
+
 export async function selectUserRole(role: UserRole) {
   const supabase = await createClient()
 
