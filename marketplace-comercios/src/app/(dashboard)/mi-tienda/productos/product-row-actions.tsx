@@ -1,10 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { Copy, Eye, EyeOff, Pencil, Star, Trash2 } from 'lucide-react'
-import { useTransition } from 'react'
+import { Copy, Eye, EyeOff, MoreVertical, Pencil, Star, Trash2 } from 'lucide-react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from '@/components/ui/toast'
 import {
   deleteProduct,
@@ -18,6 +24,7 @@ interface ProductRowActionsProps {
   isActive: boolean
   isFeatured: boolean
   canFeature: boolean
+  compact?: boolean
 }
 
 export function ProductRowActions({
@@ -25,8 +32,10 @@ export function ProductRowActions({
   isActive,
   isFeatured,
   canFeature,
+  compact = false,
 }: ProductRowActionsProps) {
   const [isPending, startTransition] = useTransition()
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   function handleToggle() {
     startTransition(async () => {
@@ -74,6 +83,62 @@ export function ProductRowActions({
         toast.add({ title: 'No pudimos eliminar el producto', type: 'error' })
       }
     })
+  }
+
+  if (compact) {
+    return (
+      <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button variant="ghost" size="icon" className="size-11" aria-label="Más acciones" />}
+          nativeButton={true}
+        >
+          <MoreVertical className="size-4" aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem render={<Link href={`/mi-tienda/productos/${productId}/editar`} />}>
+            <Pencil className="size-4" aria-hidden />
+            Editar
+          </DropdownMenuItem>
+
+          <DropdownMenuItem disabled={isPending} onClick={handleToggle}>
+            {isActive ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+            {isActive ? 'Desactivar' : 'Activar'}
+          </DropdownMenuItem>
+
+          {canFeature && (
+            <DropdownMenuItem disabled={isPending} onClick={handleToggleFeatured}>
+              <Star className={isFeatured ? 'size-4 fill-current' : 'size-4'} aria-hidden />
+              {isFeatured ? 'Quitar de destacados' : 'Destacar'}
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuItem disabled={isPending} onClick={handleDuplicate}>
+            <Copy className="size-4" aria-hidden />
+            Duplicar
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            variant="destructive"
+            disabled={isPending}
+            onClick={() => setConfirmDeleteOpen(true)}
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Eliminar
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        title="¿Eliminar este producto?"
+        description="Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        isConfirming={isPending}
+        onConfirm={handleDelete}
+      />
+      </>
+    )
   }
 
   return (

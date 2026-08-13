@@ -42,6 +42,64 @@ function formatPrice(price: number | null, currency: string) {
   }).format(price)
 }
 
+function ProductThumbnail({ product }: { product: Product }) {
+  return (
+    <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
+      {product.mainImage ? (
+        <Image
+          src={product.mainImage}
+          alt={product.name}
+          fill
+          className="object-cover"
+          sizes="44px"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center text-[9px] text-muted-foreground">
+          Sin imagen
+        </div>
+      )}
+      {product.is_featured && (
+        <span className="absolute top-0.5 left-0.5 flex size-3.5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
+          <Star className="size-2 fill-current" aria-hidden />
+        </span>
+      )}
+    </div>
+  )
+}
+
+function ProductNameCell({ product }: { product: Product }) {
+  return (
+    <div className="min-w-0 flex-1">
+      <p className="truncate font-medium">{product.name}</p>
+      {product.categoryName ? (
+        <p className="truncate text-xs text-muted-foreground">{product.categoryName}</p>
+      ) : (
+        <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
+          <AlertTriangle className="size-3 shrink-0" aria-hidden />
+          Sin subcategoría
+        </p>
+      )}
+    </div>
+  )
+}
+
+function ProductStatusBadges({ product }: { product: Product }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <StatusBadge
+        status={product.is_active ? 'active' : 'none'}
+        label={product.is_active ? 'Activo' : 'Inactivo'}
+      />
+      {product.is_featured && (
+        <Badge className="gap-1">
+          <Star className="size-2.5 fill-current" aria-hidden />
+          Destacado
+        </Badge>
+      )}
+    </div>
+  )
+}
+
 export function ProductsList({
   products,
   noun = 'producto',
@@ -63,7 +121,6 @@ export function ProductsList({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const activeCount = products.filter((product) => product.is_active).length
-  const pageProducts = products
 
   function handleSearchChange(value: string) {
     setQuery(value)
@@ -86,7 +143,7 @@ export function ProductsList({
   }, [])
 
   const { selected, selectedIds, isAllSelected, toggle, toggleAll, clear } = useRowSelection(
-    pageProducts.map((product) => product.id)
+    products.map((product) => product.id)
   )
 
   function handleBulkToggle(isActive: boolean) {
@@ -140,17 +197,19 @@ export function ProductsList({
           {(totalCount ?? products.length) === 1 ? '' : 's'} · {activeCount} activo
           {activeCount === 1 ? '' : 's'}
         </p>
-        <div className="relative">
-          <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={`Buscar ${noun}...`}
-            value={query}
-            onChange={(event) => {
-              handleSearchChange(event.target.value)
-            }}
-            className="pl-9"
-            aria-label={`Buscar ${noun}`}
-          />
+        <div className="sticky top-14 z-10 -mx-4 bg-background/95 px-4 py-2 backdrop-blur-sm sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+          <div className="relative">
+            <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={`Buscar ${noun}...`}
+              value={query}
+              onChange={(event) => {
+                handleSearchChange(event.target.value)
+              }}
+              className="pl-9"
+              aria-label={`Buscar ${noun}`}
+            />
+          </div>
         </div>
       </div>
 
@@ -182,86 +241,49 @@ export function ProductsList({
         />
       </BulkActionsBar>
 
-      {pageProducts.length === 0 ? (
+      {products.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           No encontramos {noun}s que coincidan con &quot;{query}&quot;.
         </p>
       ) : (
         <div className="space-y-3">
           <div className="flex flex-col gap-3 sm:hidden">
-            {pageProducts.map((product) => (
+            {products.map((product) => (
               <Card
                 key={product.id}
                 className={product.is_active ? undefined : 'opacity-60'}
               >
-                <CardContent className="space-y-3 p-3">
-                  <div className="flex items-center gap-3">
+                <CardContent className="flex items-center gap-2 p-2.5">
+                  <div className="flex size-11 shrink-0 items-center justify-center">
                     <Checkbox
                       checked={selected.has(product.id)}
                       onCheckedChange={() => toggle(product.id)}
                       aria-label={`Seleccionar ${product.name}`}
                     />
-                    <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
-                      {product.mainImage ? (
-                        <Image
-                          src={product.mainImage}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                          sizes="44px"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[9px] text-muted-foreground">
-                          Sin imagen
-                        </div>
-                      )}
-                      {product.is_featured && (
-                        <span className="absolute top-0.5 left-0.5 flex size-3.5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
-                          <Star className="size-2 fill-current" aria-hidden />
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">{product.name}</p>
-                      {product.categoryName ? (
-                        <p className="truncate text-xs text-muted-foreground">
-                          {product.categoryName}
-                        </p>
-                      ) : (
-                        <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
-                          <AlertTriangle className="size-3 shrink-0" aria-hidden />
-                          Sin subcategoría
-                        </p>
-                      )}
-                    </div>
                   </div>
-
-                  <div className="flex items-center justify-between gap-2 border-t border-border/60 pt-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="font-mono text-sm">
+                  <ProductThumbnail product={product} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{product.name}</p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span className="font-mono text-xs text-muted-foreground">
                         {formatPrice(product.price, product.currency)}
                       </span>
-                      <StatusBadge
-                        status={product.is_active ? 'active' : 'none'}
-                        label={product.is_active ? 'Activo' : 'Inactivo'}
-                      />
-                      {product.is_featured && (
-                        <Badge className="gap-1">
-                          <Star className="size-2.5 fill-current" aria-hidden />
-                          Destacado
-                        </Badge>
+                      {!product.categoryName && (
+                        <span className="flex items-center gap-0.5 text-xs font-medium text-warning-foreground">
+                          <AlertTriangle className="size-3 shrink-0" aria-hidden />
+                          Sin subcategoría
+                        </span>
                       )}
+                      <ProductStatusBadges product={product} />
                     </div>
                   </div>
-
-                  <div className="flex justify-end border-t border-border/60 pt-3">
-                    <ProductRowActions
-                      productId={product.id}
-                      isActive={product.is_active}
-                      isFeatured={product.is_featured}
-                      canFeature={canFeature}
-                    />
-                  </div>
+                  <ProductRowActions
+                    productId={product.id}
+                    isActive={product.is_active}
+                    isFeatured={product.is_featured}
+                    canFeature={canFeature}
+                    compact
+                  />
                 </CardContent>
               </Card>
             ))}
@@ -285,7 +307,7 @@ export function ProductsList({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pageProducts.map((product) => (
+              {products.map((product) => (
                 <TableRow key={product.id} className={!product.is_active ? 'opacity-60' : undefined}>
                   <TableCell>
                     <Checkbox
@@ -296,57 +318,15 @@ export function ProductsList({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
-                        {product.mainImage ? (
-                          <Image
-                            src={product.mainImage}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            sizes="44px"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-[9px] text-muted-foreground">
-                            Sin imagen
-                          </div>
-                        )}
-                        {product.is_featured && (
-                          <span className="absolute top-0.5 left-0.5 flex size-3.5 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-sm shadow-primary/30">
-                            <Star className="size-2 fill-current" aria-hidden />
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{product.name}</p>
-                        {product.categoryName ? (
-                          <p className="truncate text-xs text-muted-foreground">
-                            {product.categoryName}
-                          </p>
-                        ) : (
-                          <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
-                            <AlertTriangle className="size-3 shrink-0" aria-hidden />
-                            Sin subcategoría
-                          </p>
-                        )}
-                      </div>
+                      <ProductThumbnail product={product} />
+                      <ProductNameCell product={product} />
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap font-mono">
                     {formatPrice(product.price, product.currency)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <StatusBadge
-                        status={product.is_active ? 'active' : 'none'}
-                        label={product.is_active ? 'Activo' : 'Inactivo'}
-                      />
-                      {product.is_featured && (
-                        <Badge className="gap-1">
-                          <Star className="size-2.5 fill-current" aria-hidden />
-                          Destacado
-                        </Badge>
-                      )}
-                    </div>
+                    <ProductStatusBadges product={product} />
                   </TableCell>
                   <TableCell className="text-center">
                     <ProductRowActions

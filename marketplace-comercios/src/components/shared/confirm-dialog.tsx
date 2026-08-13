@@ -13,13 +13,20 @@ import {
 } from '@/components/ui/dialog'
 
 interface ConfirmDialogProps {
-  trigger: React.ReactElement
-  triggerLabel: React.ReactNode
+  /** Omit when using controlled mode (`open`/`onOpenChange`) — e.g. when the
+   * thing that opens this dialog can't be the dialog's own trigger, like a
+   * menu item whose parent menu closes on click and would take the dialog
+   * down with it. */
+  trigger?: React.ReactElement
+  triggerLabel?: React.ReactNode
   title: string
   description?: string
   confirmLabel?: string
   isConfirming?: boolean
   onConfirm: () => void
+  triggerNativeButton?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
 export function ConfirmDialog({
@@ -30,8 +37,14 @@ export function ConfirmDialog({
   confirmLabel = 'Confirmar',
   isConfirming = false,
   onConfirm,
+  triggerNativeButton = true,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
 }: ConfirmDialogProps) {
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const isControlled = openProp !== undefined
+  const open = isControlled ? openProp : uncontrolledOpen
+  const setOpen = isControlled ? (onOpenChangeProp ?? (() => {})) : setUncontrolledOpen
 
   function handleConfirm() {
     onConfirm()
@@ -40,7 +53,11 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={trigger}>{triggerLabel}</DialogTrigger>
+      {trigger && (
+        <DialogTrigger render={trigger} nativeButton={triggerNativeButton}>
+          {triggerLabel}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

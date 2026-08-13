@@ -13,7 +13,7 @@ export function BulkActionsBar({ count, onClear, children }: BulkActionsBarProps
   if (count === 0) return null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+    <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t border-primary/30 bg-background/95 px-4 py-2.5 shadow-[0_-2px_8px_rgba(0,0,0,0.06)] backdrop-blur-sm sm:mx-0 sm:rounded-lg sm:border sm:border-primary/30 sm:bg-primary/5 sm:px-3 sm:py-2 sm:shadow-none sm:backdrop-blur-none">
       <span className="text-sm font-medium">
         {count} seleccionado{count === 1 ? '' : 's'}
       </span>
