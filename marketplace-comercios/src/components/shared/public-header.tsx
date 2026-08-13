@@ -2,35 +2,30 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, Bell, Compass, Heart, Home, Package, Search, Store, User } from 'lucide-react'
+import { ArrowLeft, Compass, Heart, Home, Package, Search, Store, User } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useRef, useState, useTransition } from 'react'
-import { Badge } from '@/components/ui/badge'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { UserMenu } from '@/components/shared/user-menu'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppBanner } from '@/components/shared/install-app-banner'
-import { markClientNotificationsRead } from '@/lib/notifications/actions'
+import {
+  markClientNotificationRead,
+  markClientNotificationsRead,
+  deleteClientNotification,
+  deleteReadClientNotifications,
+} from '@/lib/notifications/actions'
+import {
+  NotificationBell,
+  type NotificationItem,
+  type NotificationTypeConfigMap,
+} from '@/components/shared/notification-bell'
 import { useFiltersStore } from '@/stores/use-filters-store'
 import { useScrolled } from '@/hooks/use-scrolled'
 import { cn } from '@/lib/utils'
 
-interface ClientNotification {
-  id: string
-  type: string
-  reference_id: string
-  is_read: boolean
-  created_at: string
-}
+type ClientNotification = NotificationItem
 
 interface PublicHeaderProps {
   user: { email: string } | null
@@ -41,17 +36,13 @@ interface PublicHeaderProps {
   unreadNotificationsCount?: number
 }
 
-const NOTIFICATION_LABELS: Record<string, string> = {
-  new_product: 'Un comercio que seguís publicó algo nuevo',
-}
-
-const NOTIFICATION_ICONS: Record<string, typeof Package> = {
-  new_product: Package,
-}
-
-function notificationHref(notification: ClientNotification) {
-  if (notification.type === 'new_product') return `/producto/${notification.reference_id}`
-  return '/'
+const NOTIFICATION_TYPE_CONFIG: NotificationTypeConfigMap = {
+  new_product: {
+    label: 'Un comercio que seguís publicó algo nuevo',
+    icon: Package,
+    style: 'bg-primary/10 text-primary',
+    href: (notification) => `/producto/${notification.reference_id}`,
+  },
 }
 
 const MINIMAL_HEADER_PREFIXES = ['/producto/', '/tienda/']
@@ -75,7 +66,6 @@ export function PublicHeader({
   const router = useRouter()
   const scrolled = useScrolled()
   const setSearch = useFiltersStore((state) => state.setSearch)
-  const [isMarkingRead, startMarkingRead] = useTransition()
   const [searchInput, setSearchInput] = useState('')
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
@@ -108,13 +98,6 @@ export function PublicHeader({
     }
     internalNavCount += 1
   }, [pathname])
-
-  function handleMarkAllRead() {
-    startMarkingRead(async () => {
-      await markClientNotificationsRead()
-      router.refresh()
-    })
-  }
 
   // /tienda/[slug] has its own explicit "Ir al Marketplace" link over the
   // banner (see the shop page), so the generic floating back button would
@@ -234,62 +217,17 @@ export function PublicHeader({
               )}
               {profileRole && (
                 <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={<Button variant="ghost" size="icon" className="relative" />}
-                      nativeButton={true}
-                    >
-                      <Bell className="size-4" aria-hidden />
-                      {unreadNotificationsCount > 0 && (
-                        <Badge
-                          variant="destructive"
-                          className="absolute -top-1 -right-1 h-4.5 min-w-4.5 justify-center rounded-full px-1 text-[10px] font-semibold"
-                        >
-                          {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
-                        </Badge>
-                      )}
-                      <span className="sr-only">Notificaciones</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-72">
-                      <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {notifications.length === 0 ? (
-                        <p className="px-1.5 py-2 text-sm text-muted-foreground">
-                          No hay notificaciones nuevas
-                        </p>
-                      ) : (
-                        notifications.map((notification) => {
-                          const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell
-                          return (
-                            <DropdownMenuItem
-                              key={notification.id}
-                              render={<Link href={notificationHref(notification)} />}
-                            >
-                              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                                <Icon className="size-4" aria-hidden />
-                              </span>
-                              <span className="flex min-w-0 flex-col gap-0.5">
-                                <span className="truncate">
-                                  {NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(notification.created_at).toLocaleString('es-AR')}
-                                </span>
-                              </span>
-                            </DropdownMenuItem>
-                          )
-                        })
-                      )}
-                      {notifications.length > 0 && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={handleMarkAllRead} disabled={isMarkingRead}>
-                            {isMarkingRead ? 'Marcando...' : 'Marcar todas como leídas'}
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <NotificationBell
+                    notifications={notifications}
+                    unreadCount={unreadNotificationsCount}
+                    typeConfig={NOTIFICATION_TYPE_CONFIG}
+                    onMarkRead={markClientNotificationRead}
+                    onMarkAllRead={markClientNotificationsRead}
+                    onDelete={deleteClientNotification}
+                    onDeleteAllRead={deleteReadClientNotifications}
+                    realtimeTable="client_notifications"
+                    detailHref="/notificaciones"
+                  />
                   <Button
                     variant="ghost"
                     size="icon"

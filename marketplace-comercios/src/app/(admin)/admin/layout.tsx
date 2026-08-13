@@ -2,6 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
 import { getUnreadNotifications, getUnreadNotificationsCount } from '@/lib/admin/queries'
+import {
+  markAdminNotificationRead,
+  deleteAdminNotification,
+  deleteReadAdminNotifications,
+} from '@/lib/admin/actions'
 import { CommandPalette } from './command-palette'
 
 const navItems: DashboardNavItem[] = [
@@ -56,6 +61,11 @@ export default async function AdminLayout({
         accent
         notifications={notifications}
         unreadNotificationsCount={unreadNotificationsCount}
+        onMarkRead={markAdminNotificationRead}
+        onDelete={deleteAdminNotification}
+        onDeleteAllRead={deleteReadAdminNotifications}
+        realtimeTable="admin_notifications"
+        notificationsHref="/admin/notificaciones"
       >
         {children}
       </DashboardShell>

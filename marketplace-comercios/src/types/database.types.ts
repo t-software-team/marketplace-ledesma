@@ -1294,6 +1294,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      delete_admin_notification: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      delete_read_admin_notifications: { Args: never; Returns: undefined }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -1496,6 +1501,10 @@ export type Database = {
         Returns: undefined
       }
       longtransactionsenabled: { Args: never; Returns: boolean }
+      mark_admin_notification_read: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
       mark_all_admin_notifications_read: { Args: never; Returns: undefined }
       mark_client_notifications_read: { Args: never; Returns: undefined }
       normalize_category_text: { Args: { p_text: string }; Returns: string }

@@ -1,10 +1,22 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
-import Image from 'next/image'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bell, FileCheck, Flag, Heart, Menu, ReceiptText } from 'lucide-react'
+import {
+  ArrowLeft,
+  CalendarX,
+  Clock,
+  FileCheck,
+  Flag,
+  Heart,
+  Menu,
+  MessageCircle,
+  Package,
+  ReceiptText,
+  ShieldCheck,
+  ShieldX,
+  Star,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -25,46 +37,80 @@ import {
 } from '@/components/ui/sheet'
 import { SidebarNav, type DashboardNavItem } from './dashboard-sidebar'
 import { signOut } from '@/lib/auth/actions'
-import { markAllNotificationsRead } from '@/lib/admin/actions'
-import { createClient } from '@/lib/supabase/client'
+import { markAllNotificationsRead, deleteReadAdminNotifications } from '@/lib/admin/actions'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppButton } from '@/components/shared/install-app-button'
 import { ShareButton } from '@/components/shared/share-button'
 import { cn } from '@/lib/utils'
+import {
+  NotificationBell,
+  type NotificationItem,
+  type NotificationTypeConfigMap,
+} from '@/components/shared/notification-bell'
 
-export interface AdminNotification {
-  id: string
-  type: string
-  reference_id: string
-  created_at: string
-}
+export type AdminNotification = NotificationItem
 
-const NOTIFICATION_LABELS: Record<string, string> = {
-  new_verification_request: 'Nueva solicitud de verificación',
-  new_subscription_request: 'Nueva solicitud de suscripción',
-  new_report: 'Nuevo reporte de comercio',
-}
-
-const NOTIFICATION_LINKS: Record<string, string> = {
-  new_verification_request: '/admin/shops',
-  new_subscription_request: '/admin/subscripciones',
-  new_report: '/admin/reportes',
-}
-
-const NOTIFICATION_ICONS: Record<string, typeof FileCheck> = {
-  new_verification_request: FileCheck,
-  new_subscription_request: ReceiptText,
-  new_report: Flag,
-}
-
-const NOTIFICATION_STYLES: Record<string, string> = {
-  new_verification_request: 'bg-verified/20 text-verified-foreground',
-  new_subscription_request: 'bg-primary/15 text-primary',
-  new_report: 'bg-destructive/15 text-destructive',
-}
-
-function formatUnreadCount(count: number) {
-  return count > 9 ? '9+' : String(count)
+const NOTIFICATION_TYPE_CONFIG: NotificationTypeConfigMap = {
+  new_verification_request: {
+    label: 'Nueva solicitud de verificación',
+    icon: FileCheck,
+    style: 'bg-verified/20 text-verified-foreground',
+    href: (notification) => `/admin/shops/${notification.reference_id}`,
+  },
+  new_subscription_request: {
+    label: 'Nueva solicitud de suscripción',
+    icon: ReceiptText,
+    style: 'bg-primary/15 text-primary',
+    href: () => '/admin/subscripciones',
+  },
+  new_report: {
+    label: 'Nuevo reporte de comercio',
+    icon: Flag,
+    style: 'bg-destructive/15 text-destructive',
+    href: () => '/admin/reportes',
+  },
+  new_review: {
+    label: 'Nueva reseña en tu comercio',
+    icon: Star,
+    style: 'bg-amber-500/15 text-amber-600',
+    href: () => '/mi-tienda',
+  },
+  new_contact: {
+    label: 'Nuevo contacto de un cliente',
+    icon: MessageCircle,
+    style: 'bg-primary/15 text-primary',
+    href: () => '/mi-tienda',
+  },
+  verification_approved: {
+    label: 'Tu verificación fue aprobada',
+    icon: ShieldCheck,
+    style: 'bg-verified/20 text-verified-foreground',
+    href: () => '/mi-tienda/configuracion',
+  },
+  verification_rejected: {
+    label: 'Tu verificación fue rechazada',
+    icon: ShieldX,
+    style: 'bg-destructive/15 text-destructive',
+    href: () => '/mi-tienda/configuracion',
+  },
+  subscription_expiring_soon: {
+    label: 'Tu suscripción está por vencer',
+    icon: Clock,
+    style: 'bg-amber-500/15 text-amber-600',
+    href: () => '/mi-tienda/suscripcion',
+  },
+  subscription_expired: {
+    label: 'Tu suscripción venció',
+    icon: CalendarX,
+    style: 'bg-destructive/15 text-destructive',
+    href: () => '/mi-tienda/suscripcion',
+  },
+  new_product: {
+    label: 'Un comercio que seguís publicó algo nuevo',
+    icon: Package,
+    style: 'bg-primary/10 text-primary',
+    href: (notification) => `/producto/${notification.reference_id}`,
+  },
 }
 
 interface DashboardHeaderProps {
@@ -78,6 +124,12 @@ interface DashboardHeaderProps {
   showInstallButton?: boolean
   reviewInvite?: { shopName: string; shopUrl: string }
   accent?: boolean
+  onMarkRead?: (id: string) => Promise<void>
+  onMarkAllRead?: () => Promise<void>
+  onDelete?: (id: string) => Promise<void>
+  onDeleteAllRead?: () => Promise<void>
+  realtimeTable?: string
+  notificationsHref?: string
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -92,13 +144,6 @@ function getInitials(fullName: string | null, email: string) {
   return email[0]?.toUpperCase() ?? '?'
 }
 
-function notificationHref(notification: AdminNotification) {
-  if (notification.type === 'new_verification_request') {
-    return `/admin/shops/${notification.reference_id}`
-  }
-  return NOTIFICATION_LINKS[notification.type] ?? '/admin'
-}
-
 export function DashboardHeader({
   navItems,
   userEmail,
@@ -110,56 +155,15 @@ export function DashboardHeader({
   showInstallButton = true,
   reviewInvite,
   accent = false,
+  onMarkRead,
+  onMarkAllRead = markAllNotificationsRead,
+  onDelete,
+  onDeleteAllRead = deleteReadAdminNotifications,
+  realtimeTable = 'admin_notifications',
+  notificationsHref = '/admin/notificaciones',
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
-  const [isMarkingRead, startMarkingRead] = useTransition()
   const [isSigningOut, startSignOut] = useTransition()
-  const router = useRouter()
-  const [extraNotifications, setExtraNotifications] = useState<AdminNotification[]>([])
-  const [extraUnreadCount, setExtraUnreadCount] = useState(0)
-  const [syncedNotifications, setSyncedNotifications] = useState(notifications)
-
-  if (notifications !== syncedNotifications) {
-    setSyncedNotifications(notifications)
-    setExtraNotifications([])
-    setExtraUnreadCount(0)
-  }
-
-  useEffect(() => {
-    if (notifications === undefined) return
-
-    const supabase = createClient()
-    const channel = supabase
-      .channel('admin-notifications')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'admin_notifications' },
-        (payload) => {
-          const row = payload.new as AdminNotification
-          setExtraNotifications((current) => [row, ...current].slice(0, 10))
-          setExtraUnreadCount((current) => current + 1)
-        }
-      )
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
-  }, [notifications])
-
-  const notificationList = notifications
-    ? [...extraNotifications, ...notifications].slice(0, 10)
-    : null
-  const unreadCount = (unreadNotificationsCount ?? 0) + extraUnreadCount
-
-  function handleMarkAllRead() {
-    startMarkingRead(async () => {
-      await markAllNotificationsRead()
-      setExtraNotifications([])
-      setExtraUnreadCount(0)
-      router.refresh()
-    })
-  }
 
   return (
     <header
@@ -226,82 +230,17 @@ export function DashboardHeader({
             <Heart className="size-4" aria-hidden />
           </Button>
           <ThemeToggle />
-          {notificationList && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={<Button variant="ghost" size="icon" className="relative" />}
-                nativeButton={true}
-              >
-                <Bell className="size-5" aria-hidden />
-                {unreadCount > 0 && (
-                  <>
-                    <span className="absolute top-1 right-1 size-2.5 animate-ping rounded-full bg-destructive opacity-75" />
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-4.5 min-w-4.5 justify-center rounded-full px-1 text-[10px] font-semibold shadow-sm"
-                    >
-                      {formatUnreadCount(unreadCount)}
-                    </Badge>
-                  </>
-                )}
-                <span className="sr-only">Notificaciones</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="flex items-center justify-between px-1.5 py-1">
-                  <DropdownMenuLabel className="p-0">Notificaciones</DropdownMenuLabel>
-                  {unreadCount > 0 && (
-                    <Badge variant="destructive" className="rounded-full px-1.5 text-[10px]">
-                      {formatUnreadCount(unreadCount)} nuevas
-                    </Badge>
-                  )}
-                </div>
-                <DropdownMenuSeparator />
-                {notificationList.length === 0 ? (
-                  <p className="px-1.5 py-6 text-center text-sm text-muted-foreground">
-                    No hay notificaciones nuevas
-                  </p>
-                ) : (
-                  notificationList.map((notification) => {
-                    const Icon = NOTIFICATION_ICONS[notification.type] ?? Bell
-                    const style = NOTIFICATION_STYLES[notification.type] ?? 'bg-muted text-muted-foreground'
-                    return (
-                      <DropdownMenuItem
-                        key={notification.id}
-                        render={<Link href={notificationHref(notification)} />}
-                        className="items-start gap-2.5 py-2"
-                      >
-                        <span
-                          className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full ${style}`}
-                        >
-                          <Icon className="size-4" aria-hidden />
-                        </span>
-                        <span className="flex min-w-0 flex-col gap-0.5">
-                          <span className="text-sm leading-snug">
-                            {NOTIFICATION_LABELS[notification.type] ?? 'Notificación'}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(notification.created_at).toLocaleString('es-AR')}
-                          </span>
-                        </span>
-                      </DropdownMenuItem>
-                    )
-                  })
-                )}
-                {notificationList.length > 0 && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={handleMarkAllRead}
-                      disabled={isMarkingRead}
-                      className="justify-center text-sm font-medium text-primary"
-                    >
-                      {isMarkingRead ? 'Marcando...' : 'Marcar todas como leídas'}
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <NotificationBell
+            notifications={notifications}
+            unreadCount={unreadNotificationsCount}
+            typeConfig={NOTIFICATION_TYPE_CONFIG}
+            onMarkRead={onMarkRead}
+            onMarkAllRead={onMarkAllRead}
+            onDelete={onDelete}
+            onDeleteAllRead={onDeleteAllRead}
+            realtimeTable={realtimeTable}
+            detailHref={notificationsHref}
+          />
 
           <DropdownMenu>
             <DropdownMenuTrigger

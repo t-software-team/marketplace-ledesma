@@ -4,6 +4,13 @@ import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
 import { isServiceRubro } from '@/lib/category-icons'
 import { getMyActiveSubscription } from '@/lib/shops/queries'
+import { getMyClientNotifications } from '@/lib/notifications/queries'
+import {
+  markClientNotificationRead,
+  markClientNotificationsRead,
+  deleteClientNotification,
+  deleteReadClientNotifications,
+} from '@/lib/notifications/actions'
 
 export default async function MiTiendaLayout({
   children,
@@ -57,6 +64,8 @@ export default async function MiTiendaLayout({
 
   const isService = isServiceRubro(rubroSlug)
 
+  const { notifications, unreadCount } = await getMyClientNotifications()
+
   const navItems: DashboardNavItem[] = [
     { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
     { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
@@ -81,6 +90,14 @@ export default async function MiTiendaLayout({
       rootHref="/mi-tienda"
       showInstallButton={false}
       reviewInvite={reviewInvite ?? undefined}
+      notifications={notifications}
+      unreadNotificationsCount={unreadCount}
+      onMarkRead={markClientNotificationRead}
+      onMarkAllRead={markClientNotificationsRead}
+      onDelete={deleteClientNotification}
+      onDeleteAllRead={deleteReadClientNotifications}
+      realtimeTable="client_notifications"
+      notificationsHref="/mi-tienda/notificaciones"
     >
       {children}
     </DashboardShell>

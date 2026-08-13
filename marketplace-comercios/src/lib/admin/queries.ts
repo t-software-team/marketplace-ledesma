@@ -239,6 +239,43 @@ export async function getUnreadNotifications() {
   return notifications ?? []
 }
 
+export interface PaginatedAdminNotifications {
+  notifications: {
+    id: string
+    type: string
+    reference_id: string
+    is_read: boolean
+    created_at: string
+  }[]
+  totalCount: number
+  totalPages: number
+}
+
+export async function getAdminNotifications(
+  page = 1,
+  pageSize = 30
+): Promise<PaginatedAdminNotifications> {
+  const supabase = await createClient()
+
+  const safePage = Math.max(1, page)
+  const from = (safePage - 1) * pageSize
+  const to = safePage * pageSize - 1
+
+  const { data, count } = await supabase
+    .from('admin_notifications')
+    .select('id, type, reference_id, is_read, created_at', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(from, to)
+
+  const totalCount = count ?? 0
+
+  return {
+    notifications: data ?? [],
+    totalCount,
+    totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
+  }
+}
+
 type UserRole = Database['public']['Enums']['user_role']
 
 export interface UserDirectoryEntry {

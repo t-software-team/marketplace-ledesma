@@ -16,6 +16,12 @@ interface DashboardShellProps {
   showSiteLink?: boolean
   showInstallButton?: boolean
   reviewInvite?: { shopName: string; shopUrl: string }
+  onMarkRead?: (id: string) => Promise<void>
+  onMarkAllRead?: () => Promise<void>
+  onDelete?: (id: string) => Promise<void>
+  onDeleteAllRead?: () => Promise<void>
+  realtimeTable?: string
+  notificationsHref?: string
   children: React.ReactNode
 }
 
@@ -32,6 +38,12 @@ export function DashboardShell({
   showSiteLink,
   showInstallButton,
   reviewInvite,
+  onMarkRead,
+  onMarkAllRead,
+  onDelete,
+  onDeleteAllRead,
+  realtimeTable,
+  notificationsHref,
   children,
 }: DashboardShellProps) {
   return (
@@ -49,6 +61,12 @@ export function DashboardShell({
           showInstallButton={showInstallButton}
           reviewInvite={reviewInvite}
           accent={accent}
+          onMarkRead={onMarkRead}
+          onMarkAllRead={onMarkAllRead}
+          onDelete={onDelete}
+          onDeleteAllRead={onDeleteAllRead}
+          realtimeTable={realtimeTable}
+          notificationsHref={notificationsHref}
         />
         <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">
           <Breadcrumbs navItems={navItems} rootHref={rootHref} rootLabel={sectionTitle} className="mb-4" />
