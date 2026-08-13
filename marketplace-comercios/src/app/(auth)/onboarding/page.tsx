@@ -1,10 +1,12 @@
 'use client'
 
 import { ShoppingBag, Store } from 'lucide-react'
+import Link from 'next/link'
 import { unstable_rethrow } from 'next/navigation'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { selectUserRole } from '@/lib/auth/actions'
 import type { Database } from '@/types/database.types'
 
@@ -13,13 +15,19 @@ type UserRole = Database['public']['Enums']['user_role']
 export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null)
   const [loadingRole, setLoadingRole] = useState<UserRole | null>(null)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   async function selectRole(role: UserRole) {
+    if (!acceptedTerms) {
+      setError('Tenés que aceptar los términos y condiciones')
+      return
+    }
+
     setError(null)
     setLoadingRole(role)
 
     try {
-      const result = await selectUserRole(role)
+      const result = await selectUserRole(role, acceptedTerms)
 
       if (result?.error) {
         setError(result.error)
@@ -47,7 +55,7 @@ export default function OnboardingPage() {
         <button
           type="button"
           onClick={() => selectRole('client')}
-          disabled={loadingRole !== null}
+          disabled={loadingRole !== null || !acceptedTerms}
           className="text-left"
         >
           <Card className="h-full transition-colors hover:ring-primary/40">
@@ -80,7 +88,7 @@ export default function OnboardingPage() {
         <button
           type="button"
           onClick={() => selectRole('shop_admin')}
-          disabled={loadingRole !== null}
+          disabled={loadingRole !== null || !acceptedTerms}
           className="text-left"
         >
           <Card className="h-full transition-colors hover:ring-primary/40">
@@ -90,12 +98,12 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <p className="font-heading text-lg">Quiero vender</p>
-                <p className="mt-1 text-sm text-muted-foreground">Comercio</p>
+                <p className="mt-1 text-sm text-muted-foreground">Comercio o prestador de servicios</p>
               </div>
               <ul className="space-y-1 text-left text-xs text-muted-foreground">
-                <li>• Creá tu tienda y cargá tus productos</li>
-                <li>• Aparecé en el feed y en búsquedas</li>
-                <li>• Recibí contactos directo por WhatsApp</li>
+                <li>• Sumá reseñas reales que generan confianza</li>
+                <li>• Conseguí el sello de verificado</li>
+                <li>• Mostrate primero con un plan destacado</li>
               </ul>
               <Button
                 render={<span />}
@@ -108,6 +116,32 @@ export default function OnboardingPage() {
             </CardContent>
           </Card>
         </button>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-start justify-center gap-2">
+          <Checkbox
+            id="acceptedTerms"
+            checked={acceptedTerms}
+            onCheckedChange={(checked) => {
+              setAcceptedTerms(checked === true)
+              if (checked === true) setError(null)
+            }}
+            aria-invalid={!!error}
+            className="mt-0.5"
+          />
+          <label htmlFor="acceptedTerms" className="text-sm text-foreground">
+            Acepto los{' '}
+            <Link href="/terminos" className="underline" target="_blank">
+              Términos y Condiciones
+            </Link>
+          </label>
+        </div>
+        {!acceptedTerms && !error && (
+          <p className="text-center text-xs text-muted-foreground">
+            Tenés que aceptar los términos para poder elegir una opción.
+          </p>
+        )}
       </div>
 
       {error && <p className="text-center text-sm text-destructive">{error}</p>}

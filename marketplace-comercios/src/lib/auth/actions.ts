@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/client'
 import { clientWelcomeEmail } from '@/lib/email/templates'
+import { checkRateLimit } from '@/lib/rate-limit'
 import type { Database } from '@/types/database.types'
 
 type UserRole = Database['public']['Enums']['user_role']
@@ -15,11 +16,21 @@ export async function signOut() {
 }
 
 export async function signIn(email: string, password: string, next?: string | null) {
+  const allowed = await checkRateLimit('login', 5, 15 * 60)
+
+  if (!allowed) {
+    return { error: 'Demasiados intentos. Probá de nuevo en unos minutos.' }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    if (error.code === 'email_not_confirmed') {
+      return { error: 'Confirmá tu email antes de ingresar. Revisá tu bandeja de entrada.' }
+    }
+
     return { error: 'Email o contraseña incorrectos' }
   }
 
@@ -51,7 +62,7 @@ export async function signIn(email: string, password: string, next?: string | nu
   redirect(next ?? roleDestination)
 }
 
-export async function selectUserRole(role: UserRole) {
+export async function selectUserRole(role: UserRole, acceptedTerms: boolean) {
   const supabase = await createClient()
 
   const {
@@ -62,9 +73,13 @@ export async function selectUserRole(role: UserRole) {
     return { error: 'No estás autenticado' }
   }
 
+  if (!acceptedTerms) {
+    return { error: 'Tenés que aceptar los términos y condiciones' }
+  }
+
   const { data: updated, error } = await supabase
     .from('profiles')
-    .update({ role })
+    .update({ role, terms_accepted_at: new Date().toISOString() })
     .eq('id', user.id)
     .is('role', null)
     .select('id')

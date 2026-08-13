@@ -390,6 +390,28 @@ export async function getMyShopReview(shopId: string) {
   return data
 }
 
+export const SITEMAP_SHOPS_LIMIT = 5000
+
+export const getSitemapShops = unstable_cache(
+  async () => {
+    const supabase = createPublicClient()
+
+    const { data, error } = await supabase
+      .from('shops')
+      .select('slug, updated_at')
+      .eq('is_active', true)
+      .is('deleted_at', null)
+      .order('updated_at', { ascending: false })
+      .limit(SITEMAP_SHOPS_LIMIT)
+
+    if (error || !data) return []
+
+    return data
+  },
+  ['sitemap-shops'],
+  { revalidate: 3600 }
+)
+
 export async function getShopFollowStats(shopId: string) {
   const supabase = await createClient()
   const { data } = await supabase.rpc('get_shop_follow_stats', { p_shop_id: shopId })
