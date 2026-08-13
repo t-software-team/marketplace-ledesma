@@ -5,23 +5,37 @@ import type { Database } from '@/types/database.types'
 export async function getShopsForReview() {
   const supabase = await createClient()
 
-  const { data: shops } = await supabase
-    .from('shops')
-    .select(
-      `
-      id, name, city, whatsapp_number, verification_status, created_at, is_active,
-      subscriptions ( status, subscription_plans ( name ) )
+  const [{ data: shops }, { data: openReports }] = await Promise.all([
+    supabase
+      .from('shops')
+      .select(
+        `
+      id, name, city, whatsapp_number, verification_status, created_at, updated_at, is_active, logo_url,
+      subscriptions ( status, subscription_plans ( name ) ),
+      products ( count )
     `
-    )
-    .is('deleted_at', null)
-    .order('created_at', { ascending: false })
-    .limit(200)
+      )
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(200),
+    supabase.from('shop_reports').select('shop_id').eq('status', 'pending'),
+  ])
+
+  const openReportsByShop = new Map<string, number>()
+  for (const report of openReports ?? []) {
+    openReportsByShop.set(report.shop_id, (openReportsByShop.get(report.shop_id) ?? 0) + 1)
+  }
 
   return (shops ?? []).map((shop) => {
-    const { subscriptions, ...rest } = shop
+    const { subscriptions, products, ...rest } = shop
     const activePlanName =
       subscriptions?.find((sub) => sub.status === 'active')?.subscription_plans?.name ?? null
-    return { ...rest, activePlanName }
+    return {
+      ...rest,
+      activePlanName,
+      productCount: products?.[0]?.count ?? 0,
+      openReportsCount: openReportsByShop.get(shop.id) ?? 0,
+    }
   })
 }
 
@@ -46,17 +60,26 @@ export async function searchShopsByName(query: string) {
 export async function getShopForReview(shopId: string) {
   const supabase = await createClient()
 
-  const { data: shop } = await supabase
-    .from('shops')
-    .select(
-      `
+  const [{ data: shop }, { count: productCount }, { count: openReportsCount }] = await Promise.all([
+    supabase
+      .from('shops')
+      .select(
+        `
       id, name, city, whatsapp_number, email, address, verification_status,
-      verification_document_url, created_at, is_active, suspended_reason,
+      verification_document_url, created_at, updated_at, is_active, suspended_reason,
+      logo_url, cover_url, slug, profile_views, whatsapp_clicks,
       subscriptions ( status, plan_id, subscription_plans ( name ) )
     `
-    )
-    .eq('id', shopId)
-    .maybeSingle()
+      )
+      .eq('id', shopId)
+      .maybeSingle(),
+    supabase.from('products').select('id', { count: 'exact', head: true }).eq('shop_id', shopId),
+    supabase
+      .from('shop_reports')
+      .select('id', { count: 'exact', head: true })
+      .eq('shop_id', shopId)
+      .eq('status', 'pending'),
+  ])
 
   if (!shop) return null
 
@@ -78,6 +101,8 @@ export async function getShopForReview(shopId: string) {
     documentUrl,
     activePlanId: activeSubscription?.plan_id ?? null,
     activePlanName: activeSubscription?.subscription_plans?.name ?? null,
+    productCount: productCount ?? 0,
+    openReportsCount: openReportsCount ?? 0,
   }
 }
 
@@ -86,11 +111,14 @@ export async function getCategoriesList() {
 
   const { data: categories } = await supabase
     .from('categories')
-    .select('id, name, slug, is_active, parent_id, created_at')
+    .select('id, name, slug, is_active, parent_id, created_at, products(count)')
     .order('name', { ascending: true })
     .limit(200)
 
-  return categories ?? []
+  return (categories ?? []).map((category) => {
+    const { products, ...rest } = category
+    return { ...rest, productCount: products?.[0]?.count ?? 0 }
+  })
 }
 
 export async function getCategorySuggestions() {
@@ -288,6 +316,7 @@ export interface UserDirectoryEntry {
   created_at: string
   email: string | null
   last_sign_in_at: string | null
+  is_banned: boolean
 }
 
 export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
@@ -305,7 +334,10 @@ export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
   // admin tool, not expected to have huge user counts yet. If this cap is ever hit,
   // switch to a server-side join/RPC instead of paging through auth.admin.listUsers.
   const service = createServiceRoleClient()
-  const authUsersById = new Map<string, { email: string | null; last_sign_in_at: string | null }>()
+  const authUsersById = new Map<
+    string,
+    { email: string | null; last_sign_in_at: string | null; is_banned: boolean }
+  >()
   const perPage = 200
   const maxPages = 20
 
@@ -314,9 +346,11 @@ export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
     if (error || !userPage) break
 
     for (const authUser of userPage.users) {
+      const bannedUntil = authUser.banned_until
       authUsersById.set(authUser.id, {
         email: authUser.email ?? null,
         last_sign_in_at: authUser.last_sign_in_at ?? null,
+        is_banned: !!bannedUntil && new Date(bannedUntil).getTime() > Date.now(),
       })
     }
 
@@ -330,6 +364,7 @@ export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
         ...profile,
         email: authUser?.email ?? null,
         last_sign_in_at: authUser?.last_sign_in_at ?? null,
+        is_banned: authUser?.is_banned ?? false,
       }
     })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())

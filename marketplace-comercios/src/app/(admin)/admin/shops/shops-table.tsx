@@ -2,9 +2,12 @@
 
 import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
-import { Ban, Download, CreditCard } from 'lucide-react'
+import { Ban, Download, CreditCard, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { formatRelativeTime } from '@/lib/format'
 import {
   Dialog,
   DialogContent,
@@ -45,6 +48,15 @@ function formatDate(date: string) {
   return new Date(date).toLocaleDateString('es-AR')
 }
 
+function getInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
 function escapeCsvValue(value: string) {
   if (/[",\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`
@@ -53,13 +65,24 @@ function escapeCsvValue(value: string) {
 }
 
 function buildCsv(shops: Shop[]) {
-  const header = ['Comercio', 'Ciudad', 'WhatsApp', 'Registrado', 'Plan', 'Estado']
+  const header = [
+    'Comercio',
+    'Ciudad',
+    'WhatsApp',
+    'Registrado',
+    'Plan',
+    'Productos',
+    'Reportes abiertos',
+    'Estado',
+  ]
   const rows = shops.map((shop) => [
     shop.name,
     shop.city ?? 'Sin ciudad',
     shop.whatsapp_number,
     formatDate(shop.created_at),
     shop.activePlanName ?? 'Free',
+    String(shop.productCount),
+    String(shop.openReportsCount),
     shop.is_active ? shop.verification_status : `${shop.verification_status} / suspendido`,
   ])
 
@@ -265,9 +288,9 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
               />
             </TableHead>
             <TableHead>Comercio</TableHead>
-            <TableHead>Ciudad</TableHead>
             <TableHead>WhatsApp</TableHead>
-            <TableHead>Registrado</TableHead>
+            <TableHead>Productos</TableHead>
+            <TableHead>Actividad</TableHead>
             <TableHead>Plan</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
@@ -287,13 +310,27 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
                   aria-label={`Seleccionar ${shop.name}`}
                 />
               </TableCell>
-              <TableCell className="font-medium">{shop.name}</TableCell>
-              <TableCell className="text-muted-foreground">{shop.city ?? 'Sin ciudad'}</TableCell>
+              <TableCell>
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <Avatar size="sm">
+                    <AvatarImage src={shop.logo_url ?? undefined} alt="" />
+                    <AvatarFallback>{getInitials(shop.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{shop.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{shop.city ?? 'Sin ciudad'}</p>
+                  </div>
+                </div>
+              </TableCell>
               <TableCell className="whitespace-nowrap text-muted-foreground">
                 {shop.whatsapp_number}
               </TableCell>
-              <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                {formatDate(shop.created_at)}
+              <TableCell className="whitespace-nowrap font-mono text-muted-foreground tabular-nums">
+                {shop.productCount}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <p className="text-xs">{formatRelativeTime(shop.updated_at)}</p>
+                <p className="text-[11px] text-muted-foreground">desde {formatDate(shop.created_at)}</p>
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 {shop.activePlanName ?? (
@@ -301,9 +338,15 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
                 )}
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {!shop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
                   <StatusBadge status={shop.verification_status} />
+                  {shop.openReportsCount > 0 && (
+                    <Badge variant="destructive" className="gap-1">
+                      <AlertTriangle className="size-3" aria-hidden />
+                      {shop.openReportsCount}
+                    </Badge>
+                  )}
                 </div>
               </TableCell>
               <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
@@ -333,6 +376,10 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
           {quickViewShop && (
             <>
               <SheetHeader>
+                <Avatar size="lg" className="mb-2">
+                  <AvatarImage src={quickViewShop.logo_url ?? undefined} alt="" />
+                  <AvatarFallback>{getInitials(quickViewShop.name)}</AvatarFallback>
+                </Avatar>
                 <SheetTitle>{quickViewShop.name}</SheetTitle>
                 <SheetDescription>Vista rápida del comercio</SheetDescription>
               </SheetHeader>
@@ -350,6 +397,10 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
                   <span>{formatDate(quickViewShop.created_at)}</span>
                 </div>
                 <div className="flex justify-between gap-3">
+                  <span className="text-muted-foreground">Productos</span>
+                  <span className="font-mono">{quickViewShop.productCount}</span>
+                </div>
+                <div className="flex justify-between gap-3">
                   <span className="text-muted-foreground">Plan</span>
                   <span>{quickViewShop.activePlanName ?? 'Free'}</span>
                 </div>
@@ -358,6 +409,12 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
                   <div className="flex items-center gap-1.5">
                     {!quickViewShop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
                     <StatusBadge status={quickViewShop.verification_status} />
+                    {quickViewShop.openReportsCount > 0 && (
+                      <Badge variant="destructive" className="gap-1">
+                        <AlertTriangle className="size-3" aria-hidden />
+                        {quickViewShop.openReportsCount}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>

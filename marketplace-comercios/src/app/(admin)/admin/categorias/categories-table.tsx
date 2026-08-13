@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Trash2 } from 'lucide-react'
+import { useMemo, useState, useTransition } from 'react'
+import { CornerDownRight, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
@@ -18,21 +19,65 @@ import type { getCategoriesList } from '@/lib/admin/queries'
 import { CategoryRowActions } from './category-row-actions'
 
 type Category = Awaited<ReturnType<typeof getCategoriesList>>[number]
+type OrderedCategory = Category & { depth: number }
 
 const PAGE_SIZE = 15
 
+function buildTreeOrder(categories: Category[]): OrderedCategory[] {
+  const childrenByParent = new Map<string, Category[]>()
+  const byId = new Map(categories.map((category) => [category.id, category]))
+
+  for (const category of categories) {
+    if (!category.parent_id) continue
+    const siblings = childrenByParent.get(category.parent_id) ?? []
+    siblings.push(category)
+    childrenByParent.set(category.parent_id, siblings)
+  }
+
+  const ordered: OrderedCategory[] = []
+
+  for (const category of categories) {
+    const isTopLevel = !category.parent_id || !byId.has(category.parent_id)
+    if (!isTopLevel) continue
+    ordered.push({ ...category, depth: 0 })
+    for (const child of childrenByParent.get(category.id) ?? []) {
+      ordered.push({ ...child, depth: 1 })
+    }
+  }
+
+  return ordered
+}
+
 export function CategoriesTable({ categories }: { categories: Category[] }) {
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
   const [isPending, startTransition] = useTransition()
-  const categoryById = new Map(categories.map((category) => [category.id, category]))
-  const totalPages = Math.max(1, Math.ceil(categories.length / PAGE_SIZE))
+
+  const categoryById = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories])
+  const treeOrdered = useMemo(() => buildTreeOrder(categories), [categories])
+
+  const filteredCategories = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return treeOrdered
+    return treeOrdered.filter(
+      (category) =>
+        category.name.toLowerCase().includes(query) || category.slug.toLowerCase().includes(query)
+    )
+  }, [treeOrdered, search])
+
+  const totalPages = Math.max(1, Math.ceil(filteredCategories.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
-  const pageCategories = categories.slice(start, start + PAGE_SIZE)
+  const pageCategories = filteredCategories.slice(start, start + PAGE_SIZE)
 
   const { selected, selectedIds, isAllSelected, toggle, toggleAll, clear } = useRowSelection(
     pageCategories.map((category) => category.id)
   )
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
 
   function handleBulkToggle(isActive: boolean) {
     startTransition(async () => {
@@ -68,6 +113,14 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
 
   return (
     <div className="space-y-3">
+      <Input
+        value={search}
+        onChange={(event) => handleSearchChange(event.target.value)}
+        placeholder="Buscar por nombre o slug..."
+        aria-label="Buscar categorías"
+        className="max-w-sm"
+      />
+
       <BulkActionsBar count={selected.size} onClear={clear}>
         <Button variant="outline" size="sm" disabled={isPending} onClick={() => handleBulkToggle(true)}>
           Activar
@@ -103,7 +156,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
             </TableHead>
             <TableHead>Nombre</TableHead>
             <TableHead>Slug</TableHead>
-            <TableHead>Padre</TableHead>
+            <TableHead>Productos</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
@@ -111,9 +164,10 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
         <TableBody>
           {pageCategories.map((category) => {
             const Icon = getRubroIcon(category.slug)
-            const rubroSlug = category.parent_id
-              ? (categoryById.get(category.parent_id)?.slug ?? category.slug)
-              : category.slug
+            const rubroSlug =
+              category.parent_id && categoryById.has(category.parent_id)
+                ? categoryById.get(category.parent_id)!.slug
+                : category.slug
             return (
               <TableRow key={category.id}>
                 <TableCell>
@@ -124,8 +178,14 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
                   />
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 font-medium">
-                    {!category.parent_id && (
+                  <div
+                    className="flex items-center gap-2 font-medium"
+                    style={category.depth > 0 ? { paddingLeft: `${category.depth * 1.5}rem` } : undefined}
+                  >
+                    {category.depth > 0 && (
+                      <CornerDownRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    )}
+                    {category.depth === 0 && (
                       <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
                         <Icon className="size-3.5" aria-hidden />
                       </span>
@@ -139,8 +199,8 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">/{category.slug}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {category.parent_id ? (categoryById.get(category.parent_id)?.name ?? '—') : '—'}
+                <TableCell className="font-mono text-muted-foreground tabular-nums">
+                  {category.productCount}
                 </TableCell>
                 <TableCell>
                   <StatusBadge
@@ -159,7 +219,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
       <PaginationControls
         page={currentPage}
         totalPages={totalPages}
-        totalCount={categories.length}
+        totalCount={filteredCategories.length}
         onPrevious={() => setPage(currentPage - 1)}
         onNext={() => setPage(currentPage + 1)}
       />

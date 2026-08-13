@@ -28,6 +28,9 @@ export default async function AdminSubscriptionsPage() {
     }))
   )
 
+  const pending = withProofUrls.filter((subscription) => subscription.status === 'pending')
+  const resolved = withProofUrls.filter((subscription) => subscription.status !== 'pending')
+
   return (
     <div className="space-y-4">
       <Suspense fallback={null}>
@@ -50,7 +53,28 @@ export default async function AdminSubscriptionsPage() {
           {withProofUrls.length === 0 ? (
             <EmptyState message="No hay solicitudes de suscripción." />
           ) : (
-            <SubscriptionsTable subscriptions={withProofUrls} />
+            <Tabs defaultValue="pendientes">
+              <TabsList>
+                <TabsTrigger value="pendientes">Pendientes ({pending.length})</TabsTrigger>
+                <TabsTrigger value="resueltas">Resueltas ({resolved.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pendientes" className="pt-3">
+                {pending.length === 0 ? (
+                  <EmptyState illustration={<EmptyBoxIllustration />} message="No hay solicitudes pendientes." />
+                ) : (
+                  <SubscriptionsTable subscriptions={pending} />
+                )}
+              </TabsContent>
+
+              <TabsContent value="resueltas" className="pt-3">
+                {resolved.length === 0 ? (
+                  <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay solicitudes resueltas." />
+                ) : (
+                  <SubscriptionsTable subscriptions={resolved} />
+                )}
+              </TabsContent>
+            </Tabs>
           )}
         </TabsContent>
 

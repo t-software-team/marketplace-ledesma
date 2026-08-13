@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -27,13 +28,34 @@ const APPLIES_TO_LABEL: Record<string, string> = {
 
 export function PlansTable({ plans }: { plans: Plan[] }) {
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(plans.length / PAGE_SIZE))
+  const [search, setSearch] = useState('')
+
+  const filteredPlans = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return plans
+    return plans.filter((plan) => plan.name.toLowerCase().includes(query))
+  }, [plans, search])
+
+  const totalPages = Math.max(1, Math.ceil(filteredPlans.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
-  const pagePlans = plans.slice(start, start + PAGE_SIZE)
+  const pagePlans = filteredPlans.slice(start, start + PAGE_SIZE)
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-3">
+      <Input
+        value={search}
+        onChange={(event) => handleSearchChange(event.target.value)}
+        placeholder="Buscar por nombre..."
+        aria-label="Buscar planes"
+        className="max-w-sm"
+      />
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -72,7 +94,7 @@ export function PlansTable({ plans }: { plans: Plan[] }) {
       <PaginationControls
         page={currentPage}
         totalPages={totalPages}
-        totalCount={plans.length}
+        totalCount={filteredPlans.length}
         onPrevious={() => setPage(currentPage - 1)}
         onNext={() => setPage(currentPage + 1)}
       />

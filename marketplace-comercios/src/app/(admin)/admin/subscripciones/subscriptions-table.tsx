@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
@@ -25,13 +26,38 @@ function formatMoney(price: number) {
 
 export function SubscriptionsTable({ subscriptions }: { subscriptions: Subscription[] }) {
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(subscriptions.length / PAGE_SIZE))
+  const [search, setSearch] = useState('')
+
+  const filteredSubscriptions = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return subscriptions
+    return subscriptions.filter(
+      (subscription) =>
+        (subscription.shops?.name ?? '').toLowerCase().includes(query) ||
+        (subscription.subscription_plans?.name ?? '').toLowerCase().includes(query)
+    )
+  }, [subscriptions, search])
+
+  const totalPages = Math.max(1, Math.ceil(filteredSubscriptions.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
   const start = (currentPage - 1) * PAGE_SIZE
-  const pageSubscriptions = subscriptions.slice(start, start + PAGE_SIZE)
+  const pageSubscriptions = filteredSubscriptions.slice(start, start + PAGE_SIZE)
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-3">
+      <Input
+        value={search}
+        onChange={(event) => handleSearchChange(event.target.value)}
+        placeholder="Buscar por comercio o plan..."
+        aria-label="Buscar solicitudes"
+        className="max-w-sm"
+      />
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -110,7 +136,7 @@ export function SubscriptionsTable({ subscriptions }: { subscriptions: Subscript
       <PaginationControls
         page={currentPage}
         totalPages={totalPages}
-        totalCount={subscriptions.length}
+        totalCount={filteredSubscriptions.length}
         onPrevious={() => setPage(currentPage - 1)}
         onNext={() => setPage(currentPage + 1)}
       />
