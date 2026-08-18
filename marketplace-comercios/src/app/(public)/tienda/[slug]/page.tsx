@@ -18,6 +18,8 @@ import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopServiceList } from '@/components/shop/shop-service-list'
+import { BookingSection } from '@/components/turnos/booking-section'
+import { getPublicBookingSettings } from '@/lib/turnos/queries'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopMoreLinksMenu } from '@/components/shop/shop-more-links-menu'
 import { ExpandableDescription } from '@/components/shop/expandable-description'
@@ -303,6 +305,13 @@ export default async function ShopPage({ params }: ShopPageProps) {
           <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
         )}
       </section>
+
+      {isService && (await getPublicBookingSettings(shop.id))?.is_enabled && (
+        <section className="space-y-4">
+          <h2 className="text-lg font-heading">Turnos</h2>
+          <BookingSection shopId={shop.id} />
+        </section>
+      )}
 
       {isFeatured && (
         <section className="space-y-4">

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+  Calendar,
   CreditCard,
   Flag,
   History,
@@ -33,6 +34,7 @@ const ICONS = {
   dashboard: LayoutDashboard,
   sparkles: Sparkles,
   users: Users,
+  calendar: Calendar,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

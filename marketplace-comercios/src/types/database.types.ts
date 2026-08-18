@@ -551,6 +551,103 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          ends_at: string
+          hold_expires_at: string | null
+          id: string
+          origin: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at: string | null
+          shop_id: string
+          starts_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at: string
+          hold_expires_at?: string | null
+          id?: string
+          origin?: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at?: string | null
+          shop_id: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at?: string
+          hold_expires_at?: string | null
+          id?: string
+          origin?: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at?: string | null
+          shop_id?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_booking_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          shop_id: string
+          slot_duration_minutes: number
+          timezone: string
+          updated_at: string
+          weekly_hours: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          shop_id: string
+          slot_duration_minutes?: number
+          timezone?: string
+          updated_at?: string
+          weekly_hours?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          shop_id?: string
+          slot_duration_minutes?: number
+          timezone?: string
+          updated_at?: string
+          weekly_hours?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_booking_settings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: true
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_contacts: {
         Row: {
           client_id: string
@@ -2151,6 +2248,63 @@ export type Database = {
         Args: { p_reason?: string; p_shop_id: string }
         Returns: undefined
       }
+      request_appointment: {
+        Args: {
+          p_customer_email?: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_shop_id: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      confirm_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
+      reject_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
+      create_manual_appointment: {
+        Args: {
+          p_customer_email?: string
+          p_customer_name: string
+          p_customer_phone?: string
+          p_shop_id: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      block_slot: {
+        Args: { p_ends_at: string; p_shop_id: string; p_starts_at: string }
+        Returns: string
+      }
+      reschedule_appointment: {
+        Args: { p_appointment_id: string; p_new_starts_at: string }
+        Returns: undefined
+      }
+      cancel_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
+      complete_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
+      expire_pending_holds: { Args: { p_shop_id: string }; Returns: undefined }
+      mark_no_show: { Args: { p_appointment_id: string }; Returns: undefined }
+      set_booking_settings: {
+        Args: {
+          p_is_enabled: boolean
+          p_shop_id: string
+          p_slot_duration_minutes: number
+          p_weekly_hours: Json
+        }
+        Returns: undefined
+      }
+      get_available_slots: {
+        Args: { p_date: string; p_shop_id: string }
+        Returns: { starts_at: string; ends_at: string }[]
+      }
+      enqueue_appointment_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          shop_id: string
+          shop_name: string
+          starts_at: string
+          customer_email: string
+        }[]
+      }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }
       unsuspend_shop: { Args: { p_shop_id: string }; Returns: undefined }
@@ -2166,6 +2320,15 @@ export type Database = {
       }
     }
     Enums: {
+      appointment_origin: "online" | "manual"
+      appointment_status:
+        | "pending"
+        | "confirmed"
+        | "rejected"
+        | "cancelled"
+        | "completed"
+        | "no_show"
+        | "blocked"
       report_reason:
         | "fake_product"
         | "scam"
@@ -2319,6 +2482,16 @@ export const Constants = {
   },
   public: {
     Enums: {
+      appointment_origin: ["online", "manual"],
+      appointment_status: [
+        "pending",
+        "confirmed",
+        "rejected",
+        "cancelled",
+        "completed",
+        "no_show",
+        "blocked",
+      ],
       report_reason: [
         "fake_product",
         "scam",

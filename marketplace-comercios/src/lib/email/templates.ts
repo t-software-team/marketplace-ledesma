@@ -151,3 +151,25 @@ export function shopReactivatedEmail(shopName: string) {
     ),
   }
 }
+
+export function appointmentConfirmedEmail(shopName: string, whenText: string) {
+  return {
+    subject: `Tu turno en ${shopName} fue confirmado ✅`,
+    html: layout(
+      '¡Tu turno fue confirmado!',
+      `<p><strong>${shopName}</strong> confirmó tu turno para el <strong>${whenText}</strong>.</p>
+       <p>Si necesitás reprogramarlo o cancelarlo, contactá directamente al comercio.</p>`
+    ),
+  }
+}
+
+export function appointmentReminderEmail(shopName: string, whenText: string) {
+  return {
+    subject: `Recordatorio: tenés un turno en ${shopName} mañana`,
+    html: layout(
+      'Te recordamos tu turno',
+      `<p>Te esperamos en <strong>${shopName}</strong> el <strong>${whenText}</strong>.</p>
+       <p>Si no podés asistir, avisale al comercio para liberar el horario.</p>`
+    ),
+  }
+}
