@@ -1,4 +1,5 @@
 import {
+  Calendar,
   CalendarX,
   Clock,
   MessageCircle,
@@ -62,6 +63,12 @@ const NOTIFICATION_TYPE_CONFIG: Record<
     style: 'bg-primary/10 text-primary',
     href: (referenceId) => `/producto/${referenceId}`,
   },
+  new_turno_request: {
+    label: 'Nueva solicitud de turno',
+    icon: Calendar,
+    style: 'bg-primary/15 text-primary',
+    href: () => '/mi-tienda/turnos',
+  },
 }
 
 interface ShopNotificationsPageProps {
@@ -93,6 +100,12 @@ export default async function ShopNotificationsPage({
           Te contactaron por {notification.contact.productName}
         </span>
       ) : undefined
+    } else if (notification.type === 'new_turno_request' && notification.appointment) {
+      extra = (
+        <span className="text-xs text-muted-foreground">
+          {notification.appointment.customerName ?? 'Un cliente'} solicitó un turno
+        </span>
+      )
     }
 
     const Icon = config?.icon ?? Star
