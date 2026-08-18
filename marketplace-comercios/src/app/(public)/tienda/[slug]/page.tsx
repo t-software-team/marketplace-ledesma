@@ -210,7 +210,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
                 />
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
-                {isFeatured && rating.reviewCount > 0 && (
+                {rating.reviewCount > 0 && (
                   <span className="flex shrink-0 items-center gap-1">
                     <StarRating rating={rating.avgRating} />
                     <span>
@@ -218,13 +218,13 @@ export default async function ShopPage({ params }: ShopPageProps) {
                     </span>
                   </span>
                 )}
-                {isFeatured && rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
+                {rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
                 {followerCount > 0 && (
                   <span className="shrink-0">
                     {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
                   </span>
                 )}
-                {((isFeatured && rating.reviewCount > 0) || followerCount > 0) && categoryName && (
+                {(rating.reviewCount > 0 || followerCount > 0) && categoryName && (
                   <span aria-hidden>·</span>
                 )}
                 {categoryName && (

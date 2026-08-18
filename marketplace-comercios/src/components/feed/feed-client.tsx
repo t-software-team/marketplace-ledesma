@@ -182,9 +182,19 @@ export function FeedClient({
               placeholder="Buscar productos, servicios o comercios..."
               value={searchInput}
               onChange={(event) => handleSearchChange(event.target.value)}
-              className="h-11 rounded-full border-transparent bg-muted pl-10 focus-visible:bg-surface"
+              className="h-11 rounded-full border-transparent bg-muted pl-10 pr-10 focus-visible:bg-surface"
               aria-label="Buscar productos, servicios o comercios"
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                className="absolute top-1/2 right-3 flex size-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Limpiar búsqueda"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            )}
           </div>
           <button
             type="button"

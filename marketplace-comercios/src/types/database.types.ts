@@ -63,6 +63,62 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          ends_at: string
+          hold_expires_at: string | null
+          id: string
+          origin: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at: string | null
+          shop_id: string
+          starts_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at: string
+          hold_expires_at?: string | null
+          id?: string
+          origin?: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at?: string | null
+          shop_id: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at?: string
+          hold_expires_at?: string | null
+          id?: string
+          origin?: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at?: string | null
+          shop_id?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -550,6 +606,47 @@ export type Database = {
           id?: never
         }
         Relationships: []
+      }
+      shop_booking_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean
+          shop_id: string
+          slot_duration_minutes: number
+          timezone: string
+          updated_at: string
+          weekly_hours: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          shop_id: string
+          slot_duration_minutes?: number
+          timezone?: string
+          updated_at?: string
+          weekly_hours?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          shop_id?: string
+          slot_duration_minutes?: number
+          timezone?: string
+          updated_at?: string
+          weekly_hours?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_booking_settings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: true
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_contacts: {
         Row: {
@@ -1285,6 +1382,18 @@ export type Database = {
         Args: { p_subscription_id: string }
         Returns: undefined
       }
+      assert_owns_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: string
+      }
+      block_slot: {
+        Args: { p_ends_at: string; p_shop_id: string; p_starts_at: string }
+        Returns: string
+      }
+      cancel_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       check_rate_limit: {
         Args: {
           p_action: string
@@ -1294,10 +1403,25 @@ export type Database = {
         }
         Returns: boolean
       }
-      delete_admin_notification: {
-        Args: { p_id: string }
+      complete_appointment: {
+        Args: { p_appointment_id: string }
         Returns: undefined
       }
+      confirm_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
+      create_manual_appointment: {
+        Args: {
+          p_customer_email?: string
+          p_customer_name: string
+          p_customer_phone?: string
+          p_shop_id: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      delete_admin_notification: { Args: { p_id: string }; Returns: undefined }
       delete_read_admin_notifications: { Args: never; Returns: undefined }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
@@ -1331,7 +1455,18 @@ export type Database = {
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
+      enqueue_appointment_reminders: {
+        Args: never
+        Returns: {
+          customer_email: string
+          id: string
+          shop_id: string
+          shop_name: string
+          starts_at: string
+        }[]
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      expire_pending_holds: { Args: { p_shop_id: string }; Returns: undefined }
       expire_subscriptions: { Args: never; Returns: undefined }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -1431,6 +1566,13 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_available_slots: {
+        Args: { p_date: string; p_shop_id: string }
+        Returns: {
+          ends_at: string
+          starts_at: string
+        }[]
+      }
       get_products_feed: {
         Args: {
           p_attribute_value?: string
@@ -1454,10 +1596,12 @@ export type Database = {
           product_is_featured: boolean
           product_name: string
           rubro_slug: string
+          shop_avg_rating: number
           shop_id: string
           shop_is_featured: boolean
           shop_is_verified: boolean
           shop_name: string
+          shop_review_count: number
         }[]
       }
       get_shop_follow_stats: {
@@ -1507,6 +1651,7 @@ export type Database = {
       }
       mark_all_admin_notifications_read: { Args: never; Returns: undefined }
       mark_client_notifications_read: { Args: never; Returns: undefined }
+      mark_no_show: { Args: { p_appointment_id: string }; Returns: undefined }
       normalize_category_text: { Args: { p_text: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -1548,6 +1693,10 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      reject_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       reject_category_suggestion: {
         Args: { p_reason: string; p_suggestion_id: string }
         Returns: undefined
@@ -1558,6 +1707,29 @@ export type Database = {
       }
       reject_subscription: {
         Args: { p_reason: string; p_subscription_id: string }
+        Returns: undefined
+      }
+      request_appointment: {
+        Args: {
+          p_customer_email?: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_shop_id: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      reschedule_appointment: {
+        Args: { p_appointment_id: string; p_new_starts_at: string }
+        Returns: undefined
+      }
+      set_booking_settings: {
+        Args: {
+          p_is_enabled: boolean
+          p_shop_id: string
+          p_slot_duration_minutes: number
+          p_weekly_hours: Json
+        }
         Returns: undefined
       }
       set_shop_location: {
@@ -2166,6 +2338,15 @@ export type Database = {
       }
     }
     Enums: {
+      appointment_origin: "online" | "manual"
+      appointment_status:
+        | "pending"
+        | "confirmed"
+        | "rejected"
+        | "cancelled"
+        | "completed"
+        | "no_show"
+        | "blocked"
       report_reason:
         | "fake_product"
         | "scam"
@@ -2319,6 +2500,16 @@ export const Constants = {
   },
   public: {
     Enums: {
+      appointment_origin: ["online", "manual"],
+      appointment_status: [
+        "pending",
+        "confirmed",
+        "rejected",
+        "cancelled",
+        "completed",
+        "no_show",
+        "blocked",
+      ],
       report_reason: [
         "fake_product",
         "scam",
