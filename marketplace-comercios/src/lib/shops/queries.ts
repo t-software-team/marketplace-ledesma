@@ -197,7 +197,13 @@ export async function getActiveCategories() {
     .order('name', { ascending: true })
     .limit(100)
 
-  return categories ?? []
+  // "Tienda de ropa" va primero en el chip de rubros (pedido de negocio);
+  // el resto mantiene el orden alfabético.
+  return [...(categories ?? [])].sort((a, b) => {
+    if (a.slug === 'tienda-de-ropa') return -1
+    if (b.slug === 'tienda-de-ropa') return 1
+    return 0
+  })
 }
 
 export async function getCategoryAttributes(categoryId: string | null) {
