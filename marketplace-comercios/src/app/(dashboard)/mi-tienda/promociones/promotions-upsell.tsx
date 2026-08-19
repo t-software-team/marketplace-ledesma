@@ -42,7 +42,7 @@ export function PromotionsUpsell({ noun = 'producto' }: { noun?: string }) {
 
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-primary">Beneficio del Plan 50 y el Plan Ilimitado</p>
+            <p className="text-sm font-medium text-primary">Beneficio del Plan Básico y el Plan Ilimitado</p>
             <h3 className="mt-0.5 font-heading text-lg">Así se ve una promo en el feed</h3>
           </div>
 

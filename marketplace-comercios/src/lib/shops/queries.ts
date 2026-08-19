@@ -850,7 +850,7 @@ export async function getProductLimitInfo(shopId: string) {
   };
 }
 
-const FREE_PLAN_MAX_IMAGES = 3;
+const FREE_PLAN_MAX_IMAGES = 2;
 const PAID_PLAN_MAX_IMAGES = 5;
 
 export async function getProductImageLimitInfo(shopId: string) {
