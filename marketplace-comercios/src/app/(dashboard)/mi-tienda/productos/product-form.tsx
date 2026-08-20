@@ -29,7 +29,7 @@ interface ProductFormProps {
     currency: string
     category_id: string | null
     is_active: boolean
-    imageUrls: string[]
+    image_urls: string[]
     videoUrl?: string | null
     variants?: { name: string; price: number }[]
     attributes?: Record<string, string | string[]>
@@ -124,7 +124,7 @@ export function ProductForm({
 
       <ProductImagesField
         shopId={shopId}
-        initialImages={defaultValues?.imageUrls}
+        initialImages={defaultValues?.image_urls}
         noun={noun}
         maxImages={maxImages}
       />

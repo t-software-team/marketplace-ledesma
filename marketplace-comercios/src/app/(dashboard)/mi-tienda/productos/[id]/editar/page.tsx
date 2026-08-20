@@ -88,7 +88,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
           currency: product.currency,
           category_id: product.category_id,
           is_active: product.is_active,
-          imageUrls: images.map((image) => image.url),
+          image_urls: images.map((image) => image.url),
           videoUrl: product.video_url,
           variants: variants.map((v) => ({ name: v.name, price: v.price })),
           attributes: defaultAttributes,

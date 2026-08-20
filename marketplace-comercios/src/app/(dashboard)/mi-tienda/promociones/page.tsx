@@ -56,7 +56,7 @@ export default async function PromotionsPage() {
               products={products.map((product) => ({
                 id: product.id,
                 name: product.name,
-                imageUrls: product.imageUrls,
+                image_urls: product.image_urls,
               }))}
               noun={noun}
             />

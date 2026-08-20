@@ -220,9 +220,9 @@ export interface MyShopProductsResult {
     currency: string;
     is_active: boolean;
     is_featured: boolean;
-    mainImage: string | null;
-    imageUrls: string[];
-    categoryName: string | null;
+    main_image: string | null;
+    image_urls: string[];
+    category_name: string | null;
   }[];
   totalCount: number;
   page: number;
@@ -295,9 +295,9 @@ export async function getMyShopProducts(
       currency: product.currency,
       is_active: product.is_active,
       is_featured: product.is_featured,
-      mainImage: images[0]?.url ?? null,
-      imageUrls: images.map((image) => image.url),
-      categoryName: product.categories?.name ?? null,
+      main_image: images[0]?.url ?? null,
+      image_urls: images.map((image) => image.url),
+      category_name: product.categories?.name ?? null,
     };
   });
 
@@ -908,7 +908,7 @@ export async function getShopProducts(
       name: product.name,
       price: product.price,
       currency: product.currency,
-      mainImage: images[0]?.url ?? null,
+      main_image: images[0]?.url ?? null,
     };
   });
 }

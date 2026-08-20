@@ -29,8 +29,8 @@ interface Product {
   currency: string
   is_active: boolean
   is_featured: boolean
-  mainImage: string | null
-  categoryName: string | null
+  main_image: string | null
+  category_name: string | null
 }
 
 function formatPrice(price: number | null, currency: string) {
@@ -45,9 +45,9 @@ function formatPrice(price: number | null, currency: string) {
 function ProductThumbnail({ product }: { product: Product }) {
   return (
     <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
-      {product.mainImage ? (
+      {product.main_image ? (
         <Image
-          src={product.mainImage}
+          src={product.main_image}
           alt={product.name}
           fill
           className="object-cover"
@@ -71,8 +71,8 @@ function ProductNameCell({ product }: { product: Product }) {
   return (
     <div className="min-w-0 flex-1">
       <p className="truncate font-medium">{product.name}</p>
-      {product.categoryName ? (
-        <p className="truncate text-xs text-muted-foreground">{product.categoryName}</p>
+      {product.category_name ? (
+        <p className="truncate text-xs text-muted-foreground">{product.category_name}</p>
       ) : (
         <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
           <AlertTriangle className="size-3 shrink-0" aria-hidden />
@@ -268,7 +268,7 @@ export function ProductsList({
                       <span className="font-mono text-xs text-muted-foreground">
                         {formatPrice(product.price, product.currency)}
                       </span>
-                      {!product.categoryName && (
+                      {!product.category_name && (
                         <span className="flex items-center gap-0.5 text-xs font-medium text-warning-foreground">
                           <AlertTriangle className="size-3 shrink-0" aria-hidden />
                           Sin subcategoría

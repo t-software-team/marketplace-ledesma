@@ -14,7 +14,7 @@ import { createPromotion, type ActionState } from '@/lib/shops/actions'
 
 interface CreatePromotionFormProps {
   shopId: string
-  products: { id: string; name: string; imageUrls: string[] }[]
+  products: { id: string; name: string; image_urls: string[] }[]
   noun?: string
 }
 
@@ -109,9 +109,9 @@ export function CreatePromotionForm({ shopId, products, noun = 'producto' }: Cre
         <div className="space-y-2">
           <label className="text-sm font-medium">Imagen de la promo</label>
 
-          {selectedProduct && selectedProduct.imageUrls.length > 0 && (
+          {selectedProduct && selectedProduct.image_urls.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {selectedProduct.imageUrls.map((url) => (
+              {selectedProduct.image_urls.map((url) => (
                 <button
                   key={url}
                   type="button"
@@ -146,7 +146,7 @@ export function CreatePromotionForm({ shopId, products, noun = 'producto' }: Cre
             </div>
           )}
 
-          {(!selectedProduct || selectedProduct.imageUrls.length === 0) &&
+          {(!selectedProduct || selectedProduct.image_urls.length === 0) &&
             (imageUrl ? (
               <div className="relative size-20 overflow-hidden rounded-lg border border-border bg-muted">
                 <Image
@@ -328,7 +328,7 @@ export function CreatePromotionForm({ shopId, products, noun = 'producto' }: Cre
               onChange={(event) => {
                 setProductId(event.target.value)
                 const product = products.find((item) => item.id === event.target.value)
-                if (product?.imageUrls[0]) setImageUrl(product.imageUrls[0])
+                if (product?.image_urls[0]) setImageUrl(product.image_urls[0])
               }}
               className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >

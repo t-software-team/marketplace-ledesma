@@ -15,7 +15,7 @@ export interface ShopProductItem {
   name: string
   price: number | null
   currency: string
-  mainImage: string | null
+  main_image: string | null
 }
 
 interface ShopProductGridProps {
@@ -110,9 +110,9 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
               <Link key={product.id} href={`/producto/${product.id}`} className="block">
                 <Card className="overflow-hidden py-0 ring-border/60 transition-colors hover:ring-primary/30">
                   <div className="relative aspect-square bg-muted">
-                    {product.mainImage ? (
+                    {product.main_image ? (
                       <Image
-                        src={product.mainImage}
+                        src={product.main_image}
                         alt={product.name}
                         fill
                         className="object-cover"

@@ -4,21 +4,23 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 const SPLASH_DURATION_MS = 1000
-const SPLASH_SESSION_KEY = 'splash-shown'
+const SPLASH_SEEN_KEY = 'splash-seen'
 
 export function SplashScreen() {
   const [visible, setVisible] = useState(true)
   const [fadingOut, setFadingOut] = useState(false)
 
   useEffect(() => {
-    // Solo una vez por sesión de navegador: en navegaciones internas este
-    // componente no se remonta (el layout persiste), así que este check solo
-    // corre en cargas completas (F5, abrir la PWA de cero).
-    if (sessionStorage.getItem(SPLASH_SESSION_KEY)) {
+    // Solo una vez por dispositivo/navegador (no por sesión): una vez que el
+    // usuario la vio, localStorage persiste entre cierres de pestaña/app y
+    // no vuelve a mostrarse. En navegaciones internas este componente no se
+    // remonta (el layout persiste), así que este check solo corre en cargas
+    // completas (F5, abrir la PWA de cero).
+    if (localStorage.getItem(SPLASH_SEEN_KEY)) {
       setVisible(false)
       return
     }
-    sessionStorage.setItem(SPLASH_SESSION_KEY, '1')
+    localStorage.setItem(SPLASH_SEEN_KEY, '1')
 
     const fadeTimer = setTimeout(() => setFadingOut(true), SPLASH_DURATION_MS)
     const hideTimer = setTimeout(() => setVisible(false), SPLASH_DURATION_MS + 300)

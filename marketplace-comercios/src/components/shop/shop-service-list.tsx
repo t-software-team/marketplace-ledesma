@@ -118,9 +118,9 @@ export function ShopServiceList({
                     className="flex min-w-0 flex-1 items-center gap-3 active:scale-[0.99] active:transition-transform sm:gap-4"
                   >
                     <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-16">
-                      {service.mainImage ? (
+                      {service.main_image ? (
                         <Image
-                          src={service.mainImage}
+                          src={service.main_image}
                           alt={service.name}
                           fill
                           className="object-cover"

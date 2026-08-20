@@ -370,9 +370,9 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
                 className="overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-primary"
               >
                 <div className="relative aspect-square bg-muted">
-                  {product.mainImage ? (
+                  {product.main_image ? (
                     <Image
-                      src={product.mainImage}
+                      src={product.main_image}
                       alt={product.name}
                       fill
                       className="object-cover"

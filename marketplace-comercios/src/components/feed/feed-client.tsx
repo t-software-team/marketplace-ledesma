@@ -2,13 +2,11 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { MapPin, Search, Store, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryGrid } from './category-grid'
-import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
-import { AttributeFilterSheet } from './attribute-filter-sheet'
 import { ProductCard, type ProductFeedItem } from '@/components/shared/product-card'
-import { BackToTopButton } from '@/components/shared/back-to-top-button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
@@ -23,6 +21,18 @@ import { useFiltersStore } from '@/stores/use-filters-store'
 import { cn } from '@/lib/utils'
 
 const SELL_BANNER_DISMISSED_KEY = 'sell-banner-dismissed'
+
+// Lazy-loaded: not needed for the initial paint (LCP), only rendered once
+// category/attribute data is available or after the user scrolls.
+const SubcategoryFilterSheet = dynamic(() =>
+  import('./subcategory-filter-sheet').then((mod) => mod.SubcategoryFilterSheet)
+)
+const AttributeFilterSheet = dynamic(() =>
+  import('./attribute-filter-sheet').then((mod) => mod.AttributeFilterSheet)
+)
+const BackToTopButton = dynamic(() =>
+  import('@/components/shared/back-to-top-button').then((mod) => mod.BackToTopButton)
+)
 
 interface Category {
   id: string
@@ -79,12 +89,36 @@ export function FeedClient({
     data: products,
     isLoading,
     isFetching,
+    isError: isProductsError,
+    error: productsError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useProductsFeed()
-  const { data: matchingShops } = useShopSearch()
-  const { data: rubroAttributes } = useCategoryAttributes(activeRubroId)
+    refetch: refetchProducts,
+  } = useProductsFeed(initialProducts)
+  const { data: matchingShops, isError: isShopSearchError, error: shopSearchError } = useShopSearch()
+  const {
+    data: rubroAttributes,
+    isError: isAttributesError,
+    error: attributesError,
+  } = useCategoryAttributes(activeRubroId)
+
+  useEffect(() => {
+    if (!isShopSearchError) return
+    console.error('useShopSearch: fallo al buscar comercios', shopSearchError)
+    toast.add({ title: 'No pudimos buscar comercios', type: 'error' })
+  }, [isShopSearchError, shopSearchError])
+
+  useEffect(() => {
+    if (!isProductsError) return
+    console.error('useProductsFeed: fallo al cargar el feed', productsError)
+  }, [isProductsError, productsError])
+
+  useEffect(() => {
+    if (!isAttributesError) return
+    console.error('useCategoryAttributes: fallo al cargar atributos del rubro', attributesError)
+    toast.add({ title: 'No pudimos cargar los filtros de este rubro', type: 'error' })
+  }, [isAttributesError, attributesError])
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [searchInput, setSearchInput] = useState(searchQuery)
@@ -255,6 +289,10 @@ export function FeedClient({
         )}
       </div>
 
+      {isShopSearchError && searchQuery.trim().length >= 2 && (
+        <p className="text-sm text-destructive">No pudimos buscar comercios. Probá de nuevo.</p>
+      )}
+
       {matchingShops && matchingShops.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">Comercios</h2>
@@ -293,6 +331,20 @@ export function FeedClient({
             <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
           ))}
         </div>
+      ) : isProductsError && displayProducts.length === 0 ? (
+        <EmptyState
+          illustration={<EmptySearchIllustration />}
+          message="No pudimos cargar los productos. Revisá tu conexión e intentá de nuevo."
+          action={
+            <button
+              type="button"
+              onClick={() => refetchProducts()}
+              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Reintentar
+            </button>
+          }
+        />
       ) : displayProducts.length === 0 ? (
         <EmptyState
           illustration={<EmptySearchIllustration />}
