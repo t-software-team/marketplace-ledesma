@@ -2,6 +2,113 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 
+export const PLAN_LIMITS_CACHE_TAG = "plan-limits";
+
+interface PlanLimitsRow {
+  plan_id: string | null;
+  max_products_service: number | null;
+  max_products_product: number | null;
+  max_images: number;
+  max_variants: number;
+}
+
+interface PlanLimitsData {
+  byPlanId: Map<string, PlanLimitsRow>;
+  defaultLimits: PlanLimitsRow | null;
+  freeServicePlanId: string | null;
+  freeProductPlanId: string | null;
+}
+
+// Los límites por plan viven en la tabla plan_limits en Supabase (única
+// fuente de verdad, también consumida por la futura app mobile), con una
+// fila por plan_id real de subscription_plans (más una fila "por defecto"
+// con plan_id NULL usada como fallback para planes pagos sin fila propia).
+// Se cachean brevemente por request/despliegue para no golpear la DB en cada
+// validación de límite; revalidatePlanLimitsCache() invalida esto cuando el
+// superadmin edita los valores desde el panel de admin.
+const getPlanLimitsData = unstable_cache(
+  async (): Promise<PlanLimitsData> => {
+    const supabase = createPublicClient();
+
+    const [{ data: limitRows }, { data: freePlans }] = await Promise.all([
+      supabase
+        .from("plan_limits")
+        .select(
+          "plan_id, max_products_service, max_products_product, max_images, max_variants",
+        ),
+      supabase
+        .from("subscription_plans")
+        .select("id, applies_to")
+        .eq("price", 0)
+        .eq("is_active", true),
+    ]);
+
+    const byPlanId = new Map<string, PlanLimitsRow>();
+    let defaultLimits: PlanLimitsRow | null = null;
+
+    for (const row of limitRows ?? []) {
+      if (row.plan_id) {
+        byPlanId.set(row.plan_id, row);
+      } else {
+        defaultLimits = row;
+      }
+    }
+
+    let freeServicePlanId: string | null = null;
+    let freeProductPlanId: string | null = null;
+
+    for (const plan of freePlans ?? []) {
+      if (
+        (plan.applies_to === "service" || plan.applies_to === "all") &&
+        !freeServicePlanId
+      ) {
+        freeServicePlanId = plan.id;
+      }
+      if (
+        (plan.applies_to === "product" || plan.applies_to === "all") &&
+        !freeProductPlanId
+      ) {
+        freeProductPlanId = plan.id;
+      }
+    }
+
+    return { byPlanId, defaultLimits, freeServicePlanId, freeProductPlanId };
+  },
+  ["plan-limits"],
+  { revalidate: 60, tags: [PLAN_LIMITS_CACHE_TAG] },
+);
+
+function resolveFreeLimits(
+  data: PlanLimitsData,
+  isService: boolean,
+): PlanLimitsRow | null {
+  const planId = isService ? data.freeServicePlanId : data.freeProductPlanId;
+  const row = planId ? data.byPlanId.get(planId) : undefined;
+  return row ?? data.defaultLimits ?? null;
+}
+
+// Cualquier fila free sirve de base para límites que no distinguen rubro
+// (imágenes, variantes); se prioriza la de "product" y se cae a "service" o
+// a la fila por defecto.
+function resolveAnyFreeLimits(data: PlanLimitsData): PlanLimitsRow | null {
+  const planId = data.freeProductPlanId ?? data.freeServicePlanId;
+  const row = planId ? data.byPlanId.get(planId) : undefined;
+  return row ?? data.defaultLimits ?? null;
+}
+
+// Centraliza la resolución del límite de productos del plan gratuito para
+// un comercio, según su rubro (servicio o producto). Reemplaza el
+// hardcodeo que existía en mi-tienda/page.tsx y mi-tienda/suscripcion/page.tsx.
+export async function getFreeProductMax(
+  isService: boolean,
+): Promise<number | null> {
+  const data = await getPlanLimitsData();
+  const row = resolveFreeLimits(data, isService);
+  return isService
+    ? (row?.max_products_service ?? null)
+    : (row?.max_products_product ?? null);
+}
+
 export async function getMyShop() {
   const supabase = await createClient();
 
@@ -806,13 +913,10 @@ export async function getShopProducts(
   });
 }
 
-const FREE_PLAN_MAX_PRODUCTS_SERVICE = 3;
-const FREE_PLAN_MAX_PRODUCTS_PRODUCT = 15;
-
 export async function getProductLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const [{ count }, { data: activeSubscription }, { data: shop }] =
+  const [{ count }, { data: activeSubscription }, { data: shop }, limitsData] =
     await Promise.all([
       supabase
         .from("products")
@@ -831,6 +935,7 @@ export async function getProductLimitInfo(shopId: string) {
         .select("categories ( is_service )")
         .eq("id", shopId)
         .maybeSingle(),
+      getPlanLimitsData(),
     ]);
 
   const used = count ?? 0;
@@ -838,9 +943,11 @@ export async function getProductLimitInfo(shopId: string) {
     { max_products?: number | null } | null | undefined;
 
   const hasActivePlan = Boolean(activeSubscription);
-  const freeMax = shop?.categories?.is_service
-    ? FREE_PLAN_MAX_PRODUCTS_SERVICE
-    : FREE_PLAN_MAX_PRODUCTS_PRODUCT;
+  const isService = Boolean(shop?.categories?.is_service);
+  const freeLimits = resolveFreeLimits(limitsData, isService);
+  const freeMax = isService
+    ? (freeLimits?.max_products_service ?? null)
+    : (freeLimits?.max_products_product ?? null);
   const max = hasActivePlan ? (benefits?.max_products ?? null) : freeMax;
 
   return {
@@ -850,54 +957,54 @@ export async function getProductLimitInfo(shopId: string) {
   };
 }
 
-const FREE_PLAN_MAX_IMAGES = 2;
-const PAID_PLAN_MAX_IMAGES = 5;
-
 export async function getProductImageLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const { data: activeSubscription } = await supabase
-    .from("subscriptions")
-    .select("subscription_plans ( benefits )")
-    .eq("shop_id", shopId)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: activeSubscription }, limitsData] = await Promise.all([
+    supabase
+      .from("subscriptions")
+      .select("subscription_plans ( benefits )")
+      .eq("shop_id", shopId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    getPlanLimitsData(),
+  ]);
 
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_images?: number | null } | null | undefined;
 
   const hasActivePlan = Boolean(activeSubscription);
   const max = hasActivePlan
-    ? (benefits?.max_images ?? PAID_PLAN_MAX_IMAGES)
-    : FREE_PLAN_MAX_IMAGES;
+    ? (benefits?.max_images ?? limitsData.defaultLimits?.max_images ?? 5)
+    : (resolveAnyFreeLimits(limitsData)?.max_images ?? 2);
 
   return { max };
 }
 
-const FREE_PLAN_MAX_VARIANTS = 3;
-const PAID_PLAN_MAX_VARIANTS = 10;
-
 export async function getProductVariantLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const { data: activeSubscription } = await supabase
-    .from("subscriptions")
-    .select("subscription_plans ( benefits )")
-    .eq("shop_id", shopId)
-    .eq("status", "active")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: activeSubscription }, limitsData] = await Promise.all([
+    supabase
+      .from("subscriptions")
+      .select("subscription_plans ( benefits )")
+      .eq("shop_id", shopId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    getPlanLimitsData(),
+  ]);
 
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_variants?: number | null } | null | undefined;
 
   const hasActivePlan = Boolean(activeSubscription);
   const max = hasActivePlan
-    ? (benefits?.max_variants ?? PAID_PLAN_MAX_VARIANTS)
-    : FREE_PLAN_MAX_VARIANTS;
+    ? (benefits?.max_variants ?? limitsData.defaultLimits?.max_variants ?? 10)
+    : (resolveAnyFreeLimits(limitsData)?.max_variants ?? 3);
 
   return { max };
 }

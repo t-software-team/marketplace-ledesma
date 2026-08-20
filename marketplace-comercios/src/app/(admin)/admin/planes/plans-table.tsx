@@ -85,7 +85,7 @@ export function PlansTable({ plans }: { plans: Plan[] }) {
                 />
               </TableCell>
               <TableCell className="text-right">
-                <PlanRowActions planId={plan.id} isActive={plan.is_active} />
+                <PlanRowActions planId={plan.id} planName={plan.name} isActive={plan.is_active} />
               </TableCell>
             </TableRow>
           ))}

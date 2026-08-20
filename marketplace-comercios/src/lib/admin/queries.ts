@@ -106,6 +106,18 @@ export async function getShopForReview(shopId: string) {
   }
 }
 
+export async function getPlanLimitsByPlanId(planId: string) {
+  const supabase = await createClient()
+
+  const { data } = await supabase
+    .from('plan_limits')
+    .select('max_products_service, max_products_product, max_images, max_variants')
+    .eq('plan_id', planId)
+    .maybeSingle()
+
+  return data
+}
+
 export async function getCategoriesList() {
   const supabase = await createClient()
 
@@ -190,13 +202,24 @@ export async function getSubscriptionPlans() {
 export async function getSubscriptionPlanById(planId: string) {
   const supabase = await createClient()
 
-  const { data: plan } = await supabase
-    .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active, applies_to')
-    .eq('id', planId)
-    .maybeSingle()
+  const [{ data: plan }, limits] = await Promise.all([
+    supabase
+      .from('subscription_plans')
+      .select('id, name, description, price, duration_days, benefits, is_active, applies_to')
+      .eq('id', planId)
+      .maybeSingle(),
+    getPlanLimitsByPlanId(planId),
+  ])
 
-  return plan
+  if (!plan) return null
+
+  return {
+    ...plan,
+    max_products_service: limits?.max_products_service ?? null,
+    max_products_product: limits?.max_products_product ?? null,
+    max_images: limits?.max_images ?? null,
+    max_variants: limits?.max_variants ?? null,
+  }
 }
 
 export async function getSignedPaymentProofUrl(path: string) {

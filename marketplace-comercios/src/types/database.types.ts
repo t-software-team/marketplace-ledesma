@@ -378,6 +378,47 @@ export type Database = {
           },
         ]
       }
+      plan_limits: {
+        Row: {
+          created_at: string
+          id: string
+          max_images: number
+          max_products_product: number | null
+          max_products_service: number | null
+          max_variants: number
+          plan_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_images: number
+          max_products_product?: number | null
+          max_products_service?: number | null
+          max_variants: number
+          plan_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_images?: number
+          max_products_product?: number | null
+          max_products_service?: number | null
+          max_variants?: number
+          plan_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_limits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_attribute_values: {
         Row: {
           attribute_id: string

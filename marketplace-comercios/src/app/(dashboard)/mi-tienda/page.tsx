@@ -17,6 +17,7 @@ import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
   getActiveCategories,
   getActiveSubscriptionPlans,
+  getFreeProductMax,
   getMyActiveSubscription,
   getMyShop,
   getMyShopProducts,
@@ -78,18 +79,21 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount] = await Promise.all([
-    getMyShopProducts(shop.id, 1, 4),
-    getShopContactsSeries(shop.id, 14),
-    getMyActiveSubscription(shop.id),
-    getActiveSubscriptionPlans(),
-    getShopFollowStats(shop.id),
-  ])
+  const isService = isServiceRubro(shop.categories?.slug)
+
+  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount, freeMaxForShop] =
+    await Promise.all([
+      getMyShopProducts(shop.id, 1, 4),
+      getShopContactsSeries(shop.id, 14),
+      getMyActiveSubscription(shop.id),
+      getActiveSubscriptionPlans(),
+      getShopFollowStats(shop.id),
+      getFreeProductMax(isService),
+    ])
   const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
   const conversionRate =
     shop.profile_views > 0 ? Math.round((shop.whatsapp_clicks / shop.profile_views) * 100) : null
-  const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
 
@@ -100,7 +104,6 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
 
   const daysUntilExpiry = shop.subscription_expires_at ? daysUntil(shop.subscription_expires_at) : null
 
-  const freeMaxForShop = isService ? 3 : 15
   const freePlan = allPlans.find(
     (plan) =>
       plan.price === 0 && (plan.applies_to === 'all' || plan.applies_to === (isService ? 'service' : 'product'))

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import {
   getActiveSubscriptionPlans,
+  getFreeProductMax,
   getMyActiveSubscription,
   getMyPendingSubscription,
   getMyShop,
@@ -101,15 +102,16 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
     }
   }
 
-  const [allPlans, activeSubscription] = await Promise.all([
+  const isService = isServiceRubro(shop.categories?.slug)
+
+  const [allPlans, activeSubscription, freeMaxForShop] = await Promise.all([
     getActiveSubscriptionPlans(),
     getMyActiveSubscription(shop.id),
+    getFreeProductMax(isService),
   ])
 
-  const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
-  const freeMaxForShop = isService ? 3 : 15
 
   const activePlanId = activeSubscription?.plan_id ?? null
 

@@ -15,6 +15,7 @@ const navItems: DashboardNavItem[] = [
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'users' },
   { href: '/admin/categorias', label: 'Categorías', icon: 'tag' },
   { href: '/admin/subscripciones', label: 'Suscripciones', icon: 'credit-card' },
+  { href: '/admin/planes', label: 'Planes', icon: 'package' },
   { href: '/admin/reportes', label: 'Reportes', icon: 'flag' },
   { href: '/admin/auditoria', label: 'Auditoría', icon: 'clock' },
 ]

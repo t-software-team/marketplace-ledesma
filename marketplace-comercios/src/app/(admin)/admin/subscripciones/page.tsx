@@ -1,23 +1,13 @@
-import Link from 'next/link'
 import { Suspense } from 'react'
-import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
 import { SavedToast } from '@/components/shared/saved-toast'
-import {
-  getSignedPaymentProofUrl,
-  getSubscriptionPlans,
-  getSubscriptionRequests,
-} from '@/lib/admin/queries'
+import { getSignedPaymentProofUrl, getSubscriptionRequests } from '@/lib/admin/queries'
 import { SubscriptionsTable } from './subscriptions-table'
-import { PlansTable } from './plans-table'
 
 export default async function AdminSubscriptionsPage() {
-  const [subscriptions, plans] = await Promise.all([
-    getSubscriptionRequests(),
-    getSubscriptionPlans(),
-  ])
+  const subscriptions = await getSubscriptionRequests()
 
   const withProofUrls = await Promise.all(
     subscriptions.map(async (subscription) => ({
@@ -43,55 +33,32 @@ export default async function AdminSubscriptionsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="solicitudes">
-        <TabsList>
-          <TabsTrigger value="solicitudes">Solicitudes</TabsTrigger>
-          <TabsTrigger value="planes">Planes</TabsTrigger>
-        </TabsList>
+      {withProofUrls.length === 0 ? (
+        <EmptyState message="No hay solicitudes de suscripción." />
+      ) : (
+        <Tabs defaultValue="pendientes">
+          <TabsList>
+            <TabsTrigger value="pendientes">Pendientes ({pending.length})</TabsTrigger>
+            <TabsTrigger value="resueltas">Resueltas ({resolved.length})</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="solicitudes" className="space-y-3 pt-2">
-          {withProofUrls.length === 0 ? (
-            <EmptyState message="No hay solicitudes de suscripción." />
-          ) : (
-            <Tabs defaultValue="pendientes">
-              <TabsList>
-                <TabsTrigger value="pendientes">Pendientes ({pending.length})</TabsTrigger>
-                <TabsTrigger value="resueltas">Resueltas ({resolved.length})</TabsTrigger>
-              </TabsList>
+          <TabsContent value="pendientes" className="pt-3">
+            {pending.length === 0 ? (
+              <EmptyState illustration={<EmptyBoxIllustration />} message="No hay solicitudes pendientes." />
+            ) : (
+              <SubscriptionsTable subscriptions={pending} />
+            )}
+          </TabsContent>
 
-              <TabsContent value="pendientes" className="pt-3">
-                {pending.length === 0 ? (
-                  <EmptyState illustration={<EmptyBoxIllustration />} message="No hay solicitudes pendientes." />
-                ) : (
-                  <SubscriptionsTable subscriptions={pending} />
-                )}
-              </TabsContent>
-
-              <TabsContent value="resueltas" className="pt-3">
-                {resolved.length === 0 ? (
-                  <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay solicitudes resueltas." />
-                ) : (
-                  <SubscriptionsTable subscriptions={resolved} />
-                )}
-              </TabsContent>
-            </Tabs>
-          )}
-        </TabsContent>
-
-        <TabsContent value="planes" className="space-y-3 pt-2">
-          <div className="flex justify-end">
-            <Button render={<Link href="/admin/subscripciones/planes/nueva" />} nativeButton={false}>
-              Nuevo plan
-            </Button>
-          </div>
-
-          {plans.length === 0 ? (
-            <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay planes." />
-          ) : (
-            <PlansTable plans={plans} />
-          )}
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="resueltas" className="pt-3">
+            {resolved.length === 0 ? (
+              <EmptyState illustration={<EmptyBoxIllustration />} message="Todavía no hay solicitudes resueltas." />
+            ) : (
+              <SubscriptionsTable subscriptions={resolved} />
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   )
 }
