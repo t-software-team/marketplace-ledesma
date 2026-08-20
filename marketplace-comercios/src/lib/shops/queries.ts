@@ -13,7 +13,11 @@ interface PlanLimitsRow {
 }
 
 interface PlanLimitsData {
-  byPlanId: Map<string, PlanLimitsRow>;
+  // Array en vez de Map: unstable_cache serializa el resultado a JSON para
+  // persistirlo en caché, y un Map no sobrevive esa serialización (queda un
+  // objeto plano sin .get/.set, lo que rompía en producción con
+  // "byPlanId.get is not a function").
+  limitRows: PlanLimitsRow[];
   defaultLimits: PlanLimitsRow | null;
   freeServicePlanId: string | null;
   freeProductPlanId: string | null;
@@ -43,12 +47,12 @@ const getPlanLimitsData = unstable_cache(
         .eq("is_active", true),
     ]);
 
-    const byPlanId = new Map<string, PlanLimitsRow>();
+    const rowsByPlan: PlanLimitsRow[] = [];
     let defaultLimits: PlanLimitsRow | null = null;
 
     for (const row of limitRows ?? []) {
       if (row.plan_id) {
-        byPlanId.set(row.plan_id, row);
+        rowsByPlan.push(row);
       } else {
         defaultLimits = row;
       }
@@ -72,7 +76,7 @@ const getPlanLimitsData = unstable_cache(
       }
     }
 
-    return { byPlanId, defaultLimits, freeServicePlanId, freeProductPlanId };
+    return { limitRows: rowsByPlan, defaultLimits, freeServicePlanId, freeProductPlanId };
   },
   ["plan-limits"],
   { revalidate: 60, tags: [PLAN_LIMITS_CACHE_TAG] },
@@ -83,7 +87,7 @@ function resolveFreeLimits(
   isService: boolean,
 ): PlanLimitsRow | null {
   const planId = isService ? data.freeServicePlanId : data.freeProductPlanId;
-  const row = planId ? data.byPlanId.get(planId) : undefined;
+  const row = planId ? data.limitRows.find((r) => r.plan_id === planId) : undefined;
   return row ?? data.defaultLimits ?? null;
 }
 
@@ -92,7 +96,7 @@ function resolveFreeLimits(
 // a la fila por defecto.
 function resolveAnyFreeLimits(data: PlanLimitsData): PlanLimitsRow | null {
   const planId = data.freeProductPlanId ?? data.freeServicePlanId;
-  const row = planId ? data.byPlanId.get(planId) : undefined;
+  const row = planId ? data.limitRows.find((r) => r.plan_id === planId) : undefined;
   return row ?? data.defaultLimits ?? null;
 }
 
