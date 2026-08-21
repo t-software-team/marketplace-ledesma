@@ -2,67 +2,35 @@
 
 import Link from 'next/link'
 import { useMemo, useState, useTransition } from 'react'
-import { Ban, Download, CreditCard, AlertTriangle } from 'lucide-react'
+import { Download, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { formatRelativeTime } from '@/lib/format'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
+import { escapeCsvValue, downloadCsv } from '@/lib/csv'
 import {
   bulkApproveShopVerification,
   bulkChangeShopPlan,
   bulkSuspendShops,
 } from '@/lib/admin/actions/shops'
 import type { getShopsForReview, getSubscriptionPlans } from '@/lib/admin/queries'
+import { formatDate, getInitials } from './shops-table-utils'
+import { SuspendShopDialog } from './suspend-shop-dialog'
+import { ChangePlanDialog } from './change-plan-dialog'
+import { ShopQuickViewSheet } from './shop-quick-view-sheet'
 
 type Shop = Awaited<ReturnType<typeof getShopsForReview>>[number]
 type Plan = Awaited<ReturnType<typeof getSubscriptionPlans>>[number]
 
 const PAGE_SIZE = 15
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('es-AR')
-}
-
-function getInitials(name: string) {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
-function escapeCsvValue(value: string) {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
 
 function buildCsv(shops: Shop[]) {
   const header = [
@@ -87,19 +55,6 @@ function buildCsv(shops: Shop[]) {
   ])
 
   return [header, ...rows].map((row) => row.map(escapeCsvValue).join(',')).join('\n')
-}
-
-function downloadCsv(csv: string) {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  const date = new Date().toISOString().slice(0, 10)
-  link.href = url
-  link.download = `comercios-export-${date}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
 }
 
 export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
@@ -166,7 +121,8 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
 
   function handleExportCsv() {
     const selectedShops = shops.filter((shop) => selected.has(shop.id))
-    downloadCsv(buildCsv(selectedShops))
+    const date = new Date().toISOString().slice(0, 10)
+    downloadCsv(buildCsv(selectedShops), `comercios-export-${date}.csv`)
   }
 
   function handleBulkChangePlan() {
@@ -205,72 +161,25 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
             Verificar
           </Button>
         )}
-        <Dialog open={suspendOpen} onOpenChange={setSuspendOpen}>
-          <DialogTrigger render={<Button variant="outline" size="sm" className="gap-1.5 text-destructive" />}>
-            <Ban className="size-3.5" aria-hidden />
-            Suspender
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>
-                Suspender {selected.size} comercio{selected.size === 1 ? '' : 's'}
-              </DialogTitle>
-            </DialogHeader>
-            <Textarea
-              placeholder="Motivo de la suspensión"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              rows={3}
-              aria-label="Motivo de suspensión"
-            />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setSuspendOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={isPending || reason.trim().length < 5}
-                onClick={handleBulkSuspend}
-              >
-                {isPending ? 'Suspendiendo...' : 'Suspender'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
-          <DialogTrigger render={<Button variant="outline" size="sm" className="gap-1.5" />}>
-            <CreditCard className="size-3.5" aria-hidden />
-            Cambiar plan
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>
-                Cambiar plan de {selected.size} comercio{selected.size === 1 ? '' : 's'}
-              </DialogTitle>
-            </DialogHeader>
-            <select
-              value={selectedPlanId}
-              onChange={(event) => setSelectedPlanId(event.target.value)}
-              aria-label="Plan de suscripción"
-              className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <option value="">Seleccioná un plan</option>
-              {plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name}
-                </option>
-              ))}
-            </select>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setPlanDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button disabled={isPending || !selectedPlanId} onClick={handleBulkChangePlan}>
-                {isPending ? 'Guardando...' : 'Confirmar'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <SuspendShopDialog
+          open={suspendOpen}
+          onOpenChange={setSuspendOpen}
+          selectedCount={selected.size}
+          reason={reason}
+          onReasonChange={setReason}
+          isPending={isPending}
+          onSuspend={handleBulkSuspend}
+        />
+        <ChangePlanDialog
+          open={planDialogOpen}
+          onOpenChange={setPlanDialogOpen}
+          selectedCount={selected.size}
+          plans={plans}
+          selectedPlanId={selectedPlanId}
+          onSelectedPlanIdChange={setSelectedPlanId}
+          isPending={isPending}
+          onConfirm={handleBulkChangePlan}
+        />
         <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportCsv}>
           <Download className="size-3.5" aria-hidden />
           Exportar CSV
@@ -371,66 +280,7 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
         onNext={() => setPage(currentPage + 1)}
       />
 
-      <Sheet open={quickViewShop !== null} onOpenChange={(open) => !open && setQuickViewShop(null)}>
-        <SheetContent>
-          {quickViewShop && (
-            <>
-              <SheetHeader>
-                <Avatar size="lg" className="mb-2">
-                  <AvatarImage src={quickViewShop.logo_url ?? undefined} alt="" />
-                  <AvatarFallback>{getInitials(quickViewShop.name)}</AvatarFallback>
-                </Avatar>
-                <SheetTitle>{quickViewShop.name}</SheetTitle>
-                <SheetDescription>Vista rápida del comercio</SheetDescription>
-              </SheetHeader>
-              <div className="flex-1 space-y-3 px-4 text-sm">
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Ciudad</span>
-                  <span>{quickViewShop.city ?? 'Sin ciudad'}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">WhatsApp</span>
-                  <span>{quickViewShop.whatsapp_number}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Registrado</span>
-                  <span>{formatDate(quickViewShop.created_at)}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Productos</span>
-                  <span className="font-mono">{quickViewShop.productCount}</span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-muted-foreground">Plan</span>
-                  <span>{quickViewShop.activePlanName ?? 'Free'}</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Estado</span>
-                  <div className="flex items-center gap-1.5">
-                    {!quickViewShop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
-                    <StatusBadge status={quickViewShop.verification_status} />
-                    {quickViewShop.openReportsCount > 0 && (
-                      <Badge variant="destructive" className="gap-1">
-                        <AlertTriangle className="size-3" aria-hidden />
-                        {quickViewShop.openReportsCount}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <SheetFooter>
-                <Button
-                  render={<Link href={`/admin/shops/${quickViewShop.id}`} />}
-                  nativeButton={false}
-                  className="w-full"
-                >
-                  Ver detalle completo
-                </Button>
-              </SheetFooter>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      <ShopQuickViewSheet shop={quickViewShop} onClose={() => setQuickViewShop(null)} />
     </div>
   )
 }
