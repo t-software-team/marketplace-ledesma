@@ -1614,6 +1614,24 @@ export type Database = {
           starts_at: string
         }[]
       }
+      get_featured_shops: {
+        Args: {
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          avg_rating: number
+          category_id: string
+          city: string
+          id: string
+          logo_url: string
+          name: string
+          review_count: number
+          slug: string
+          subscription_status: string
+          verification_status: string
+        }[]
+      }
       get_products_feed: {
         Args: {
           p_attribute_value?: string

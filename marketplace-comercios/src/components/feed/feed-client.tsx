@@ -33,6 +33,9 @@ const AttributeFilterSheet = dynamic(() =>
 const BackToTopButton = dynamic(() =>
   import('@/components/shared/back-to-top-button').then((mod) => mod.BackToTopButton)
 )
+const FeaturedShopsRow = dynamic(() =>
+  import('./featured-shops-row').then((mod) => mod.FeaturedShopsRow)
+)
 
 interface Category {
   id: string
@@ -288,6 +291,8 @@ export function FeedClient({
           />
         )}
       </div>
+
+      {!searchQuery && !categoryId && <FeaturedShopsRow />}
 
       {isShopSearchError && searchQuery.trim().length >= 2 && (
         <p className="text-sm text-destructive">No pudimos buscar comercios. Probá de nuevo.</p>

@@ -111,6 +111,37 @@ export interface ShopSearchResult {
   subscription_status: string
 }
 
+export interface FeaturedShop {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  city: string | null
+  category_id: string | null
+  verification_status: string
+  subscription_status: string
+  avg_rating: number | null
+  review_count: number
+}
+
+const FEATURED_SHOPS_LIMIT = 12
+
+export function useFeaturedShops() {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['featured-shops'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_featured_shops', {
+        p_limit: FEATURED_SHOPS_LIMIT,
+        p_offset: 0,
+      })
+      if (error) throw error
+      return (data ?? []) as FeaturedShop[]
+    },
+  })
+}
+
 export function useShopSearch() {
   const { searchQuery } = useFiltersStore()
   const supabase = createClient()
