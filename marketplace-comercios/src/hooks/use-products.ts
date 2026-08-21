@@ -125,20 +125,45 @@ export interface FeaturedShop {
 }
 
 const FEATURED_SHOPS_LIMIT = 12
+const SHOPS_PAGE_SIZE = 20
 
-export function useFeaturedShops() {
+export function useFeaturedShops(categoryId?: string | null) {
   const supabase = createClient()
 
   return useQuery({
-    queryKey: ['featured-shops'],
+    queryKey: ['featured-shops', categoryId ?? null],
     queryFn: async () => {
       const { data, error } = await supabase.rpc('get_featured_shops', {
         p_limit: FEATURED_SHOPS_LIMIT,
         p_offset: 0,
+        p_category_id: categoryId ?? undefined,
       })
       if (error) throw error
       return (data ?? []) as FeaturedShop[]
     },
+  })
+}
+
+export function useFeaturedShopsInfinite(seedShops?: FeaturedShop[], categoryId?: string | null) {
+  const supabase = createClient()
+  const isDefaultFilters = !categoryId
+
+  return useInfiniteQuery({
+    queryKey: ['featured-shops-infinite', categoryId ?? null],
+    initialPageParam: 0,
+    initialData:
+      isDefaultFilters && seedShops ? { pages: [seedShops], pageParams: [0] } : undefined,
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.rpc('get_featured_shops', {
+        p_limit: SHOPS_PAGE_SIZE,
+        p_offset: pageParam,
+        p_category_id: categoryId ?? undefined,
+      })
+      if (error) throw error
+      return (data ?? []) as FeaturedShop[]
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < SHOPS_PAGE_SIZE ? undefined : allPages.length * SHOPS_PAGE_SIZE,
   })
 }
 
