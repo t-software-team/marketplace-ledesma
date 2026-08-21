@@ -154,7 +154,7 @@ export function PublicHeader({
             <span className="hidden sm:inline">Marketplace</span>
           </span>
         </Link>
-        {pathname !== '/' && (
+        {pathname !== '/' && !pathname.startsWith('/comercios') && (
           <>
             <div className="relative hidden min-w-0 flex-1 sm:block sm:max-w-xs">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -179,6 +179,15 @@ export function PublicHeader({
           </>
         )}
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            render={<Link href="/comercios" />}
+            nativeButton={false}
+            className="hidden sm:inline-flex"
+          >
+            Comercios
+          </Button>
           {user ? (
             <>
               {profileRole === 'shop_admin' && (
@@ -273,13 +282,14 @@ export function PublicHeader({
 export function PublicMain({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  const noPaddingTop = pathname.startsWith('/comercios') || pathname === '/'
 
   return (
     <main
       id="main-content"
       className={cn(
         'mx-auto w-full max-w-5xl flex-1 px-4 md:px-6',
-        isMinimal ? 'pt-5 pb-6' : 'py-6 pb-24 sm:pb-6'
+        isMinimal ? 'pt-5 pb-6' : noPaddingTop ? 'pb-24 sm:pb-6' : 'py-6 pb-24 sm:pb-6'
       )}
     >
       {children}
