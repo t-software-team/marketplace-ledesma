@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { getRubroIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 
@@ -26,18 +26,26 @@ export function CategoryGrid({
   // En desktop, sin scrollbar visible ni trackpad, la rueda del mouse solo
   // scrollea vertical. Si el contenedor tiene overflow horizontal, traducimos
   // el delta vertical a scrollLeft para que se pueda navegar con la rueda.
-  function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
+  // React registra onWheel como passive, así que el listener nativo se agrega
+  // a mano con { passive: false } para poder llamar preventDefault().
+  useEffect(() => {
     const el = scrollRef.current;
-    if (!el || el.scrollWidth <= el.clientWidth) return;
-    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-    event.preventDefault();
-    el.scrollLeft += event.deltaY;
-  }
+    if (!el) return;
+
+    function handleWheel(event: WheelEvent) {
+      if (!el || el.scrollWidth <= el.clientWidth) return;
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      el.scrollLeft += event.deltaY;
+    }
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
 
   return (
     <div
       ref={scrollRef}
-      onWheel={handleWheel}
       className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden"
     >
       <button

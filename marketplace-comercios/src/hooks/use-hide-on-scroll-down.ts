@@ -13,17 +13,24 @@ export function useHideOnScrollDown(threshold = 8) {
 
   useEffect(() => {
     lastY.current = window.scrollY
+    let ticking = false
 
     function handleScroll() {
-      const y = window.scrollY
-      const diff = y - lastY.current
+      if (ticking) return
+      ticking = true
 
-      if (y < threshold) {
-        setHidden(false)
-      } else if (Math.abs(diff) > 4) {
-        setHidden(diff > 0)
-      }
-      lastY.current = y
+      requestAnimationFrame(() => {
+        const y = window.scrollY
+        const diff = y - lastY.current
+
+        if (y < threshold) {
+          setHidden(false)
+        } else if (Math.abs(diff) > 4) {
+          setHidden(diff > 0)
+        }
+        lastY.current = y
+        ticking = false
+      })
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true })

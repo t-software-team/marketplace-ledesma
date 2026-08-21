@@ -213,8 +213,8 @@ export function FeedClient({
       >
         <div
           className={cn(
-            'flex gap-2 px-4 py-2 transition-colors duration-200 md:px-6',
-            scrolled ? 'bg-background/95 backdrop-blur-sm' : 'bg-transparent backdrop-blur-md'
+            'flex gap-2 px-4 py-2 transition-all duration-200 md:px-6',
+            scrolled ? 'bg-background/95 pt-3 backdrop-blur-sm ' : 'bg-transparent backdrop-blur-md'
           )}
         >
           <div className="relative flex-1">
