@@ -1,4 +1,5 @@
 import { ComerciosPageClient } from './comercios-page-client'
+import { BackLink } from '@/components/shared/back-link'
 import { createClient } from '@/lib/supabase/server'
 import { getActiveCategories } from '@/lib/shops/queries'
 import type { FeaturedShop } from '@/hooks/use-products'
@@ -28,6 +29,7 @@ export default async function ComerciosPage() {
 
   return (
     <div className="space-y-4">
+      <BackLink href="/" />
       <h1 className="text-lg font-semibold">Comercios</h1>
       <ComerciosPageClient initialShops={initialShops} categories={categories} />
     </div>
