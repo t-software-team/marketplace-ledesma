@@ -145,15 +145,34 @@ export function PublicHeader({
       )}
     >
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-2 px-4 md:px-6">
-        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 font-heading text-lg">
-          <span className="relative flex size-8 shrink-0 items-center justify-center">
-            <Image src="/brand/logo.png" alt="" fill sizes="28px" className="object-contain" priority />
-          </span>
-          <span className="truncate">
-            <span className="sm:hidden">Proxi</span>
-            <span className="hidden sm:inline">Marketplace</span>
-          </span>
-        </Link>
+        <div className="flex min-w-0 shrink-0 items-center gap-1">
+          {pathname.startsWith('/comercios') && (
+            <button
+              type="button"
+              onClick={() => {
+                const navigatedWithinApp = internalNavCount > 0
+                if (navigatedWithinApp) {
+                  router.back()
+                } else {
+                  router.push('/')
+                }
+              }}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted sm:hidden"
+              aria-label="Volver"
+            >
+              <ArrowLeft className="size-5" aria-hidden />
+            </button>
+          )}
+          <Link href="/" className="flex min-w-0 items-center gap-2 font-heading text-lg">
+            <span className="relative flex size-8 shrink-0 items-center justify-center">
+              <Image src="/brand/logo.png" alt="" fill sizes="28px" className="object-contain" priority />
+            </span>
+            <span className="truncate">
+              <span className="sm:hidden">Proxi</span>
+              <span className="hidden sm:inline">Marketplace</span>
+            </span>
+          </Link>
+        </div>
         {pathname !== '/' && !pathname.startsWith('/comercios') && (
           <>
             <div className="relative hidden min-w-0 flex-1 sm:block sm:max-w-xs">
