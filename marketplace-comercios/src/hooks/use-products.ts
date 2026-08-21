@@ -125,6 +125,7 @@ export interface FeaturedShop {
 }
 
 const FEATURED_SHOPS_LIMIT = 12
+const SHOPS_PAGE_SIZE = 20
 
 export function useFeaturedShops() {
   const supabase = createClient()
@@ -139,6 +140,26 @@ export function useFeaturedShops() {
       if (error) throw error
       return (data ?? []) as FeaturedShop[]
     },
+  })
+}
+
+export function useFeaturedShopsInfinite(seedShops?: FeaturedShop[]) {
+  const supabase = createClient()
+
+  return useInfiniteQuery({
+    queryKey: ['featured-shops-infinite'],
+    initialPageParam: 0,
+    initialData: seedShops ? { pages: [seedShops], pageParams: [0] } : undefined,
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.rpc('get_featured_shops', {
+        p_limit: SHOPS_PAGE_SIZE,
+        p_offset: pageParam,
+      })
+      if (error) throw error
+      return (data ?? []) as FeaturedShop[]
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < SHOPS_PAGE_SIZE ? undefined : allPages.length * SHOPS_PAGE_SIZE,
   })
 }
 

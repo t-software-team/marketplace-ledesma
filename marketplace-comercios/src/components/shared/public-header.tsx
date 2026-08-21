@@ -179,6 +179,15 @@ export function PublicHeader({
           </>
         )}
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            render={<Link href="/comercios" />}
+            nativeButton={false}
+            className="hidden sm:inline-flex"
+          >
+            Comercios
+          </Button>
           {user ? (
             <>
               {profileRole === 'shop_admin' && (
