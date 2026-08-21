@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getSubscriptionPlanById } from '@/lib/admin/queries'
-import { updateSubscriptionPlan } from '@/lib/admin/actions'
+import { updateSubscriptionPlan } from '@/lib/admin/actions/plans'
 import { BackLink } from '@/components/shared/back-link'
 import { PlanForm } from '../../plan-form'
 

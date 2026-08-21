@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { RichTextEditor } from '@/components/shared/rich-text-editor'
 import { toast } from '@/components/ui/toast'
-import type { ActionState } from '@/lib/admin/actions'
+import type { ActionState } from '@/lib/admin/actions/shared'
 
 interface PlanBenefits {
   max_products?: number | null

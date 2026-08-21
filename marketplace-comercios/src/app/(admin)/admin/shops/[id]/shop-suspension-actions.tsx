@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
-import { suspendShop, unsuspendShop, type ActionState } from '@/lib/admin/actions'
+import { suspendShop, unsuspendShop } from '@/lib/admin/actions/shops'
+import type { ActionState } from '@/lib/admin/actions/shared'
 
 interface ShopSuspensionActionsProps {
   shopId: string

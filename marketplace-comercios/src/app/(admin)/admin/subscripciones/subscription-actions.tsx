@@ -13,11 +13,8 @@ import {
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from '@/components/ui/toast'
-import {
-  approveSubscriptionRequest,
-  rejectSubscriptionRequest,
-  type ActionState,
-} from '@/lib/admin/actions'
+import { approveSubscriptionRequest, rejectSubscriptionRequest } from '@/lib/admin/actions/subscriptions'
+import type { ActionState } from '@/lib/admin/actions/shared'
 
 interface SubscriptionActionsProps {
   subscriptionId: string

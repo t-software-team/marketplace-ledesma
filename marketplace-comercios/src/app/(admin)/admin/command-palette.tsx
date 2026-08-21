@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Search, Store, LayoutDashboard, Tag, CreditCard, Flag, Clock3 } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { searchShopsByName } from '@/lib/admin/actions'
+import { searchShopsByName } from '@/lib/admin/actions/shops'
 
 export const COMMAND_PALETTE_OPEN_EVENT = 'admin-command-palette:open'
 

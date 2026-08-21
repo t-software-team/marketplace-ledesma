@@ -16,11 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
-import {
-  approveCategorySuggestion,
-  rejectCategorySuggestion,
-  type ActionState,
-} from '@/lib/admin/actions'
+import { approveCategorySuggestion, rejectCategorySuggestion } from '@/lib/admin/actions/categories'
+import type { ActionState } from '@/lib/admin/actions/shared'
 import type { getCategorySuggestions } from '@/lib/admin/queries'
 
 type Suggestion = Awaited<ReturnType<typeof getCategorySuggestions>>[number]

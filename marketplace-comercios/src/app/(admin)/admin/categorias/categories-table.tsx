@@ -14,7 +14,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
 import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
-import { bulkDeleteCategories, bulkToggleCategoryActive } from '@/lib/admin/actions'
+import { bulkDeleteCategories, bulkToggleCategoryActive } from '@/lib/admin/actions/categories'
 import type { getCategoriesList } from '@/lib/admin/queries'
 import { CategoryRowActions } from './category-row-actions'
 

@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/sheet'
 import { SidebarNav, type DashboardNavItem } from './dashboard-sidebar'
 import { signOut } from '@/lib/auth/actions'
-import { markAllNotificationsRead, deleteReadAdminNotifications } from '@/lib/admin/actions'
+import { markAllNotificationsRead, deleteReadAdminNotifications } from '@/lib/admin/actions/notifications'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppButton } from '@/components/shared/install-app-button'
 import { ShareButton } from '@/components/shared/share-button'

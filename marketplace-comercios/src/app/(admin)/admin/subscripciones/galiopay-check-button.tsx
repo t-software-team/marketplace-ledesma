@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { checkGalioPaySubscription } from '@/lib/admin/actions'
+import { checkGalioPaySubscription } from '@/lib/admin/actions/subscriptions'
 
 interface GalioPayCheckButtonProps {
   subscriptionId: string

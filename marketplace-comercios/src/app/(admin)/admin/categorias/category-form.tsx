@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
-import type { ActionState } from '@/lib/admin/actions'
+import type { ActionState } from '@/lib/admin/actions/shared'
 
 function slugify(value: string) {
   return value

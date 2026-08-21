@@ -5,7 +5,7 @@ import { useTransition } from 'react'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { deleteSubscriptionPlan, toggleSubscriptionPlanActive } from '@/lib/admin/actions'
+import { deleteSubscriptionPlan, toggleSubscriptionPlanActive } from '@/lib/admin/actions/plans'
 
 interface PlanRowActionsProps {
   planId: string
