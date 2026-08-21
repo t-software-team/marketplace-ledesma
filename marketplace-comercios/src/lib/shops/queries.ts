@@ -34,7 +34,10 @@ const getPlanLimitsData = unstable_cache(
   async (): Promise<PlanLimitsData> => {
     const supabase = createPublicClient();
 
-    const [{ data: limitRows }, { data: freePlans }] = await Promise.all([
+    const [
+      { data: limitRows, error: limitRowsError },
+      { data: freePlans, error: freePlansError },
+    ] = await Promise.all([
       supabase
         .from("plan_limits")
         .select(
@@ -46,6 +49,17 @@ const getPlanLimitsData = unstable_cache(
         .eq("price", 0)
         .eq("is_active", true),
     ]);
+
+    if (limitRowsError) {
+      console.error("getPlanLimitsData: fallo al traer plan_limits", {
+        error: limitRowsError,
+      });
+    }
+    if (freePlansError) {
+      console.error("getPlanLimitsData: fallo al traer planes gratuitos", {
+        error: freePlansError,
+      });
+    }
 
     const rowsByPlan: PlanLimitsRow[] = [];
     let defaultLimits: PlanLimitsRow | null = null;
@@ -122,7 +136,7 @@ export async function getMyShop() {
 
   if (!user) return null;
 
-  const { data: shop } = await supabase
+  const { data: shop, error } = await supabase
     .from("shops")
     .select(
       `
@@ -140,6 +154,13 @@ export async function getMyShop() {
     .is("deleted_at", null)
     .maybeSingle();
 
+  if (error) {
+    console.error("getMyShop: fallo al traer la tienda del usuario", {
+      userId: user.id,
+      error,
+    });
+  }
+
   return shop;
 }
 
@@ -148,11 +169,19 @@ export async function getShopContactsSeries(shopId: string, days = 14) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   since.setHours(0, 0, 0, 0);
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("shop_contacts")
     .select("created_at")
     .eq("shop_id", shopId)
     .gte("created_at", since.toISOString());
+
+  if (error) {
+    console.error("getShopContactsSeries: fallo al traer contactos de la tienda", {
+      shopId,
+      days,
+      error,
+    });
+  }
 
   const counts = new Map<string, number>();
   for (let i = 0; i < days; i++) {
@@ -186,7 +215,15 @@ export async function getMyPromotions(shopId: string) {
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
 
-  if (error || !data) return [];
+  if (error || !data) {
+    if (error) {
+      console.error("getMyPromotions: fallo al traer promociones de la tienda", {
+        shopId,
+        error,
+      });
+    }
+    return [];
+  }
 
   return data;
 }
@@ -208,7 +245,14 @@ export const getActivePromotions = unstable_cache(
       .order("created_at", { ascending: false })
       .limit(30);
 
-    if (error || !data) return [];
+    if (error || !data) {
+      if (error) {
+        console.error("getActivePromotions: fallo al traer promociones activas", {
+          error,
+        });
+      }
+      return [];
+    }
 
     return data.filter((promo) => promo.shops !== null);
   },
@@ -275,6 +319,15 @@ export async function getMyShopProducts(
   } = await query.order("created_at", { ascending: false }).range(from, to);
 
   if (error || !products) {
+    if (error) {
+      console.error("getMyShopProducts: fallo al traer productos de la tienda", {
+        shopId,
+        page: safePage,
+        pageSize,
+        search: normalizedSearch,
+        error,
+      });
+    }
     return {
       products: [],
       totalCount: 0,
@@ -311,13 +364,19 @@ export async function getMyShopProducts(
 export async function getActiveCategories() {
   const supabase = await createClient();
 
-  const { data: categories } = await supabase
+  const { data: categories, error } = await supabase
     .from("categories")
     .select("id, name, slug, is_service")
     .eq("is_active", true)
     .is("parent_id", null)
     .order("name", { ascending: true })
     .limit(100);
+
+  if (error) {
+    console.error("getActiveCategories: fallo al traer categorías activas", {
+      error,
+    });
+  }
 
   // "Tienda de ropa" va primero en el chip de rubros (pedido de negocio);
   // el resto mantiene el orden alfabético.
@@ -333,11 +392,18 @@ export async function getCategoryAttributes(categoryId: string | null) {
 
   const supabase = await createClient();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("category_attributes")
     .select("id, key, label, type, options")
     .eq("category_id", categoryId)
     .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("getCategoryAttributes: fallo al traer atributos de la categoría", {
+      categoryId,
+      error,
+    });
+  }
 
   return data ?? [];
 }
@@ -345,10 +411,17 @@ export async function getCategoryAttributes(categoryId: string | null) {
 export async function getProductAttributeValues(productId: string) {
   const supabase = await createClient();
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("product_attribute_values")
     .select("attribute_id, value, category_attributes ( key, label, type )")
     .eq("product_id", productId);
+
+  if (error) {
+    console.error("getProductAttributeValues: fallo al traer valores de atributos del producto", {
+      productId,
+      error,
+    });
+  }
 
   return data ?? [];
 }
@@ -358,7 +431,7 @@ export async function getSubcategories(parentId: string | null) {
 
   const supabase = await createClient();
 
-  const { data: categories } = await supabase
+  const { data: categories, error } = await supabase
     .from("categories")
     .select("id, name")
     .eq("is_active", true)
@@ -366,13 +439,20 @@ export async function getSubcategories(parentId: string | null) {
     .order("name", { ascending: true })
     .limit(100);
 
+  if (error) {
+    console.error("getSubcategories: fallo al traer subcategorías", {
+      parentId,
+      error,
+    });
+  }
+
   return categories ?? [];
 }
 
 export async function getMyProduct(productId: string) {
   const supabase = await createClient();
 
-  const { data: product } = await supabase
+  const { data: product, error } = await supabase
     .from("products")
     .select(
       `
@@ -391,6 +471,13 @@ export async function getMyProduct(productId: string) {
     )
     .eq("id", productId)
     .maybeSingle();
+
+  if (error) {
+    console.error("getMyProduct: fallo al traer el producto", {
+      productId,
+      error,
+    });
+  }
 
   return product;
 }
@@ -434,7 +521,15 @@ export const getShopBySlug = unstable_cache(
       .is("deleted_at", null)
       .maybeSingle();
 
-    if (error || !shop) return null;
+    if (error || !shop) {
+      if (error) {
+        console.error("getShopBySlug: fallo al traer la tienda por slug", {
+          slug,
+          error,
+        });
+      }
+      return null;
+    }
 
     return shop;
   },
@@ -458,7 +553,7 @@ export const getRelatedShops = unstable_cache(
       city ? `city.eq."${city.replace(/"/g, '\\"')}"` : null,
     ].filter(Boolean);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("shops")
       .select(
         "id, name, slug, logo_url, city, verification_status, subscription_status",
@@ -472,6 +567,15 @@ export const getRelatedShops = unstable_cache(
       .order("verification_status", { ascending: false })
       .limit(limit);
 
+    if (error) {
+      console.error("getRelatedShops: fallo al traer tiendas relacionadas", {
+        shopId,
+        categoryId,
+        city,
+        error,
+      });
+    }
+
     return data ?? [];
   },
   ["related-shops"],
@@ -481,7 +585,17 @@ export const getRelatedShops = unstable_cache(
 export async function getShopRating(shopId: string) {
   const supabase = await createClient();
 
-  const { data } = await supabase.rpc("get_shop_rating", { p_shop_id: shopId });
+  const { data, error } = await supabase.rpc("get_shop_rating", {
+    p_shop_id: shopId,
+  });
+
+  if (error) {
+    console.error("getShopRating: fallo al traer el rating de la tienda", {
+      shopId,
+      error,
+    });
+  }
+
   const row = data?.[0];
 
   return {
@@ -497,7 +611,15 @@ export async function getShopReviews(shopId: string) {
     p_shop_id: shopId,
   });
 
-  if (error || !data) return [];
+  if (error || !data) {
+    if (error) {
+      console.error("getShopReviews: fallo al traer reseñas de la tienda", {
+        shopId,
+        error,
+      });
+    }
+    return [];
+  }
 
   return data.map((review) => ({
     id: review.id,
@@ -517,12 +639,20 @@ export async function getMyShopReview(shopId: string) {
 
   if (!user) return null;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("shop_reviews")
     .select("id, rating, comment")
     .eq("shop_id", shopId)
     .eq("client_id", user.id)
     .maybeSingle();
+
+  if (error) {
+    console.error("getMyShopReview: fallo al traer la reseña del usuario", {
+      shopId,
+      userId: user.id,
+      error,
+    });
+  }
 
   return data;
 }
@@ -541,7 +671,14 @@ export const getSitemapShops = unstable_cache(
       .order("updated_at", { ascending: false })
       .limit(SITEMAP_SHOPS_LIMIT);
 
-    if (error || !data) return [];
+    if (error || !data) {
+      if (error) {
+        console.error("getSitemapShops: fallo al traer tiendas para el sitemap", {
+          error,
+        });
+      }
+      return [];
+    }
 
     return data;
   },
@@ -551,9 +688,17 @@ export const getSitemapShops = unstable_cache(
 
 export async function getShopFollowStats(shopId: string) {
   const supabase = await createClient();
-  const { data } = await supabase.rpc("get_shop_follow_stats", {
+  const { data, error } = await supabase.rpc("get_shop_follow_stats", {
     p_shop_id: shopId,
   });
+
+  if (error) {
+    console.error("getShopFollowStats: fallo al traer stats de seguidores", {
+      shopId,
+      error,
+    });
+  }
+
   return data?.[0]?.follower_count ? Number(data[0].follower_count) : 0;
 }
 
@@ -565,12 +710,20 @@ export async function getMyShopFollow(shopId: string) {
 
   if (!user) return false;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("shop_follows")
     .select("id")
     .eq("shop_id", shopId)
     .eq("client_id", user.id)
     .maybeSingle();
+
+  if (error) {
+    console.error("getMyShopFollow: fallo al verificar si el usuario sigue la tienda", {
+      shopId,
+      userId: user.id,
+      error,
+    });
+  }
 
   return Boolean(data);
 }
@@ -599,7 +752,15 @@ export async function getMyFollowedShops() {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (error || !data) return [];
+  if (error || !data) {
+    if (error) {
+      console.error("getMyFollowedShops: fallo al traer tiendas seguidas", {
+        userId: user.id,
+        error,
+      });
+    }
+    return [];
+  }
 
   return data
     .map((row) => row.shops)
@@ -627,7 +788,15 @@ export async function getMyContactHistory() {
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (error || !data) return [];
+  if (error || !data) {
+    if (error) {
+      console.error("getMyContactHistory: fallo al traer historial de contactos", {
+        userId: user.id,
+        error,
+      });
+    }
+    return [];
+  }
 
   const seenShopIds = new Set<string>();
   const deduped = [];
@@ -645,12 +814,18 @@ export async function getMyContactHistory() {
 export async function getActiveSubscriptionPlans() {
   const supabase = await createClient();
 
-  const { data: plans } = await supabase
+  const { data: plans, error } = await supabase
     .from("subscription_plans")
     .select("id, name, description, price, duration_days, benefits, applies_to")
     .eq("is_active", true)
     .order("price", { ascending: true })
     .limit(50);
+
+  if (error) {
+    console.error("getActiveSubscriptionPlans: fallo al traer planes activos", {
+      error,
+    });
+  }
 
   return plans ?? [];
 }
@@ -658,7 +833,7 @@ export async function getActiveSubscriptionPlans() {
 export async function getMyActiveSubscription(shopId: string) {
   const supabase = await createClient();
 
-  const { data: subscription } = await supabase
+  const { data: subscription, error } = await supabase
     .from("subscriptions")
     .select("id, plan_id, end_date, subscription_plans ( name, benefits )")
     .eq("shop_id", shopId)
@@ -667,13 +842,20 @@ export async function getMyActiveSubscription(shopId: string) {
     .limit(1)
     .maybeSingle();
 
+  if (error) {
+    console.error("getMyActiveSubscription: fallo al traer suscripción activa", {
+      shopId,
+      error,
+    });
+  }
+
   return subscription;
 }
 
 export async function getMyPendingSubscription(shopId: string) {
   const supabase = await createClient();
 
-  const { data: subscription } = await supabase
+  const { data: subscription, error } = await supabase
     .from("subscriptions")
     .select(
       "id, status, created_at, payment_provider, galiopay_link_id, galiopay_proof_token, galiopay_checkout_url, mercadopago_reference_id, mercadopago_checkout_url, subscription_plans ( id, name )",
@@ -683,6 +865,13 @@ export async function getMyPendingSubscription(shopId: string) {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  if (error) {
+    console.error("getMyPendingSubscription: fallo al traer suscripción pendiente", {
+      shopId,
+      error,
+    });
+  }
 
   return subscription;
 }
@@ -714,16 +903,32 @@ export const getProductDetail = unstable_cache(
       .eq("id", productId)
       .maybeSingle();
 
-    if (error || !product) return null;
+    if (error || !product) {
+      if (error) {
+        console.error("getProductDetail: fallo al traer el detalle del producto", {
+          productId,
+          error,
+        });
+      }
+      return null;
+    }
 
     let parentCategoryName: string | null = null;
     let parentCategorySlug: string | null = null;
     if (product.categories?.parent_id) {
-      const { data: parentCategory } = await supabase
+      const { data: parentCategory, error: parentCategoryError } = await supabase
         .from("categories")
         .select("name, slug")
         .eq("id", product.categories.parent_id)
         .maybeSingle();
+
+      if (parentCategoryError) {
+        console.error("getProductDetail: fallo al traer la categoría padre", {
+          productId,
+          parentId: product.categories.parent_id,
+          error: parentCategoryError,
+        });
+      }
 
       parentCategoryName = parentCategory?.name ?? null;
       parentCategorySlug = parentCategory?.slug ?? null;
@@ -782,22 +987,43 @@ export const getFeedData = unstable_cache(
   async (limit: number, offset: number) => {
     const supabase = createPublicClient();
 
-    const [{ data: categories }, { data: subcategories }, { data: products }] =
-      await Promise.all([
-        supabase
-          .from("categories")
-          .select("id, name, slug")
-          .eq("is_active", true)
-          .is("parent_id", null)
-          .order("name"),
-        supabase
-          .from("categories")
-          .select("id, name, slug, parent_id")
-          .eq("is_active", true)
-          .not("parent_id", "is", null)
-          .order("name"),
-        supabase.rpc("get_products_feed", { p_limit: limit, p_offset: offset }),
-      ]);
+    const [
+      { data: categories, error: categoriesError },
+      { data: subcategories, error: subcategoriesError },
+      { data: products, error: productsError },
+    ] = await Promise.all([
+      supabase
+        .from("categories")
+        .select("id, name, slug")
+        .eq("is_active", true)
+        .is("parent_id", null)
+        .order("name"),
+      supabase
+        .from("categories")
+        .select("id, name, slug, parent_id")
+        .eq("is_active", true)
+        .not("parent_id", "is", null)
+        .order("name"),
+      supabase.rpc("get_products_feed", { p_limit: limit, p_offset: offset }),
+    ]);
+
+    if (categoriesError) {
+      console.error("getFeedData: fallo al traer categorías", {
+        error: categoriesError,
+      });
+    }
+    if (subcategoriesError) {
+      console.error("getFeedData: fallo al traer subcategorías", {
+        error: subcategoriesError,
+      });
+    }
+    if (productsError) {
+      console.error("getFeedData: fallo al traer productos del feed", {
+        limit,
+        offset,
+        error: productsError,
+      });
+    }
 
     // "Tienda de ropa" va primero en el chip de rubros (pedido de negocio);
     // el resto mantiene el orden alfabético.
@@ -847,7 +1073,15 @@ export async function getMyFavorites() {
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (error || !favorites) return [];
+  if (error || !favorites) {
+    if (error) {
+      console.error("getMyFavorites: fallo al traer favoritos del usuario", {
+        userId: user.id,
+        error,
+      });
+    }
+    return [];
+  }
 
   return favorites
     .map((favorite) => favorite.products)
@@ -900,7 +1134,17 @@ export async function getShopProducts(
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
-  if (error || !products) return [];
+  if (error || !products) {
+    if (error) {
+      console.error("getShopProducts: fallo al traer productos de la tienda", {
+        shopId,
+        limit,
+        offset,
+        error,
+      });
+    }
+    return [];
+  }
 
   return products.map((product) => {
     const images = [...(product.product_images ?? [])].sort(
@@ -920,27 +1164,50 @@ export async function getShopProducts(
 export async function getProductLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const [{ count }, { data: activeSubscription }, { data: shop }, limitsData] =
-    await Promise.all([
-      supabase
-        .from("products")
-        .select("id", { count: "exact", head: true })
-        .eq("shop_id", shopId),
-      supabase
-        .from("subscriptions")
-        .select("subscription_plans ( benefits )")
-        .eq("shop_id", shopId)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("shops")
-        .select("categories ( is_service )")
-        .eq("id", shopId)
-        .maybeSingle(),
-      getPlanLimitsData(),
-    ]);
+  const [
+    { count, error: countError },
+    { data: activeSubscription, error: subscriptionError },
+    { data: shop, error: shopError },
+    limitsData,
+  ] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("shop_id", shopId),
+    supabase
+      .from("subscriptions")
+      .select("subscription_plans ( benefits )")
+      .eq("shop_id", shopId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("shops")
+      .select("categories ( is_service )")
+      .eq("id", shopId)
+      .maybeSingle(),
+    getPlanLimitsData(),
+  ]);
+
+  if (countError) {
+    console.error("getProductLimitInfo: fallo al contar productos de la tienda", {
+      shopId,
+      error: countError,
+    });
+  }
+  if (subscriptionError) {
+    console.error("getProductLimitInfo: fallo al traer suscripción activa", {
+      shopId,
+      error: subscriptionError,
+    });
+  }
+  if (shopError) {
+    console.error("getProductLimitInfo: fallo al traer datos de la tienda", {
+      shopId,
+      error: shopError,
+    });
+  }
 
   const used = count ?? 0;
   const benefits = activeSubscription?.subscription_plans?.benefits as
@@ -964,7 +1231,7 @@ export async function getProductLimitInfo(shopId: string) {
 export async function getProductImageLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const [{ data: activeSubscription }, limitsData] = await Promise.all([
+  const [{ data: activeSubscription, error }, limitsData] = await Promise.all([
     supabase
       .from("subscriptions")
       .select("subscription_plans ( benefits )")
@@ -975,6 +1242,13 @@ export async function getProductImageLimitInfo(shopId: string) {
       .maybeSingle(),
     getPlanLimitsData(),
   ]);
+
+  if (error) {
+    console.error("getProductImageLimitInfo: fallo al traer suscripción activa", {
+      shopId,
+      error,
+    });
+  }
 
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_images?: number | null } | null | undefined;
@@ -990,7 +1264,7 @@ export async function getProductImageLimitInfo(shopId: string) {
 export async function getProductVariantLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const [{ data: activeSubscription }, limitsData] = await Promise.all([
+  const [{ data: activeSubscription, error }, limitsData] = await Promise.all([
     supabase
       .from("subscriptions")
       .select("subscription_plans ( benefits )")
@@ -1001,6 +1275,13 @@ export async function getProductVariantLimitInfo(shopId: string) {
       .maybeSingle(),
     getPlanLimitsData(),
   ]);
+
+  if (error) {
+    console.error("getProductVariantLimitInfo: fallo al traer suscripción activa", {
+      shopId,
+      error,
+    });
+  }
 
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_variants?: number | null } | null | undefined;
@@ -1018,7 +1299,10 @@ const FREE_PLAN_MAX_VIDEOS = 3;
 export async function getProductVideoLimitInfo(shopId: string) {
   const supabase = await createClient();
 
-  const [{ count }, { data: activeSubscription }] = await Promise.all([
+  const [
+    { count, error: countError },
+    { data: activeSubscription, error: subscriptionError },
+  ] = await Promise.all([
     supabase
       .from("products")
       .select("id", { count: "exact", head: true })
@@ -1033,6 +1317,19 @@ export async function getProductVideoLimitInfo(shopId: string) {
       .limit(1)
       .maybeSingle(),
   ]);
+
+  if (countError) {
+    console.error("getProductVideoLimitInfo: fallo al contar videos de productos", {
+      shopId,
+      error: countError,
+    });
+  }
+  if (subscriptionError) {
+    console.error("getProductVideoLimitInfo: fallo al traer suscripción activa", {
+      shopId,
+      error: subscriptionError,
+    });
+  }
 
   const used = count ?? 0;
   const benefits = activeSubscription?.subscription_plans?.benefits as
