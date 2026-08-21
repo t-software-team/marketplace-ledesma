@@ -10,10 +10,11 @@ import { useFeaturedShopsInfinite } from '@/hooks/use-products'
 import type { FeaturedShop } from '@/hooks/use-products'
 
 interface ShopsGridProps {
-  initialShops: FeaturedShop[]
+  initialShops: FeaturedShop[] | undefined
+  categoryId?: string | null
 }
 
-export function ShopsGrid({ initialShops }: ShopsGridProps) {
+export function ShopsGrid({ initialShops, categoryId = null }: ShopsGridProps) {
   const {
     data: shops,
     isLoading,
@@ -24,7 +25,7 @@ export function ShopsGrid({ initialShops }: ShopsGridProps) {
     hasNextPage,
     isFetchingNextPage,
     refetch,
-  } = useFeaturedShopsInfinite(initialShops)
+  } = useFeaturedShopsInfinite(initialShops, categoryId)
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -51,7 +52,7 @@ export function ShopsGrid({ initialShops }: ShopsGridProps) {
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
-  const displayShops = shops ? shops.pages.flat() : initialShops
+  const displayShops = shops ? shops.pages.flat() : (initialShops ?? [])
   const showLoading = isLoading || (isFetching && !isFetchingNextPage && !shops)
 
   if (showLoading) {

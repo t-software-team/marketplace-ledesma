@@ -154,7 +154,7 @@ export function PublicHeader({
             <span className="hidden sm:inline">Marketplace</span>
           </span>
         </Link>
-        {pathname !== '/' && (
+        {pathname !== '/' && !pathname.startsWith('/comercios') && (
           <>
             <div className="relative hidden min-w-0 flex-1 sm:block sm:max-w-xs">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
