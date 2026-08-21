@@ -115,6 +115,7 @@ export function FeedClient({
   useEffect(() => {
     if (!isProductsError) return
     console.error('useProductsFeed: fallo al cargar el feed', productsError)
+    toast.add({ title: 'No pudimos cargar los productos', type: 'error' })
   }, [isProductsError, productsError])
 
   useEffect(() => {
@@ -178,26 +179,29 @@ export function FeedClient({
   return (
     <div className="space-y-4">
       {!isLoggedIn && !sellBannerDismissed && (
-        <div className="relative flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
-          <Link href="/login" className="flex min-w-0 flex-1 items-center justify-between gap-3">
-            <div>
+        <div className="relative rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
+          <button
+            type="button"
+            onClick={handleDismissSellBanner}
+            aria-label="Cerrar"
+            className="absolute top-2.5 right-2.5 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+          <Link
+            href="/login"
+            className="flex flex-col gap-3 pr-8 sm:flex-row sm:items-center sm:justify-between sm:pr-10"
+          >
+            <div className="min-w-0">
               <p className="text-sm font-semibold">Vendé tus productos en Proxi</p>
               <p className="text-xs text-muted-foreground">
                 Creá tu cuenta gratis, abrí tu tienda y empezá a vender hoy mismo.
               </p>
             </div>
-            <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
+            <span className="flex shrink-0 items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground sm:inline-flex">
               Crear cuenta gratis
             </span>
           </Link>
-          <button
-            type="button"
-            onClick={handleDismissSellBanner}
-            aria-label="Cerrar"
-            className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
         </div>
       )}
 
