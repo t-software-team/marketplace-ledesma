@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { toggleCategoryActive } from '@/lib/admin/actions'
+import { toggleCategoryActive } from '@/lib/admin/actions/categories'
 
 interface CategoryRowActionsProps {
   categoryId: string

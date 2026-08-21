@@ -1,5 +1,5 @@
 import { getCategoriesList } from '@/lib/admin/queries'
-import { createCategory } from '@/lib/admin/actions'
+import { createCategory } from '@/lib/admin/actions/categories'
 import { BackLink } from '@/components/shared/back-link'
 import { CategoryForm } from '../category-form'
 

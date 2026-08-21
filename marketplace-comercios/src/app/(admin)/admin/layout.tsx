@@ -6,7 +6,7 @@ import {
   markAdminNotificationRead,
   deleteAdminNotification,
   deleteReadAdminNotifications,
-} from '@/lib/admin/actions'
+} from '@/lib/admin/actions/notifications'
 import { CommandPalette } from './command-palette'
 
 const navItems: DashboardNavItem[] = [

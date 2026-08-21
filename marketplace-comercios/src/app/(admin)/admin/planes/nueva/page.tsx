@@ -1,4 +1,4 @@
-import { createSubscriptionPlan } from '@/lib/admin/actions'
+import { createSubscriptionPlan } from '@/lib/admin/actions/plans'
 import { BackLink } from '@/components/shared/back-link'
 import { PlanForm } from '../plan-form'
 

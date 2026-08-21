@@ -36,7 +36,7 @@ import {
   bulkApproveShopVerification,
   bulkChangeShopPlan,
   bulkSuspendShops,
-} from '@/lib/admin/actions'
+} from '@/lib/admin/actions/shops'
 import type { getShopsForReview, getSubscriptionPlans } from '@/lib/admin/queries'
 
 type Shop = Awaited<ReturnType<typeof getShopsForReview>>[number]
