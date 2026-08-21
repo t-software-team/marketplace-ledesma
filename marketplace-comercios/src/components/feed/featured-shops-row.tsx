@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect } from 'react'
 import { ShopCard } from '@/components/shared/shop-card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -32,7 +33,12 @@ export function FeaturedShopsRow() {
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-medium text-muted-foreground">Comercios</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-medium text-muted-foreground">Comercios</h2>
+        <Link href="/comercios" className="text-xs font-medium text-primary hover:underline">
+          Ver todos
+        </Link>
+      </div>
       <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {shops.map((shop) => (
           <ShopCard key={shop.id} shop={shop} className="w-56 shrink-0" />
