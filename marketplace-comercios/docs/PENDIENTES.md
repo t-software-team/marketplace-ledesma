@@ -54,3 +54,46 @@ de review lo marca contra la regla de "límite explícito en cualquier query que
 liste". Agregar un `.limit()` razonable cuando se toque esa función.
 
 **Nota:** función preexistente, no modificada en el trabajo de performance.
+
+## 4. Páginas públicas forzadas a dinámicas por el auth del layout
+
+**Contexto:** `src/app/(public)/layout.tsx` hace `auth.getUser()` (+ perfil +
+notificaciones) para renderizar el header (avatar, campana, login/perfil).
+Como lee cookies, fuerza a **dinámicas todas las páginas públicas** que
+envuelve: feed (`/`), tiendas (`/tienda/[slug]`), producto (`/producto/[id]`),
+etc. En el build aparecen como `ƒ (Dynamic)` aunque una página declare
+`export const revalidate`.
+
+**Estado:** la página de producto (`/producto/[id]`) ya quedó lista para ISR
+(no lee cookies, favoritos resueltos client-side, `revalidate = 30`), pero el
+layout la sigue forzando a dinámica, así que el `revalidate` no tiene efecto
+hoy.
+
+**Decisión pendiente:** mover la auth del header público al cliente para que
+las páginas públicas puedan servirse estáticas/ISR. Es un cambio transversal
+(toca toda la navegación pública) con un tradeoff de UX: el header
+parpadearía de estado "deslogueado" a "logueado" al hidratar. Evaluar si el
+salto de rendimiento (páginas públicas cacheadas, casi instantáneas) justifica
+ese parpadeo, o si conviene mitigarlo (ej. skeleton del header, o leer un
+estado optimista de cookie no-httpOnly).
+
+**Impacto potencial:** alto — el feed y las páginas de producto/tienda son las
+más visitadas y las que más se benefician de ISR/caché de CDN.
+
+## 5. Naming inconsistente snake_case / camelCase en queries de shops
+
+**Contexto:** varias funciones de `src/lib/shops/queries.ts` devuelven un shape
+mezclado. Ej. `getProductDetail` expone el producto en camelCase
+(`isActive`, `videoUrl`, `parentCategoryName`) pero deja `shop.*` y
+`category.*` en snake_case crudo del schema (`logo_url`, `whatsapp_number`,
+`parent_id`). AGENTS.md marca justamente este caso como anti-patrón: si se
+mapea a camelCase, tiene que ser una decisión centralizada y consistente,
+nunca parcial.
+
+**Estado:** preexistente, no introducido por el trabajo de performance. El gate
+de review lo marca como bloqueante al tocar archivos que consumen ese shape.
+
+**Decisión pendiente:** unificar el naming de los retornos de `queries.ts` —
+o todo snake_case (más simple, alineado al schema) o un mapeo centralizado a
+camelCase. Es un rename transversal que toca la query y todos sus
+consumidores, así que conviene hacerlo aparte y de una.
