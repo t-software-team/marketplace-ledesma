@@ -91,7 +91,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: SPLASH_HIDE_SCRIPT }}
         />
         <ThemeProvider>
-          <SplashScreen />
+         {/*/ <SplashScreen />*/} 
           <Toaster>
             <ScrollToTopOnNavigate />
             <QueryProvider>
