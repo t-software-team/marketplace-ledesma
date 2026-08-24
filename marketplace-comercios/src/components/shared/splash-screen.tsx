@@ -30,14 +30,6 @@ export function SplashScreen() {
 
   return (
     <>
-      {/* Corre de forma síncrona durante el parseo del HTML, antes de que
-          cargue e hidrate el bundle de React. Sin esto, el overlay tapa el
-          LCP hasta que termina la hidratación completa (~650ms medidos). */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `try{if(localStorage.getItem('${SPLASH_SEEN_KEY}')){document.getElementById('${SPLASH_ID}').style.display='none'}}catch(e){}`,
-        }}
-      />
       <div
         id={SPLASH_ID}
         className={`fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background transition-opacity duration-300 ${
@@ -52,6 +44,17 @@ export function SplashScreen() {
           Proxi Marketplace
         </span>
       </div>
+      {/* Corre de forma síncrona durante el parseo del HTML (justo después del
+          div de arriba), antes de que cargue e hidrate el bundle de React.
+          Sin esto, el overlay tapa el LCP hasta que termina la hidratación
+          completa (~650ms medidos). Tiene que ir DESPUÉS del div: un <script>
+          se ejecuta en cuanto el parser lo encuentra, así que si fuera antes,
+          el div todavía no existiría en el DOM y getElementById fallaría. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `try{if(localStorage.getItem('${SPLASH_SEEN_KEY}')){document.getElementById('${SPLASH_ID}').style.display='none'}}catch(e){}`,
+        }}
+      />
     </>
   )
 }
