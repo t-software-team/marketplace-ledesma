@@ -370,7 +370,9 @@ export async function getMyShopProducts(
 }
 
 export async function getActiveCategories() {
-  const supabase = await createClient();
+  // Cliente público (sin cookies): las categorías activas son data pública
+  // —el feed ya las lee así— y esto permite que /comercios se sirva estática.
+  const supabase = createPublicClient();
 
   const { data: categories, error } = await supabase
     .from("categories")
@@ -591,7 +593,8 @@ export const getRelatedShops = unstable_cache(
 );
 
 export async function getShopRating(shopId: string) {
-  const supabase = await createClient();
+  // Data pública (rating agregado): cliente público para no leer cookies.
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase.rpc("get_shop_rating", {
     p_shop_id: shopId,
@@ -613,7 +616,8 @@ export async function getShopRating(shopId: string) {
 }
 
 export async function getShopReviews(shopId: string) {
-  const supabase = await createClient();
+  // Data pública (reseñas visibles a cualquiera): cliente público.
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase.rpc("get_shop_reviews", {
     p_shop_id: shopId,
@@ -695,7 +699,8 @@ export const getSitemapShops = unstable_cache(
 );
 
 export async function getShopFollowStats(shopId: string) {
-  const supabase = await createClient();
+  // Data pública (conteo de seguidores): cliente público.
+  const supabase = createPublicClient();
   const { data, error } = await supabase.rpc("get_shop_follow_stats", {
     p_shop_id: shopId,
   });
@@ -1126,7 +1131,9 @@ export async function getShopProducts(
   limit = SHOP_PRODUCTS_PAGE_SIZE,
   offset = 0,
 ) {
-  const supabase = await createClient();
+  // Cliente público: los productos activos de una tienda son data pública
+  // (permite servir /tienda/[slug] estática/ISR).
+  const supabase = createPublicClient();
 
   const { data: products, error } = await supabase
     .from("products")

@@ -23,6 +23,15 @@ interface ProductPageProps {
 // revalidarse cada 30s, igual que la caché de getProductDetail.
 export const revalidate = 30
 
+// Sin generateStaticParams, un segmento [id] cae a render dinámico y descarta
+// el revalidate (Next docs: "Dynamic segments without generateStaticParams").
+// Devolvemos [] para no prerenderizar ninguno en el build pero marcar la ruta
+// como estática/ISR: cada producto se genera on-demand en su primera visita y
+// se cachea 30s. dynamicParams=true (default) sirve los ids no listados.
+export function generateStaticParams() {
+  return []
+}
+
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { id } = await params
   const product = await getProductDetail(id)

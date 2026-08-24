@@ -87,8 +87,10 @@ export default function RootLayout({
           <SplashScreen />
           <Toaster>
             <ScrollToTopOnNavigate />
-            <AuthListener />
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              <AuthListener />
+              {children}
+            </QueryProvider>
           </Toaster>
         </ThemeProvider>
         <CookieNotice />

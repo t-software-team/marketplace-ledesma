@@ -32,6 +32,11 @@ export function SplashScreen() {
     <>
       <div
         id={SPLASH_ID}
+        // El script inline de abajo le setea `display:none` de forma síncrona
+        // antes de la hidratación (usuario que ya vio el splash), así que el DOM
+        // del cliente difiere a propósito del HTML del server. Suprimimos el
+        // warning de hidratación para este nodo mutado intencionalmente.
+        suppressHydrationWarning
         className={`fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background transition-opacity duration-300 ${
           fadingOut ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}

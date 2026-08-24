@@ -1,13 +1,18 @@
 import { ComerciosPageClient } from './comercios-page-client'
 import { BackLink } from '@/components/shared/back-link'
-import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { getActiveCategories } from '@/lib/shops/queries'
 import type { FeaturedShop } from '@/hooks/use-products'
 
 const INITIAL_LIMIT = 20
 
+// Comercios destacados + categorías son data pública (sin sesión), así que la
+// página se sirve estática/ISR y se revalida cada 60s en vez de renderizarse
+// dinámica por request. La lista se pagina client-side con el mismo RPC.
+export const revalidate = 60
+
 export default async function ComerciosPage() {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
 
   const [{ data, error }, categories] = await Promise.all([
     supabase.rpc('get_featured_shops', {

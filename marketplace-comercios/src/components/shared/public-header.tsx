@@ -18,23 +18,12 @@ import {
 } from '@/lib/notifications/actions'
 import {
   NotificationBell,
-  type NotificationItem,
   type NotificationTypeConfigMap,
 } from '@/components/shared/notification-bell'
 import { useFiltersStore } from '@/stores/use-filters-store'
 import { useScrolled } from '@/hooks/use-scrolled'
+import { useHeaderAuth } from '@/hooks/use-header-auth'
 import { cn } from '@/lib/utils'
-
-type ClientNotification = NotificationItem
-
-interface PublicHeaderProps {
-  user: { email: string } | null
-  profileRole: string | null
-  profileFullName: string | null
-  profileAvatarUrl: string | null
-  notifications?: ClientNotification[]
-  unreadNotificationsCount?: number
-}
 
 const NOTIFICATION_TYPE_CONFIG: NotificationTypeConfigMap = {
   new_product: {
@@ -54,17 +43,30 @@ const MINIMAL_HEADER_PREFIXES = ['/producto/', '/tienda/']
 // every tab/reload, since each gets its own JS execution context.
 let internalNavCount = 0
 
-export function PublicHeader({
-  user,
-  profileRole,
-  profileFullName,
-  profileAvatarUrl,
-  notifications = [],
-  unreadNotificationsCount = 0,
-}: PublicHeaderProps) {
+// Placeholder neutro mientras `useHeaderAuth` resuelve la sesión en el cliente.
+// Evita el salto de "Ingresar/Registrarse" (estado deslogueado del HTML
+// estático) a avatar/campana al hidratar: mostramos formas neutras hasta saber.
+function HeaderAuthSkeleton() {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2" aria-hidden>
+      <ThemeToggle />
+      <span className="size-9 animate-pulse rounded-full bg-muted" />
+      <span className="size-9 animate-pulse rounded-full bg-muted" />
+    </div>
+  )
+}
+
+export function PublicHeader() {
   const pathname = usePathname()
   const router = useRouter()
   const scrolled = useScrolled()
+  const { data: auth, isPending } = useHeaderAuth()
+  const user = auth?.user ?? null
+  const profileRole = auth?.profileRole ?? null
+  const profileFullName = auth?.profileFullName ?? null
+  const profileAvatarUrl = auth?.profileAvatarUrl ?? null
+  const notifications = auth?.notifications ?? []
+  const unreadNotificationsCount = auth?.unreadCount ?? 0
   const setSearch = useFiltersStore((state) => state.setSearch)
   const [searchInput, setSearchInput] = useState('')
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -188,7 +190,9 @@ export function PublicHeader({
           >
             Comercios
           </Button>
-          {user ? (
+          {isPending ? (
+            <HeaderAuthSkeleton />
+          ) : user ? (
             <>
               {profileRole === 'shop_admin' && (
                 <Button
@@ -297,11 +301,6 @@ export function PublicMain({ children }: { children: React.ReactNode }) {
   )
 }
 
-interface BottomNavProps {
-  isLoggedIn: boolean
-  profileRole?: string | null
-}
-
 const NAV_ITEMS = [
   { href: '/', label: 'Inicio', icon: Home, exact: true },
   { href: '/favoritos', label: 'Favoritos', icon: Heart, exact: false },
@@ -311,8 +310,11 @@ const NAV_ITEMS = [
 const LAST_ITEM_SHOP_ADMIN = { href: '/mi-tienda', label: 'Mi tienda', icon: Store, exact: false } as const
 const LAST_ITEM_DEFAULT = { href: '/perfil', label: 'Perfil', icon: User, exact: false } as const
 
-export function BottomNav({ isLoggedIn, profileRole }: BottomNavProps) {
+export function BottomNav() {
   const pathname = usePathname()
+  const { data: auth } = useHeaderAuth()
+  const isLoggedIn = Boolean(auth?.user)
+  const profileRole = auth?.profileRole ?? null
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (isMinimal) return null

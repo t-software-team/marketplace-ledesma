@@ -1,24 +1,18 @@
 import { FeedClient } from '@/components/feed/feed-client'
 import { PromotionsRow } from '@/components/feed/promotions-row'
-import { createClient } from '@/lib/supabase/server'
 import { getActivePromotions, getFeedData } from '@/lib/shops/queries'
 
+// El feed no depende de la sesión: FeedClient resuelve login + favoritos en el
+// cliente (useHeaderAuth / useMyFavoriteIds), así la página —la más visitada—
+// se sirve estática/ISR y se revalida cada 30s, igual que la caché de
+// getFeedData/getActivePromotions.
+export const revalidate = 30
+
 export default async function HomePage() {
-  const supabase = await createClient()
-
-  const [
-    {
-      data: { user },
-    },
-    { categories, subcategories, products: initialProducts },
-    promotions,
-  ] = await Promise.all([supabase.auth.getUser(), getFeedData(20, 0), getActivePromotions()])
-
-  const favorites = user
-    ? await supabase.from('favorites').select('product_id').eq('client_id', user.id)
-    : { data: null }
-
-  const favoriteIds = (favorites.data ?? []).map((favorite) => favorite.product_id)
+  const [{ categories, subcategories, products: initialProducts }, promotions] = await Promise.all([
+    getFeedData(20, 0),
+    getActivePromotions(),
+  ])
 
   return (
     <div className="relative space-y-6">
@@ -31,8 +25,6 @@ export default async function HomePage() {
         categories={categories}
         subcategories={subcategories}
         initialProducts={initialProducts}
-        isLoggedIn={Boolean(user)}
-        favoriteIds={favoriteIds}
       />
     </div>
   )

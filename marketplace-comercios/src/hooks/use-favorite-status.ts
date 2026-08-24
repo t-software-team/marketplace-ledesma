@@ -23,7 +23,10 @@ export function useFavoriteStatus(productId: string, enabled = true) {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser()
-      if (userError) {
+      // Sin sesión, getUser() devuelve AuthSessionMissingError: es el estado
+      // normal de un visitante deslogueado, no un fallo. Solo logueamos errores
+      // reales (red, etc.).
+      if (userError && userError.name !== 'AuthSessionMissingError') {
         console.error('useFavoriteStatus: fallo al traer el usuario', { productId, error: userError })
       }
       if (!user) return { isLoggedIn: false, isFavorite: false }
