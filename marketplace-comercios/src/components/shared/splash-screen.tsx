@@ -12,9 +12,10 @@ export function SplashScreen() {
   const [fadingOut, setFadingOut] = useState(false)
 
   useEffect(() => {
-    // El script inline de abajo ya ocultó el splash de forma síncrona (antes
-    // de la hidratación) si el usuario ya lo había visto. Si seguimos acá es
-    // porque es la primera vez: programamos el fade-out y lo removemos del DOM.
+    // El script del layout ya ocultó este splash antes de hidratar si el usuario
+    // ya lo vio. Si llegamos acá, o bien es la primera vez, o bien el script
+    // falló (ej: localStorage bloqueado): en ambos casos, mostramos el splash
+    // y programamos el fade-out.
     if (localStorage.getItem(SPLASH_SEEN_KEY)) return
     localStorage.setItem(SPLASH_SEEN_KEY, '1')
 
@@ -32,11 +33,6 @@ export function SplashScreen() {
     <>
       <div
         id={SPLASH_ID}
-        // El script inline de abajo le setea `display:none` de forma síncrona
-        // antes de la hidratación (usuario que ya vio el splash), así que el DOM
-        // del cliente difiere a propósito del HTML del server. Suprimimos el
-        // warning de hidratación para este nodo mutado intencionalmente.
-        suppressHydrationWarning
         className={`fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 bg-background transition-opacity duration-300 ${
           fadingOut ? 'pointer-events-none opacity-0' : 'opacity-100'
         }`}
@@ -49,17 +45,6 @@ export function SplashScreen() {
           Proxi Marketplace
         </span>
       </div>
-      {/* Corre de forma síncrona durante el parseo del HTML (justo después del
-          div de arriba), antes de que cargue e hidrate el bundle de React.
-          Sin esto, el overlay tapa el LCP hasta que termina la hidratación
-          completa (~650ms medidos). Tiene que ir DESPUÉS del div: un <script>
-          se ejecuta en cuanto el parser lo encuentra, así que si fuera antes,
-          el div todavía no existiría en el DOM y getElementById fallaría. */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `try{if(localStorage.getItem('${SPLASH_SEEN_KEY}')){document.getElementById('${SPLASH_ID}').style.display='none'}}catch(e){}`,
-        }}
-      />
     </>
   )
 }
