@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyBoxIllustration } from '@/components/shared/empty-illustrations'
-import { getUsersDirectory } from '@/lib/admin/queries'
+import { getUsersDirectory } from '@/server/admin-users-directory'
 import { UsersTable } from './users-table'
 
 const ROLE_LABELS = {

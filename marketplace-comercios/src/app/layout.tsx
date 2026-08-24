@@ -66,6 +66,11 @@ export default function RootLayout({
       className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
+        )}
+      </head>
       <body className="flex min-h-dvh flex-col">
         <a
           href="#main-content"
@@ -82,8 +87,10 @@ export default function RootLayout({
           <SplashScreen />
           <Toaster>
             <ScrollToTopOnNavigate />
-            <AuthListener />
-            <QueryProvider>{children}</QueryProvider>
+            <QueryProvider>
+              <AuthListener />
+              {children}
+            </QueryProvider>
           </Toaster>
         </ThemeProvider>
         <CookieNotice />

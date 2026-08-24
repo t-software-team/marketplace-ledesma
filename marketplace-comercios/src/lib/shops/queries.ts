@@ -1,5 +1,6 @@
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 
 export const PLAN_LIMITS_CACHE_TAG = "plan-limits";
@@ -127,12 +128,12 @@ export async function getFreeProductMax(
     : (row?.max_products_product ?? null);
 }
 
-export async function getMyShop() {
+// Cacheado por request: el layout de /mi-tienda y la page piden la tienda
+// del usuario logueado por separado; sin esto son dos queries idénticas.
+export const getMyShop = cache(async () => {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return null;
 
@@ -162,7 +163,7 @@ export async function getMyShop() {
   }
 
   return shop;
-}
+});
 
 export async function getShopContactsSeries(shopId: string, days = 14) {
   const supabase = await createClient();
@@ -301,7 +302,7 @@ export async function getMyShopProducts(
       currency,
       is_active,
       is_featured,
-      product_images ( id, url, sort_order ),
+      product_images ( url ),
       categories ( name )
     `,
       { count: "exact" },
@@ -312,11 +313,18 @@ export async function getMyShopProducts(
     query = query.ilike("name", `%${normalizedSearch}%`);
   }
 
+  // La grilla solo muestra la imagen principal, así que se limita el join
+  // embebido a la de menor sort_order en vez de traer todas las imágenes de
+  // cada producto (24 productos x N imágenes) y ordenarlas en JS.
   const {
     data: products,
     error,
     count,
-  } = await query.order("created_at", { ascending: false }).range(from, to);
+  } = await query
+    .order("sort_order", { referencedTable: "product_images", ascending: true })
+    .limit(1, { referencedTable: "product_images" })
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error || !products) {
     if (error) {
@@ -341,9 +349,9 @@ export async function getMyShopProducts(
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const mapped = products.map((product) => {
-    const images = [...(product.product_images ?? [])].sort(
-      (a, b) => a.sort_order - b.sort_order,
-    );
+    // product_images ya viene ordenado por sort_order y limitado a 1 desde la
+    // query (la imagen principal), así que no hace falta ordenar en JS.
+    const images = product.product_images ?? [];
 
     return {
       id: product.id,
@@ -362,7 +370,9 @@ export async function getMyShopProducts(
 }
 
 export async function getActiveCategories() {
-  const supabase = await createClient();
+  // Cliente público (sin cookies): las categorías activas son data pública
+  // —el feed ya las lee así— y esto permite que /comercios se sirva estática.
+  const supabase = createPublicClient();
 
   const { data: categories, error } = await supabase
     .from("categories")
@@ -583,7 +593,8 @@ export const getRelatedShops = unstable_cache(
 );
 
 export async function getShopRating(shopId: string) {
-  const supabase = await createClient();
+  // Data pública (rating agregado): cliente público para no leer cookies.
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase.rpc("get_shop_rating", {
     p_shop_id: shopId,
@@ -605,7 +616,8 @@ export async function getShopRating(shopId: string) {
 }
 
 export async function getShopReviews(shopId: string) {
-  const supabase = await createClient();
+  // Data pública (reseñas visibles a cualquiera): cliente público.
+  const supabase = createPublicClient();
 
   const { data, error } = await supabase.rpc("get_shop_reviews", {
     p_shop_id: shopId,
@@ -687,7 +699,8 @@ export const getSitemapShops = unstable_cache(
 );
 
 export async function getShopFollowStats(shopId: string) {
-  const supabase = await createClient();
+  // Data pública (conteo de seguidores): cliente público.
+  const supabase = createPublicClient();
   const { data, error } = await supabase.rpc("get_shop_follow_stats", {
     p_shop_id: shopId,
   });
@@ -830,7 +843,9 @@ export async function getActiveSubscriptionPlans() {
   return plans ?? [];
 }
 
-export async function getMyActiveSubscription(shopId: string) {
+// Cacheado por request: layout y page de /mi-tienda la piden para el mismo
+// shopId dentro del mismo render.
+export const getMyActiveSubscription = cache(async (shopId: string) => {
   const supabase = await createClient();
 
   const { data: subscription, error } = await supabase
@@ -850,7 +865,7 @@ export async function getMyActiveSubscription(shopId: string) {
   }
 
   return subscription;
-}
+});
 
 export async function getMyPendingSubscription(shopId: string) {
   const supabase = await createClient();
@@ -1116,7 +1131,9 @@ export async function getShopProducts(
   limit = SHOP_PRODUCTS_PAGE_SIZE,
   offset = 0,
 ) {
-  const supabase = await createClient();
+  // Cliente público: los productos activos de una tienda son data pública
+  // (permite servir /tienda/[slug] estática/ISR).
+  const supabase = createPublicClient();
 
   const { data: products, error } = await supabase
     .from("products")
@@ -1161,60 +1178,58 @@ export async function getShopProducts(
   });
 }
 
-export async function getProductLimitInfo(shopId: string) {
+// opts permite que el caller pase datos que ya tiene y evitar round-trips:
+//  - usedCount: el conteo de productos de la tienda ya calculado (ej. la
+//    página de productos ya lo obtuvo de getMyShopProducts sin filtro de
+//    búsqueda), para no repetir un count: 'exact' que escanea toda la tabla.
+//  - isService: si el rubro es de servicios, ya derivable del getMyShop
+//    cacheado, para no volver a pegarle a shops -> categories.
+export async function getProductLimitInfo(
+  shopId: string,
+  opts?: { usedCount?: number; isService?: boolean },
+) {
   const supabase = await createClient();
 
+  const needsCount = opts?.usedCount === undefined;
+  const needsShop = opts?.isService === undefined;
+
   const [
-    { count, error: countError },
-    { data: activeSubscription, error: subscriptionError },
-    { data: shop, error: shopError },
+    countResult,
+    activeSubscription,
+    shopResult,
     limitsData,
   ] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id", { count: "exact", head: true })
-      .eq("shop_id", shopId),
-    supabase
-      .from("subscriptions")
-      .select("subscription_plans ( benefits )")
-      .eq("shop_id", shopId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("shops")
-      .select("categories ( is_service )")
-      .eq("id", shopId)
-      .maybeSingle(),
+    needsCount
+      ? supabase.from("products").select("id", { count: "exact", head: true }).eq("shop_id", shopId)
+      : Promise.resolve(null),
+    // Cacheada por request: en la página de productos el layout ya la trajo
+    // para este shopId, así que acá suele ser un cache hit.
+    getMyActiveSubscription(shopId),
+    needsShop
+      ? supabase.from("shops").select("categories ( is_service )").eq("id", shopId).maybeSingle()
+      : Promise.resolve(null),
     getPlanLimitsData(),
   ]);
 
-  if (countError) {
+  if (countResult?.error) {
     console.error("getProductLimitInfo: fallo al contar productos de la tienda", {
       shopId,
-      error: countError,
+      error: countResult.error,
     });
   }
-  if (subscriptionError) {
-    console.error("getProductLimitInfo: fallo al traer suscripción activa", {
-      shopId,
-      error: subscriptionError,
-    });
-  }
-  if (shopError) {
+  if (shopResult?.error) {
     console.error("getProductLimitInfo: fallo al traer datos de la tienda", {
       shopId,
-      error: shopError,
+      error: shopResult.error,
     });
   }
 
-  const used = count ?? 0;
+  const used = opts?.usedCount ?? countResult?.count ?? 0;
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_products?: number | null } | null | undefined;
 
   const hasActivePlan = Boolean(activeSubscription);
-  const isService = Boolean(shop?.categories?.is_service);
+  const isService = opts?.isService ?? Boolean(shopResult?.data?.categories?.is_service);
   const freeLimits = resolveFreeLimits(limitsData, isService);
   const freeMax = isService
     ? (freeLimits?.max_products_service ?? null)

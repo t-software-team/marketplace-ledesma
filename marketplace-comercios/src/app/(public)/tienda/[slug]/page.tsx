@@ -4,12 +4,12 @@ import { ArrowLeft, MapPin, Store } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
 import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { FollowShopButton } from '@/components/shop/follow-shop-button'
+import { ShopReviewAction } from '@/components/shop/shop-review-action'
 import { LandingBannerSection, LandingGallerySection, LandingServicesSection } from '@/components/shop/landing-sections'
 import { LandingVideoSection } from '@/components/shop/landing-video-section'
 import { OpenNowBadge } from '@/components/shop/open-now-badge'
@@ -22,14 +22,11 @@ import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopMoreLinksMenu } from '@/components/shop/shop-more-links-menu'
 import { ExpandableDescription } from '@/components/shop/expandable-description'
 import Link from 'next/link'
-import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
 import { ShopReviewsList } from '@/components/shop/shop-reviews-list'
 import { ShopViewTracker } from '@/components/shop/shop-view-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  getMyShopFollow,
-  getMyShopReview,
   getRelatedShops,
   getShopBySlug,
   getShopFollowStats,
@@ -38,7 +35,6 @@ import {
   getShopReviews,
 } from '@/lib/shops/queries'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
-import { createClient } from '@/lib/supabase/server'
 import { getAccentColor } from '@/lib/accent-colors'
 import { getBaseUrl } from '@/lib/site-url'
 import { cn } from '@/lib/utils'
@@ -48,12 +44,14 @@ interface ShopPageProps {
   params: Promise<{ slug: string }>
 }
 
-function getShopUrl(slug: string) {
-  return headers().then((headersList) => {
-    const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
-    const protocol = headersList.get('x-forwarded-proto') ?? 'http'
-    return `${protocol}://${host}/tienda/${slug}`
-  })
+// La página no depende de la sesión: follow y reseña del usuario se resuelven
+// en el cliente (useMyShopStatus). Sin generateStaticParams un segmento [slug]
+// cae a render dinámico y descarta el revalidate; devolvemos [] para marcar la
+// ruta como estática/ISR y generar cada tienda on-demand, cacheada 60s.
+export const revalidate = 60
+
+export function generateStaticParams() {
+  return []
 }
 
 function getMapsUrl(address: string | null, city: string | null) {
@@ -87,32 +85,27 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
 
 export default async function ShopPage({ params }: ShopPageProps) {
   const { slug } = await params
-  const supabase = await createClient()
-  const [shop, {
-    data: { user },
-  }] = await Promise.all([getShopBySlug(slug), supabase.auth.getUser()])
+  const shop = await getShopBySlug(slug)
 
   if (!shop) {
     notFound()
   }
 
-  const [products, shopUrl, rating, reviews, myReview, followerCount, isFollowing, relatedShops] =
-    await Promise.all([
-      getShopProducts(shop.id),
-      getShopUrl(slug),
-      getShopRating(shop.id),
-      getShopReviews(shop.id),
-      user ? getMyShopReview(shop.id) : Promise.resolve(null),
-      getShopFollowStats(shop.id),
-      user ? getMyShopFollow(shop.id) : Promise.resolve(false),
-      getRelatedShops(shop.id, shop.category_id, shop.city),
-    ])
+  const baseUrl = getBaseUrl()
+  const shopUrl = `${baseUrl}/tienda/${slug}`
+
+  const [products, rating, reviews, followerCount, relatedShops] = await Promise.all([
+    getShopProducts(shop.id),
+    getShopRating(shop.id),
+    getShopReviews(shop.id),
+    getShopFollowStats(shop.id),
+    getRelatedShops(shop.id, shop.category_id, shop.city),
+  ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
   const isService = shop.categories?.is_service ?? false
   const isVerified = hasVerifiedBadge(shop)
   const isFeatured = shop.subscription_status === 'active'
-  const baseUrl = getBaseUrl()
   const accentColor = shop.accent_color ? getAccentColor(shop.accent_color) : null
   const themeClass = accentColor ? `shop-theme-${shop.id}` : ''
 
@@ -203,11 +196,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
                     {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
                   </div>
                 </div>
-                <FollowShopButton
-                  shopId={shop.id}
-                  isLoggedIn={Boolean(user)}
-                  initialIsFollowing={isFollowing}
-                />
+                <FollowShopButton shopId={shop.id} />
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
                 {rating.reviewCount > 0 && (
@@ -310,18 +299,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
             <h2 className="text-lg font-heading">
               Reseñas {rating.reviewCount > 0 && `(${rating.reviewCount})`}
             </h2>
-            {user ? (
-              <ShopReviewDialog shopId={shop.id} myReview={myReview} />
-            ) : (
-              <Button
-                render={<Link href={`/login?next=/tienda/${slug}`} />}
-                nativeButton={false}
-                variant="outline"
-                size="sm"
-              >
-                Iniciar sesión para dejar una reseña
-              </Button>
-            )}
+            <ShopReviewAction shopId={shop.id} slug={slug} />
           </div>
           <ShopReviewsList reviews={reviews} />
         </section>

@@ -17,6 +17,8 @@ import { toast } from '@/components/ui/toast'
 import { useCategoryAttributes, useProductsFeed, useShopSearch } from '@/hooks/use-products'
 import { useScrolled } from '@/hooks/use-scrolled'
 import { useHideOnScrollDown } from '@/hooks/use-hide-on-scroll-down'
+import { useHeaderAuth } from '@/hooks/use-header-auth'
+import { useMyFavoriteIds } from '@/hooks/use-my-favorite-ids'
 import { useFiltersStore } from '@/stores/use-filters-store'
 import { cn } from '@/lib/utils'
 
@@ -51,20 +53,21 @@ interface FeedClientProps {
   categories: Category[]
   subcategories: Subcategory[]
   initialProducts: ProductFeedItem[]
-  isLoggedIn?: boolean
-  favoriteIds?: string[]
 }
 
 export function FeedClient({
   categories,
   subcategories,
   initialProducts,
-  isLoggedIn = false,
-  favoriteIds = [],
 }: FeedClientProps) {
   const scrolled = useScrolled()
   const hideOnScrollDown = useHideOnScrollDown()
   const [sellBannerDismissed, setSellBannerDismissed] = useState(true)
+  // Login y favoritos se resuelven en el cliente para que el feed pueda ser
+  // estático/ISR (la página ya no lee la sesión en el servidor).
+  const { data: auth, isPending: authPending } = useHeaderAuth()
+  const isLoggedIn = Boolean(auth?.user)
+  const { data: favoriteIds = [] } = useMyFavoriteIds()
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const {
     categoryId,
@@ -178,7 +181,7 @@ export function FeedClient({
 
   return (
     <div className="space-y-4">
-      {!isLoggedIn && !sellBannerDismissed && (
+      {!authPending && !isLoggedIn && !sellBannerDismissed && (
         <div className="relative rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
           <button
             type="button"

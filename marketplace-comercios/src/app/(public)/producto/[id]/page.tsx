@@ -11,12 +11,25 @@ import { ProductGallery } from '@/components/product/product-gallery'
 import { formatPrice } from '@/lib/format'
 import { getProductDetail } from '@/lib/shops/queries'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
-import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/site-url'
 import { stripHtml } from '@/lib/strip-html'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
+}
+
+// La página no depende de la sesión (el estado de favorito lo resuelve
+// FavoriteButton en el cliente), así que puede renderizarse estática y
+// revalidarse cada 30s, igual que la caché de getProductDetail.
+export const revalidate = 30
+
+// Sin generateStaticParams, un segmento [id] cae a render dinámico y descarta
+// el revalidate (Next docs: "Dynamic segments without generateStaticParams").
+// Devolvemos [] para no prerenderizar ninguno en el build pero marcar la ruta
+// como estática/ISR: cada producto se genera on-demand en su primera visita y
+// se cachea 30s. dynamicParams=true (default) sirve los ids no listados.
+export function generateStaticParams() {
+  return []
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -49,23 +62,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product || !product.isActive || !product.shop) {
     notFound()
-  }
-
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  let isFavorite = false
-  if (user) {
-    const { data: favorite } = await supabase
-      .from('favorites')
-      .select('product_id')
-      .eq('client_id', user.id)
-      .eq('product_id', product.id)
-      .maybeSingle()
-
-    isFavorite = Boolean(favorite)
   }
 
   const shop = product.shop
@@ -108,8 +104,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
             imageOverlay={
               <FavoriteButton
                 productId={product.id}
-                initialIsFavorite={isFavorite}
-                isLoggedIn={Boolean(user)}
                 className="absolute right-2 bottom-2 z-10"
               />
             }
