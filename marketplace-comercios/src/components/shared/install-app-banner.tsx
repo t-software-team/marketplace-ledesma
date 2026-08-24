@@ -38,7 +38,7 @@ export function InstallAppBanner() {
 
   return (
     <>
-      <div className="mx-auto flex max-w-5xl items-center gap-3 border-b border-border bg-primary/5 px-4 py-2.5 md:px-6">
+      <div className="mx-auto mb-4 flex max-w-5xl items-center gap-3 border-b border-border bg-primary/5 px-4 py-2.5 md:px-6">
         <Smartphone className="size-4 shrink-0 text-primary" aria-hidden />
         <p className="min-w-0 flex-1 truncate text-sm text-foreground">
           Instalá Proxi en tu celular para un acceso más rápido
