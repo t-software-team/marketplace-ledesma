@@ -1624,6 +1624,23 @@ export type Database = {
           verified_shops: number
         }[]
       }
+      get_admin_shops_for_review: {
+        Args: { p_limit?: number }
+        Returns: {
+          active_plan_name: string
+          city: string
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string
+          name: string
+          open_reports_count: number
+          product_count: number
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          whatsapp_number: string
+        }[]
+      }
       get_available_slots: {
         Args: { p_date: string; p_shop_id: string }
         Returns: {
