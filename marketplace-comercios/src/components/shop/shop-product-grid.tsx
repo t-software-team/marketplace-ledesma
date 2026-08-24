@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
+import { ProductImage } from '@/components/shared/product-image'
 import { Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -30,10 +30,8 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useShopProductsPaged(
-    shopId,
-    searchQuery
-  )
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isError, error } =
+    useShopProductsPaged(shopId, searchQuery)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   function handleSearchChange(value: string) {
@@ -47,6 +45,11 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isError) return
+    console.error('useShopProductsPaged: fallo al cargar productos de la tienda', { shopId, error })
+  }, [isError, error, shopId])
 
   const products = useMemo(
     () => (data ? data.pages.flat() : searchQuery ? [] : initialProducts),
@@ -99,7 +102,17 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
         </div>
       )}
 
-      {products.length === 0 ? (
+      {searchQuery && isError ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No pudimos cargar la búsqueda. Probá de nuevo.
+        </p>
+      ) : searchQuery && isFetching && products.length === 0 ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
+          ))}
+        </div>
+      ) : products.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No encontramos productos que coincidan con &quot;{searchInput}&quot;.
         </p>
@@ -111,10 +124,9 @@ export function ShopProductGrid({ shopId, initialProducts, shopName }: ShopProdu
                 <Card className="overflow-hidden py-0 ring-border/60 transition-colors hover:ring-primary/30">
                   <div className="relative aspect-square bg-muted">
                     {product.main_image ? (
-                      <Image
+                      <ProductImage
                         src={product.main_image}
                         alt={product.name}
-                        fill
                         className="object-cover"
                         sizes="(max-width: 768px) 50vw, 25vw"
                       />
