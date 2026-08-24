@@ -1,85 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 
-const REVENUE_STATUSES = ['active', 'expired'] as const
-
 export async function getDashboardStats() {
   const supabase = await createClient()
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
 
-  const [
-    { count: totalShops },
-    { count: newShops },
-    { count: verifiedShops },
-    { count: pausedShops },
-    { count: activeProducts },
-    { count: pendingReports },
-    { count: pendingSuggestions },
-    { count: pendingVerificationsOver48h },
-    { data: subscriptions },
-  ] = await Promise.all([
-    supabase.from('shops').select('id', { count: 'exact', head: true }).is('deleted_at', null),
-    supabase
-      .from('shops')
-      .select('id', { count: 'exact', head: true })
-      .is('deleted_at', null)
-      .gte('created_at', thirtyDaysAgo),
-    supabase
-      .from('shops')
-      .select('id', { count: 'exact', head: true })
-      .eq('verification_status', 'verified')
-      .is('deleted_at', null),
-    supabase
-      .from('shops')
-      .select('id', { count: 'exact', head: true })
-      .eq('is_paused', true)
-      .is('deleted_at', null),
-    supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('shop_reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabase
-      .from('category_suggestions')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending'),
-    supabase
-      .from('shops')
-      .select('id', { count: 'exact', head: true })
-      .eq('verification_status', 'pending')
-      .is('deleted_at', null)
-      .lte('created_at', fortyEightHoursAgo),
-    supabase
-      .from('subscriptions')
-      .select('id, status, created_at, subscription_plans ( name, price )'),
-  ])
-
-  const allSubscriptions = subscriptions ?? []
-  const activeSubscriptions = allSubscriptions.filter((sub) => sub.status === 'active')
-  const pendingSubscriptions = allSubscriptions.filter((sub) => sub.status === 'pending')
-
-  const totalRevenue = allSubscriptions
-    .filter((sub) => REVENUE_STATUSES.includes(sub.status as (typeof REVENUE_STATUSES)[number]))
-    .reduce((sum, sub) => sum + (sub.subscription_plans?.price ?? 0), 0)
-
-  const revenueByPlan = new Map<string, number>()
-  for (const sub of allSubscriptions) {
-    if (!REVENUE_STATUSES.includes(sub.status as (typeof REVENUE_STATUSES)[number])) continue
-    const planName = sub.subscription_plans?.name ?? 'Sin plan'
-    const price = sub.subscription_plans?.price ?? 0
-    revenueByPlan.set(planName, (revenueByPlan.get(planName) ?? 0) + price)
-  }
+  const { data, error } = await supabase.rpc('get_admin_dashboard_stats').single()
+  if (error) throw error
 
   return {
-    totalShops: totalShops ?? 0,
-    newShops: newShops ?? 0,
-    verifiedShops: verifiedShops ?? 0,
-    pausedShops: pausedShops ?? 0,
-    activeProducts: activeProducts ?? 0,
-    pendingReports: pendingReports ?? 0,
-    pendingSuggestions: pendingSuggestions ?? 0,
-    pendingVerificationsOver48h: pendingVerificationsOver48h ?? 0,
-    activeSubscriptionsCount: activeSubscriptions.length,
-    pendingSubscriptionsCount: pendingSubscriptions.length,
-    totalRevenue,
-    revenueByPlan: Array.from(revenueByPlan.entries()).map(([name, revenue]) => ({ name, revenue })),
+    totalShops: data.total_shops ?? 0,
+    newShops: data.new_shops ?? 0,
+    verifiedShops: data.verified_shops ?? 0,
+    pausedShops: data.paused_shops ?? 0,
+    activeProducts: data.active_products ?? 0,
+    pendingReports: data.pending_reports ?? 0,
+    pendingSuggestions: data.pending_suggestions ?? 0,
+    pendingVerificationsOver48h: data.pending_verifications_over_48h ?? 0,
+    activeSubscriptionsCount: data.active_subscriptions_count ?? 0,
+    pendingSubscriptionsCount: data.pending_subscriptions_count ?? 0,
+    totalRevenue: data.total_revenue ?? 0,
+    revenueByPlan: (data.revenue_by_plan ?? []) as { name: string; revenue: number }[],
   }
 }
 
@@ -88,11 +27,13 @@ export async function getShopsGrowthSeries(days = 30) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
   since.setHours(0, 0, 0, 0)
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('shops')
     .select('created_at')
     .is('deleted_at', null)
     .gte('created_at', since.toISOString())
+
+  if (error) console.error('getShopsGrowthSeries: fallo al traer shops', error)
 
   const counts = new Map<string, number>()
   for (let i = 0; i < days; i++) {
@@ -115,11 +56,13 @@ export async function getShopsGrowthSeries(days = 30) {
 export async function getRecentContacts(limit = 15) {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('shop_contacts')
     .select('id, created_at, shops ( id, name ), products ( id, name )')
     .order('created_at', { ascending: false })
     .limit(limit)
+
+  if (error) console.error('getRecentContacts: fallo al traer shop_contacts', error)
 
   return data ?? []
 }

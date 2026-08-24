@@ -1607,6 +1607,23 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_admin_dashboard_stats: {
+        Args: never
+        Returns: {
+          active_products: number
+          active_subscriptions_count: number
+          new_shops: number
+          paused_shops: number
+          pending_reports: number
+          pending_subscriptions_count: number
+          pending_suggestions: number
+          pending_verifications_over_48h: number
+          revenue_by_plan: Json
+          total_revenue: number
+          total_shops: number
+          verified_shops: number
+        }[]
+      }
       get_available_slots: {
         Args: { p_date: string; p_shop_id: string }
         Returns: {
@@ -1615,10 +1632,7 @@ export type Database = {
         }[]
       }
       get_featured_shops: {
-        Args: {
-          p_limit?: number
-          p_offset?: number
-        }
+        Args: { p_limit?: number; p_offset?: number }
         Returns: {
           avg_rating: number
           category_id: string
@@ -1628,8 +1642,8 @@ export type Database = {
           name: string
           review_count: number
           slug: string
-          subscription_status: string
-          verification_status: string
+          subscription_status: Database["public"]["Enums"]["subscription_status"]
+          verification_status: Database["public"]["Enums"]["verification_status"]
         }[]
       }
       get_products_feed: {
