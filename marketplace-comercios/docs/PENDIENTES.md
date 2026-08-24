@@ -44,3 +44,13 @@ marca como violación de la sección "Manejo de errores y logging" de AGENTS.md.
 **Nota:** el commit `7f4440d` se hizo con `--no-verify` justamente por este
 punto — el código quedó mejor que antes, pero el gate pide el cambio de
 comportamiento completo, que excede el alcance de ese commit.
+
+## 3. `getMyPromotions` sin límite explícito
+
+**Contexto:** `getMyPromotions` en `src/lib/shops/queries.ts` ordena por
+`created_at` pero no tiene `.limit()` ni paginación. Son las promociones de una
+sola tienda (acotado por naturaleza), así que el riesgo es bajo, pero el gate
+de review lo marca contra la regla de "límite explícito en cualquier query que
+liste". Agregar un `.limit()` razonable cuando se toque esa función.
+
+**Nota:** función preexistente, no modificada en el trabajo de performance.

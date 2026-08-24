@@ -1,9 +1,9 @@
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
 import { isServiceRubro } from '@/lib/category-icons'
-import { getMyActiveSubscription } from '@/lib/shops/queries'
+import { getMyActiveSubscription, getMyShop } from '@/lib/shops/queries'
 import { getMyClientNotifications } from '@/lib/notifications/queries'
 import {
   markClientNotificationRead,
@@ -18,9 +18,7 @@ export default async function MiTiendaLayout({
   children: React.ReactNode
 }) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
 
   let fullName: string | null = null
   let avatarUrl: string | null = null
@@ -29,21 +27,26 @@ export default async function MiTiendaLayout({
   let hasCustomBranding = false
   let reviewInvite: { shopName: string; shopUrl: string } | null = null
 
-  if (user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, avatar_url')
-      .eq('id', user.id)
-      .single()
+  // Notificaciones no dependen del perfil/tienda, así que corren en paralelo
+  // en vez de esperar a que termine ese bloque primero.
+  const [profileAndShop, { notifications, unreadCount }] = await Promise.all([
+    user
+      ? Promise.all([
+          supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single(),
+          getMyShop(),
+        ])
+      : Promise.resolve(null),
+    getMyClientNotifications(),
+  ])
+
+  if (profileAndShop) {
+    const [{ data: profile, error: profileError }, shop] = profileAndShop
+
+    if (profileError)
+      console.error('MiTiendaLayout: fallo al traer profile', { userId: user?.id, error: profileError })
 
     fullName = profile?.full_name ?? null
     avatarUrl = profile?.avatar_url ?? null
-
-    const { data: shop } = await supabase
-      .from('shops')
-      .select('id, name, slug, categories ( slug )')
-      .eq('owner_id', user.id)
-      .maybeSingle()
 
     rubroSlug = shop?.categories?.slug ?? null
 
@@ -63,8 +66,6 @@ export default async function MiTiendaLayout({
   }
 
   const isService = isServiceRubro(rubroSlug)
-
-  const { notifications, unreadCount } = await getMyClientNotifications()
 
   const navItems: DashboardNavItem[] = [
     { href: '/mi-tienda', label: 'Resumen', icon: 'store' },

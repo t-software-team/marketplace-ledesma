@@ -1,5 +1,6 @@
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { createPublicClient } from "@/lib/supabase/public";
 
 export const PLAN_LIMITS_CACHE_TAG = "plan-limits";
@@ -127,12 +128,12 @@ export async function getFreeProductMax(
     : (row?.max_products_product ?? null);
 }
 
-export async function getMyShop() {
+// Cacheado por request: el layout de /mi-tienda y la page piden la tienda
+// del usuario logueado por separado; sin esto son dos queries idénticas.
+export const getMyShop = cache(async () => {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return null;
 
@@ -162,7 +163,7 @@ export async function getMyShop() {
   }
 
   return shop;
-}
+});
 
 export async function getShopContactsSeries(shopId: string, days = 14) {
   const supabase = await createClient();
@@ -830,7 +831,9 @@ export async function getActiveSubscriptionPlans() {
   return plans ?? [];
 }
 
-export async function getMyActiveSubscription(shopId: string) {
+// Cacheado por request: layout y page de /mi-tienda la piden para el mismo
+// shopId dentro del mismo render.
+export const getMyActiveSubscription = cache(async (shopId: string) => {
   const supabase = await createClient();
 
   const { data: subscription, error } = await supabase
@@ -850,7 +853,7 @@ export async function getMyActiveSubscription(shopId: string) {
   }
 
   return subscription;
-}
+});
 
 export async function getMyPendingSubscription(shopId: string) {
   const supabase = await createClient();
