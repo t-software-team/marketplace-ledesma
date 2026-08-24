@@ -13,6 +13,8 @@ import { SplashScreen } from '@/components/shared/splash-screen'
 import { getBaseUrl } from '@/lib/site-url'
 import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script'
 
+const SPLASH_HIDE_SCRIPT = `try{if(localStorage.getItem('splash-seen')){var el=document.getElementById('splash-screen');if(el)el.style.display='none'}}catch(e){}`
+
 import './globals.css'
 
 const inter = Inter({
@@ -82,6 +84,11 @@ export default function RootLayout({
           id="theme-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
+        <Script
+          id="splash-hide"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: SPLASH_HIDE_SCRIPT }}
         />
         <ThemeProvider>
           <SplashScreen />
