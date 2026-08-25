@@ -1143,6 +1143,10 @@ export async function getShopProducts(
       name,
       price,
       currency,
+      is_featured,
+      wholesale_price,
+      min_order_qty,
+      video_url,
       product_images ( url, sort_order )
     `,
     )
@@ -1173,6 +1177,10 @@ export async function getShopProducts(
       name: product.name,
       price: product.price,
       currency: product.currency,
+      is_featured: product.is_featured,
+      wholesale_price: product.wholesale_price,
+      min_order_qty: product.min_order_qty,
+      video_url: product.video_url,
       main_image: images[0]?.url ?? null,
     };
   });

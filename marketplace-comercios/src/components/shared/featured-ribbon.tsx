@@ -3,10 +3,24 @@ import { cn } from '@/lib/utils'
 
 interface FeaturedRibbonProps {
   className?: string
-  variant?: 'corner' | 'floating'
+  variant?: 'corner' | 'floating' | 'inline'
 }
 
 export function FeaturedRibbon({ className, variant = 'corner' }: FeaturedRibbonProps) {
+  if (variant === 'inline') {
+    return (
+      <span
+        className={cn(
+          'inline-flex w-fit items-center gap-1 rounded-full bg-gradient-to-br from-primary to-primary/80 px-2 py-0.5 text-[10px] font-medium text-primary-foreground shadow-sm shadow-primary/30',
+          className
+        )}
+      >
+        <Sparkles className="size-2.5" aria-hidden />
+        Destacado
+      </span>
+    )
+  }
+
   if (variant === 'floating') {
     return (
       <div

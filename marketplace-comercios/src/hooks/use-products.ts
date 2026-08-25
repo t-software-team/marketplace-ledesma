@@ -16,7 +16,9 @@ export function useShopProductsPaged(shopId: string, searchQuery = '') {
     queryFn: async ({ pageParam }) => {
       let query = supabase
         .from('products')
-        .select('id, name, price, currency, product_images ( url, sort_order )')
+        .select(
+          'id, name, price, currency, is_featured, wholesale_price, min_order_qty, video_url, product_images ( url, sort_order )'
+        )
         .eq('shop_id', shopId)
         .eq('is_active', true)
 
@@ -37,6 +39,10 @@ export function useShopProductsPaged(shopId: string, searchQuery = '') {
           name: product.name,
           price: product.price,
           currency: product.currency,
+          is_featured: product.is_featured,
+          wholesale_price: product.wholesale_price,
+          min_order_qty: product.min_order_qty,
+          video_url: product.video_url,
           main_image: images[0]?.url ?? null,
         }
       })

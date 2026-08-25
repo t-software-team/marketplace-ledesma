@@ -172,7 +172,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
         </div>
 
         <div className="relative px-4 pb-5 md:px-6">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-muted md:size-20">
               {shop.logo_url ? (
                 <Image
@@ -188,48 +188,44 @@ export default async function ShopPage({ params }: ShopPageProps) {
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1 pt-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
-                    {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
-                  </div>
-                </div>
-                <FollowShopButton shopId={shop.id} />
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
-                {rating.reviewCount > 0 && (
-                  <span className="flex shrink-0 items-center gap-1">
-                    <StarRating rating={rating.avgRating} />
-                    <span>
-                      {rating.avgRating} ({rating.reviewCount})
-                    </span>
-                  </span>
-                )}
-                {rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
-                {followerCount > 0 && (
-                  <span className="shrink-0">
-                    {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
-                  </span>
-                )}
-                {(rating.reviewCount > 0 || followerCount > 0) && categoryName && (
-                  <span aria-hidden>·</span>
-                )}
-                {categoryName && (
-                  <Badge variant="outline" className="shrink-0 font-normal">
-                    {categoryName}
-                  </Badge>
-                )}
-                {shop.city && (
-                  <span className="flex shrink-0 items-center gap-1">
-                    <MapPin className="size-3.5" aria-hidden />
-                    {shop.city}
-                  </span>
-                )}
-                <OpenNowBadge businessHours={shop.business_hours} />
-              </div>
+            <div className="pt-2">
+              <FollowShopButton shopId={shop.id} />
             </div>
+          </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <h1 className="min-w-0 truncate text-2xl font-heading">{shop.name}</h1>
+            {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+            {rating.reviewCount > 0 && (
+              <span className="flex shrink-0 items-center gap-1">
+                <StarRating rating={rating.avgRating} />
+                <span>
+                  {rating.avgRating} ({rating.reviewCount})
+                </span>
+              </span>
+            )}
+            {rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
+            {followerCount > 0 && (
+              <span className="shrink-0">
+                {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
+              </span>
+            )}
+            {(rating.reviewCount > 0 || followerCount > 0) && categoryName && (
+              <span aria-hidden>·</span>
+            )}
+            {categoryName && (
+              <Badge variant="outline" className="shrink-0 font-normal">
+                {categoryName}
+              </Badge>
+            )}
+            {shop.city && (
+              <span className="flex shrink-0 items-center gap-1">
+                <MapPin className="size-3.5" aria-hidden />
+                {shop.city}
+              </span>
+            )}
+            <OpenNowBadge businessHours={shop.business_hours} />
           </div>
 
           {shop.is_paused && (
