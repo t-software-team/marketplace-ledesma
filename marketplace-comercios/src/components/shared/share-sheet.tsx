@@ -53,10 +53,15 @@ interface ShareTarget {
   /** Circular badge background (brand color). */
   badgeClass: string
   onSelect: () => void | Promise<void>
+  disabled?: boolean
 }
 
 export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl }: ShareSheetProps) {
   const [copied, setCopied] = useState(false)
+  // navigator.share rejects with InvalidStateError if a previous share is still
+  // pending. Fetching the story image before sharing widens that window, so we
+  // gate re-entry and disable the trigger until the current share settles.
+  const [isSharing, setIsSharing] = useState(false)
   const shareMessage = `${text} ${url}`
 
   async function copyLink(notify = true) {
@@ -95,6 +100,8 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
   // Historia/Feed/Mensaje chooser from the web is to hand it an image file via
   // the native share sheet. Everything else degrades to copy + download.
   async function shareToInstagram() {
+    if (isSharing) return
+    setIsSharing(true)
     try {
       const file = await fetchStoryFile()
 
@@ -117,6 +124,8 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
       if (error instanceof Error && error.name === 'AbortError') return
       console.error('ShareSheet: fallo al compartir en Instagram', error)
       toast.add({ title: 'No pudimos preparar la historia', type: 'error' })
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -146,6 +155,7 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
       icon: <InstagramIcon className="size-6 text-white" />,
       badgeClass: 'bg-gradient-to-tr from-[#feda75] via-[#d62976] to-[#4f5bd5]',
       onSelect: shareToInstagram,
+      disabled: isSharing,
     },
     {
       key: 'whatsapp',
@@ -221,7 +231,8 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
               key={target.key}
               type="button"
               onClick={target.onSelect}
-              className="flex flex-col items-center gap-1.5 rounded-xl py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
+              disabled={target.disabled}
+              className="flex flex-col items-center gap-1.5 rounded-xl py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring disabled:opacity-60"
             >
               <span
                 className={cn(
