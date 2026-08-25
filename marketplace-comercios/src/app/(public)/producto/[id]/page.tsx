@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { FavoriteButton } from '@/components/shared/favorite-button'
-import { ShareButton } from '@/components/shared/share-button'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
+import { ProductShare } from '@/components/product/product-share'
 import { ProductContact } from '@/components/product/product-contact'
 import { ProductGallery } from '@/components/product/product-gallery'
 import { formatPrice } from '@/lib/format'
@@ -135,7 +135,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 {formatPrice(product.price, product.currency)}
               </p>
             </div>
-            <ShareButton
+            <ProductShare
+              productId={product.id}
               title={product.name}
               text={`Mirá "${product.name}" en ${shop.name} — ${formatPrice(product.price, product.currency)}`}
               url={`${baseUrl}/producto/${product.id}`}
