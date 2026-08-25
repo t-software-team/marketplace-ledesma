@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Download, Link2, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
@@ -58,11 +58,43 @@ interface ShareTarget {
 
 export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl }: ShareSheetProps) {
   const [copied, setCopied] = useState(false)
-  // navigator.share rejects with InvalidStateError if a previous share is still
-  // pending. Fetching the story image before sharing widens that window, so we
-  // gate re-entry and disable the trigger until the current share settles.
   const [isSharing, setIsSharing] = useState(false)
+  // The story image is prefetched when the sheet opens. iOS drops the transient
+  // user activation if we `await fetch` inside the tap handler (forcing a second
+  // tap), so having the file ready lets navigator.share fire synchronously.
+  const [storyFile, setStoryFile] = useState<File | null>(null)
+  const [preparing, setPreparing] = useState(false)
   const shareMessage = `${text} ${url}`
+
+  useEffect(() => {
+    if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the prefetched file when the sheet closes so a stale image is never shared
+      setStoryFile(null)
+      return
+    }
+
+    let cancelled = false
+    setPreparing(true)
+
+    void (async () => {
+      try {
+        const response = await fetch(storyImageUrl)
+        if (!response.ok) throw new Error('story image request failed')
+        const blob = await response.blob()
+        if (!cancelled) {
+          setStoryFile(new File([blob], 'historia.png', { type: blob.type || 'image/png' }))
+        }
+      } catch (error) {
+        if (!cancelled) console.error('ShareSheet: fallo al preparar la imagen de historia', error)
+      } finally {
+        if (!cancelled) setPreparing(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [open, storyImageUrl])
 
   async function copyLink(notify = true) {
     try {
@@ -93,26 +125,39 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
     link.href = href
     link.download = file.name
     link.click()
-    URL.revokeObjectURL(href)
+    // Defer revoke: some browsers start the download asynchronously and revoking
+    // synchronously can race it.
+    setTimeout(() => URL.revokeObjectURL(href), 0)
   }
 
   // Instagram exposes no web share intent. The only way to land in its
   // Historia/Feed/Mensaje chooser from the web is to hand it an image file via
   // the native share sheet. Everything else degrades to copy + download.
   async function shareToInstagram() {
+    // Fast path: the prefetched file lets navigator.share run inside the gesture.
+    if (storyFile && navigator.canShare?.({ files: [storyFile] })) {
+      try {
+        await navigator.share({ files: [storyFile], title })
+        onOpenChange(false)
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return
+        console.error('ShareSheet: fallo al compartir en Instagram', error)
+        toast.add({ title: 'No pudimos compartir la historia', type: 'error' })
+      }
+      return
+    }
+
+    // Fallback: image not ready yet or no file-share support (older mobile /
+    // desktop) — fetch, then copy the link and save the image to post manually.
     if (isSharing) return
     setIsSharing(true)
     try {
-      const file = await fetchStoryFile()
-
+      const file = storyFile ?? (await fetchStoryFile())
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title })
         onOpenChange(false)
         return
       }
-
-      // Fallback (older mobile / desktop): copy the link, save the image, and
-      // point the user to Instagram to post it manually.
       await copyLink(false)
       downloadStoryImage(file)
       toast.add({
@@ -127,6 +172,29 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
     } finally {
       setIsSharing(false)
     }
+  }
+
+  // Facebook dropped prefilled mobile deep links, and inside a standalone PWA the
+  // sharer.php page opens in an in-app webview that isn't logged into Facebook —
+  // so it renders blank. The native share sheet hands the link to the real FB
+  // app, which scrapes the OG tags and shows the preview. Desktop keeps the popup.
+  function shareToFacebook() {
+    const sharer = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      navigator
+        .share({ url, text, title })
+        .then(() => onOpenChange(false))
+        .catch((error: unknown) => {
+          if (error instanceof Error && error.name === 'AbortError') return
+          window.open(sharer, '_blank', 'noopener,noreferrer')
+          onOpenChange(false)
+        })
+      return
+    }
+
+    window.open(sharer, '_blank', 'noopener,noreferrer')
+    onOpenChange(false)
   }
 
   async function saveStoryImage() {
@@ -151,15 +219,16 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
   const targets: ShareTarget[] = [
     {
       key: 'instagram',
-      label: isSharing ? 'Generando…' : 'Historia',
-      icon: isSharing ? (
-        <Loader2 className="size-6 animate-spin text-white" />
-      ) : (
-        <InstagramIcon className="size-6 text-white" />
-      ),
+      label: preparing ? 'Generando…' : 'Historia',
+      icon:
+        preparing || isSharing ? (
+          <Loader2 className="size-6 animate-spin text-white" />
+        ) : (
+          <InstagramIcon className="size-6 text-white" />
+        ),
       badgeClass: 'bg-gradient-to-tr from-[#feda75] via-[#d62976] to-[#4f5bd5]',
       onSelect: shareToInstagram,
-      disabled: isSharing,
+      disabled: preparing || isSharing,
     },
     {
       key: 'whatsapp',
@@ -174,8 +243,7 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
       label: 'Facebook',
       icon: <FacebookIcon className="size-6 text-white" />,
       badgeClass: 'bg-[#1877F2]',
-      onSelect: () =>
-        openIntent(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`),
+      onSelect: shareToFacebook,
     },
     {
       key: 'telegram',
