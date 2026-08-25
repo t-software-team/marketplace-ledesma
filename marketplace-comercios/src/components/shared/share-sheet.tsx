@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, Download, Link2 } from 'lucide-react'
+import { Check, Download, Link2, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
@@ -151,8 +151,12 @@ export function ShareSheet({ open, onOpenChange, url, title, text, storyImageUrl
   const targets: ShareTarget[] = [
     {
       key: 'instagram',
-      label: 'Historia',
-      icon: <InstagramIcon className="size-6 text-white" />,
+      label: isSharing ? 'Generando…' : 'Historia',
+      icon: isSharing ? (
+        <Loader2 className="size-6 animate-spin text-white" />
+      ) : (
+        <InstagramIcon className="size-6 text-white" />
+      ),
       badgeClass: 'bg-gradient-to-tr from-[#feda75] via-[#d62976] to-[#4f5bd5]',
       onSelect: shareToInstagram,
       disabled: isSharing,
