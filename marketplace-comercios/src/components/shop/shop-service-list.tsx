@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
+import { ProductImage } from '@/components/shared/product-image'
 import { ChevronRight, Search, Wrench } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -31,10 +31,8 @@ export function ShopServiceList({
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useShopProductsPaged(
-    shopId,
-    searchQuery
-  )
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isError, error } =
+    useShopProductsPaged(shopId, searchQuery)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   function handleSearchChange(value: string) {
@@ -48,6 +46,11 @@ export function ShopServiceList({
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isError) return
+    console.error('useShopProductsPaged: fallo al cargar servicios de la tienda', { shopId, error })
+  }, [isError, error, shopId])
 
   const services = useMemo(
     () => (data ? data.pages.flat() : searchQuery ? [] : initialProducts),
@@ -100,7 +103,17 @@ export function ShopServiceList({
         </div>
       )}
 
-      {services.length === 0 ? (
+      {searchQuery && isError ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No pudimos cargar la búsqueda. Probá de nuevo.
+        </p>
+      ) : searchQuery && isFetching && services.length === 0 ? (
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-20 rounded-xl" />
+          ))}
+        </div>
+      ) : services.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No encontramos servicios que coincidan con &quot;{searchInput}&quot;.
         </p>
@@ -119,10 +132,9 @@ export function ShopServiceList({
                   >
                     <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-16">
                       {service.main_image ? (
-                        <Image
+                        <ProductImage
                           src={service.main_image}
                           alt={service.name}
-                          fill
                           className="object-cover"
                           sizes="64px"
                         />
