@@ -949,6 +949,7 @@ export type Database = {
           landing_banner: Json | null
           landing_gallery: Json | null
           landing_services: Json | null
+          landing_template: string | null
           landing_video_url: string | null
           location: unknown
           logo_url: string | null
@@ -989,6 +990,7 @@ export type Database = {
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
+          landing_template?: string | null
           landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
@@ -1029,6 +1031,7 @@ export type Database = {
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
+          landing_template?: string | null
           landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null

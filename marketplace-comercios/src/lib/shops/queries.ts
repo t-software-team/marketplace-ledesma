@@ -146,7 +146,7 @@ export const getMyShop = cache(async () => {
       verification_status, verification_document_url, verified_by, verified_at,
       subscription_status, subscription_expires_at,
       is_active, is_paused, paused_reason, business_hours, accent_color,
-      landing_banner, landing_services, landing_gallery, landing_video_url,
+      landing_template, landing_banner, landing_services, landing_gallery, landing_video_url,
       profile_views, whatsapp_clicks, created_at, updated_at, deleted_at,
       categories ( slug )
     `,
@@ -518,6 +518,7 @@ export const getShopBySlug = unstable_cache(
         is_paused,
         paused_reason,
         accent_color,
+        landing_template,
         landing_banner,
         landing_services,
         landing_gallery,
@@ -1184,6 +1185,91 @@ export async function getShopProducts(
       main_image: images[0]?.url ?? null,
     };
   });
+}
+
+// Productos destacados de una tienda (is_featured), para la fila de "destacados"
+// de la plantilla Marketplace. Data pública igual que getShopProducts.
+export async function getShopFeaturedProducts(shopId: string, limit = 8) {
+  const supabase = createPublicClient();
+
+  const { data: products, error } = await supabase
+    .from("products")
+    .select(
+      `
+      id,
+      name,
+      price,
+      currency,
+      product_images ( url, sort_order )
+    `,
+    )
+    .eq("shop_id", shopId)
+    .eq("is_active", true)
+    .eq("is_featured", true)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !products) {
+    if (error) {
+      console.error("getShopFeaturedProducts: fallo al traer destacados", {
+        shopId,
+        error,
+      });
+    }
+    return [];
+  }
+
+  return products.map((product) => {
+    const images = [...(product.product_images ?? [])].sort(
+      (a, b) => a.sort_order - b.sort_order,
+    );
+    return {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      currency: product.currency,
+      main_image: images[0]?.url ?? null,
+    };
+  });
+}
+
+// Subcategorías en las que la tienda tiene productos activos, para los círculos
+// de "categorías que vende" de la plantilla Marketplace. Dedup en memoria porque
+// PostgREST no expone DISTINCT sobre una relación embebida.
+export async function getShopProductCategories(shopId: string) {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("category_id, categories ( name, slug )")
+    .eq("shop_id", shopId)
+    .eq("is_active", true)
+    .not("category_id", "is", null);
+
+  if (error || !data) {
+    if (error) {
+      console.error("getShopProductCategories: fallo al traer categorías", {
+        shopId,
+        error,
+      });
+    }
+    return [];
+  }
+
+  const seen = new Map<string, { id: string; name: string; slug: string }>();
+  for (const row of data) {
+    const category = row.categories as { name?: string; slug?: string } | null;
+    if (!row.category_id || !category?.name || !category.slug) continue;
+    if (!seen.has(row.category_id)) {
+      seen.set(row.category_id, {
+        id: row.category_id,
+        name: category.name,
+        slug: category.slug,
+      });
+    }
+  }
+
+  return [...seen.values()];
 }
 
 // opts permite que el caller pase datos que ya tiene y evitar round-trips:

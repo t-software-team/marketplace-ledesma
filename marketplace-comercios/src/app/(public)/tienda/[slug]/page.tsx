@@ -17,6 +17,7 @@ import { RelatedShops } from '@/components/shop/related-shops'
 import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
+import { ShopmoreTemplate } from '@/components/shop/store-templates/shopmore-template'
 import { ShopServiceList } from '@/components/shop/shop-service-list'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopMoreLinksMenu } from '@/components/shop/shop-more-links-menu'
@@ -29,11 +30,14 @@ import { Button } from '@/components/ui/button'
 import {
   getRelatedShops,
   getShopBySlug,
+  getShopFeaturedProducts,
   getShopFollowStats,
+  getShopProductCategories,
   getShopProducts,
   getShopRating,
   getShopReviews,
 } from '@/lib/shops/queries'
+import { resolveStoreTemplate } from '@/lib/shops/personalization-templates'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { getAccentColor } from '@/lib/accent-colors'
 import { getBaseUrl } from '@/lib/site-url'
@@ -94,16 +98,24 @@ export default async function ShopPage({ params }: ShopPageProps) {
   const baseUrl = getBaseUrl()
   const shopUrl = `${baseUrl}/tienda/${slug}`
 
-  const [products, rating, reviews, followerCount, relatedShops] = await Promise.all([
+  const isService = shop.categories?.is_service ?? false
+  // La plantilla Marketplace es para catálogos de productos; en rubros de
+  // servicio cae al layout clásico (grilla/lista de servicios).
+  const template = isService ? 'clasica' : resolveStoreTemplate(shop.landing_template)
+  const isShopmore = template === 'shopmore'
+
+  const [products, rating, reviews, followerCount, relatedShops, shopmoreData] = await Promise.all([
     getShopProducts(shop.id),
     getShopRating(shop.id),
     getShopReviews(shop.id),
     getShopFollowStats(shop.id),
     getRelatedShops(shop.id, shop.category_id, shop.city),
+    isShopmore
+      ? Promise.all([getShopFeaturedProducts(shop.id), getShopProductCategories(shop.id)])
+      : Promise.resolve(null),
   ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
-  const isService = shop.categories?.is_service ?? false
   const isVerified = hasVerifiedBadge(shop)
   const isFeatured = shop.subscription_status === 'active'
   const accentColor = shop.accent_color ? getAccentColor(shop.accent_color) : null
@@ -269,25 +281,38 @@ export default async function ShopPage({ params }: ShopPageProps) {
         </div>
       </div>
 
-      <LandingBannerSection data={shop.landing_banner} />
+      {isShopmore ? (
+        <ShopmoreTemplate
+          shopId={shop.id}
+          shopName={shop.name}
+          landingBanner={shop.landing_banner}
+          initialProducts={products}
+          featured={shopmoreData?.[0] ?? []}
+          categories={shopmoreData?.[1] ?? []}
+        />
+      ) : (
+        <>
+          <LandingBannerSection data={shop.landing_banner} />
 
-      <LandingServicesSection data={shop.landing_services} />
-      <LandingGallerySection data={shop.landing_gallery} />
-      <LandingVideoSection url={shop.landing_video_url} />
+          <LandingServicesSection data={shop.landing_services} />
+          <LandingGallerySection data={shop.landing_gallery} />
+          <LandingVideoSection url={shop.landing_video_url} />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
-        {isService ? (
-          <ShopServiceList
-            shopId={shop.id}
-            initialProducts={products}
-            shopName={shop.name}
-            whatsappNumber={shop.whatsapp_number}
-          />
-        ) : (
-          <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
-        )}
-      </section>
+          <section className="space-y-4">
+            <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
+            {isService ? (
+              <ShopServiceList
+                shopId={shop.id}
+                initialProducts={products}
+                shopName={shop.name}
+                whatsappNumber={shop.whatsapp_number}
+              />
+            ) : (
+              <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
+            )}
+          </section>
+        </>
+      )}
 
       {isFeatured && (
         <section className="space-y-4">
