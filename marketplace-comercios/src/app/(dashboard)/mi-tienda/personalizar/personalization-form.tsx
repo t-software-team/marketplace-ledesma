@@ -133,12 +133,13 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           <CardContent className="space-y-4 p-5 lg:p-6">
             <div>
               <h2 className="text-sm font-medium text-muted-foreground">
-                {isShopmore ? 'Banner principal' : 'Contenido de tu tienda'}
+                {isShopmore ? 'Banner y servicios' : 'Contenido de tu tienda'}
               </h2>
               {isShopmore && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Subí tu banner. Las categorías que vendés y los productos destacados se muestran
-                  automáticamente a partir de tu catálogo.
+                  Cargá tu banner y los servicios que ofrecés. Las categorías y los productos
+                  destacados se muestran automáticamente a partir de tu catálogo, y los horarios y
+                  contacto salen de la Configuración de tu tienda.
                 </p>
               )}
             </div>
@@ -149,7 +150,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
               landingGallery={shop.landing_gallery}
               landingVideoUrl={shop.landing_video_url}
               onChange={setLandingValues}
-              visibleSection={isShopmore ? 'banner' : 'all'}
+              visibleSection={isShopmore ? ['banner', 'services'] : 'all'}
             />
           </CardContent>
         </Card>
@@ -194,6 +195,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
                   <ShopmorePreviewBlock label="Categorías que vendés" />
                   <ShopmorePreviewBlock label="Destacados" />
                   <ShopmorePreviewBlock label="Todos los productos" />
+                  <LandingServicesSection data={previewServicesData} />
                   {!previewBannerData && (
                     <p className="text-center text-xs text-muted-foreground">
                       Subí un banner para completar tu portada.

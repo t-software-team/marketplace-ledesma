@@ -286,6 +286,15 @@ export default async function ShopPage({ params }: ShopPageProps) {
           shopId={shop.id}
           shopName={shop.name}
           landingBanner={shop.landing_banner}
+          landingServices={shop.landing_services}
+          description={shop.description}
+          businessHours={shop.business_hours}
+          address={shop.address}
+          city={shop.city}
+          whatsappNumber={shop.whatsapp_number}
+          instagramUrl={shop.instagram_url}
+          facebookUrl={shop.facebook_url}
+          websiteUrl={shop.website_url}
           initialProducts={products}
           featured={shopmoreData?.[0] ?? []}
           categories={shopmoreData?.[1] ?? []}

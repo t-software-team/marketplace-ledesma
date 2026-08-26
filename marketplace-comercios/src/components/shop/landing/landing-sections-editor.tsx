@@ -23,12 +23,10 @@ interface LandingSectionsEditorProps {
   landingGallery?: unknown
   landingVideoUrl: string | null
   onChange?: (values: LandingSectionsValues) => void
-  applyTemplate?: {
-    key: string
-    banner?: { title: string; subtitle: string }
-  } | null
-  visibleSection?: 'banner' | 'services' | 'gallery' | 'video' | 'all'
+  visibleSection?: LandingSection | LandingSection[] | 'all'
 }
+
+type LandingSection = 'banner' | 'services' | 'gallery' | 'video'
 
 export function LandingSectionsEditor({
   shopId,
@@ -37,7 +35,6 @@ export function LandingSectionsEditor({
   landingGallery,
   landingVideoUrl,
   onChange,
-  applyTemplate,
   visibleSection = 'all',
 }: LandingSectionsEditorProps) {
   const [banner, setBanner] = useState<LandingBanner>(() => parseBanner(landingBanner))
@@ -51,13 +48,6 @@ export function LandingSectionsEditor({
     onChange?.({ banner, bannerEnabled, services, gallery, videoUrl })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [banner, bannerEnabled, services, gallery, videoUrl])
-
-  useEffect(() => {
-    if (!applyTemplate?.banner) return
-    if (banner.title.trim()) return
-    setBanner((current) => ({ ...current, title: applyTemplate.banner!.title, subtitle: applyTemplate.banner!.subtitle }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applyTemplate?.key])
 
   const bannerJson = useMemo(() => {
     if (!banner.title.trim()) return ''
@@ -75,6 +65,10 @@ export function LandingSectionsEditor({
     return JSON.stringify(gallery)
   }, [gallery])
 
+  const isVisible = (section: LandingSection) =>
+    visibleSection === 'all' ||
+    (Array.isArray(visibleSection) ? visibleSection.includes(section) : visibleSection === section)
+
   return (
     <div className="space-y-6">
       <input type="hidden" name="landing_banner_text" value={bannerJson} />
@@ -86,27 +80,27 @@ export function LandingSectionsEditor({
         banner={banner}
         setBanner={setBanner}
         bannerEnabled={bannerEnabled}
-        visible={visibleSection === 'all' || visibleSection === 'banner'}
+        visible={isVisible('banner')}
       />
 
       <LandingServicesSection
         services={services}
         setServices={setServices}
-        visible={visibleSection === 'all' || visibleSection === 'services'}
+        visible={isVisible('services')}
       />
 
       <LandingGallerySection
         shopId={shopId}
         gallery={gallery}
         setGallery={setGallery}
-        visible={visibleSection === 'all' || visibleSection === 'gallery'}
+        visible={isVisible('gallery')}
       />
 
       <LandingVideoSection
         shopId={shopId}
         videoUrl={videoUrl}
         setVideoUrl={setVideoUrl}
-        visible={visibleSection === 'all' || visibleSection === 'video'}
+        visible={isVisible('video')}
       />
     </div>
   )
