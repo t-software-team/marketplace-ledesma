@@ -61,6 +61,7 @@ export type ShopSettingsFormValues = z.infer<typeof shopSettingsSchema>
 
 export const personalizationSchema = z.object({
   accent_color: z.string().optional().or(z.literal('')),
+  landing_template: z.enum(['clasica', 'shopmore']).optional().or(z.literal('')),
   landing_banner_text: z.string().max(2000).optional().or(z.literal('')),
   landing_services_text: z.string().max(4000).optional().or(z.literal('')),
   landing_gallery_text: z.string().max(4000).optional().or(z.literal('')),

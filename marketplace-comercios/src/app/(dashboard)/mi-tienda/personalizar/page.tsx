@@ -26,7 +26,7 @@ export default async function PersonalizarPage() {
         <div>
           <h1 className="text-2xl font-heading">Personalizar tienda</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Dale identidad propia a tu tienda pública: color, banner, servicios destacados y video.
+            Elegí una plantilla para tu tienda pública y cargá tu banner y color.
           </p>
         </div>
         <Button

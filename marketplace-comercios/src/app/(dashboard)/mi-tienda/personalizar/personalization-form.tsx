@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import { Check, GalleryHorizontal, ImageIcon, Palette, Play, Sparkles, Wand2 } from 'lucide-react'
+import { Check, LayoutGrid, Sparkles } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
@@ -10,7 +10,11 @@ import { ACCENT_COLORS, DEFAULT_ACCENT_COLOR, getAccentColor } from '@/lib/accen
 import { LandingSectionsEditor, type LandingSectionsValues } from '@/components/shop/landing/landing-sections-editor'
 import { LandingBannerSection, LandingGallerySection, LandingServicesSection } from '@/components/shop/landing-sections'
 import { LandingVideoSection } from '@/components/shop/landing-video-section'
-import { PERSONALIZATION_TEMPLATES } from '@/lib/shops/personalization-templates'
+import {
+  STORE_TEMPLATES,
+  resolveStoreTemplate,
+  type StoreTemplateKey,
+} from '@/lib/shops/personalization-templates'
 import { updateShopPersonalization, type ActionState } from '@/lib/shops/actions'
 import type { getMyShop } from '@/lib/shops/queries'
 
@@ -18,23 +22,12 @@ type Shop = NonNullable<Awaited<ReturnType<typeof getMyShop>>>
 
 const initialState: ActionState = { error: null }
 
-const STEPS = [
-  { key: 'color', label: 'Color', icon: Palette },
-  { key: 'banner', label: 'Banner', icon: ImageIcon },
-  { key: 'services', label: 'Servicios', icon: Sparkles },
-  { key: 'gallery', label: 'Galería', icon: GalleryHorizontal },
-  { key: 'video', label: 'Video', icon: Play },
-] as const
-
-type StepKey = (typeof STEPS)[number]['key']
-
 export function PersonalizationForm({ shop }: { shop: Shop }) {
   const [state, formAction, isPending] = useActionState(updateShopPersonalization, initialState)
   const isFirstRender = useRef(true)
   const [accentColor, setAccentColor] = useState(shop.accent_color ?? DEFAULT_ACCENT_COLOR)
-  const [activeStep, setActiveStep] = useState<StepKey>('color')
-  const [template, setTemplate] = useState<{ key: string; banner?: { title: string; subtitle: string } } | null>(
-    null
+  const [template, setTemplate] = useState<StoreTemplateKey>(() =>
+    resolveStoreTemplate(shop.landing_template)
   )
   const [landingValues, setLandingValues] = useState<LandingSectionsValues | null>(null)
 
@@ -50,21 +43,8 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
     }
   }, [state])
 
-  function applyTemplate(templateKey: string) {
-    const found = PERSONALIZATION_TEMPLATES.find((item) => item.key === templateKey)
-    if (!found) return
-    setAccentColor(found.accentColor)
-    setTemplate({ key: `${found.key}-${Date.now()}`, banner: found.banner })
-  }
-
   const selectedAccent = getAccentColor(accentColor)
-
-  const bannerComplete = Boolean(landingValues?.bannerEnabled && landingValues.banner.title.trim())
-  const servicesComplete = Boolean(landingValues?.services.some((service) => service.name.trim()))
-  const galleryComplete = Boolean(landingValues?.gallery.length)
-  const videoComplete = Boolean(landingValues?.videoUrl.trim())
-  const completedCount =
-    1 + Number(bannerComplete) + Number(servicesComplete) + Number(galleryComplete) + Number(videoComplete)
+  const isShopmore = template === 'shopmore'
 
   const previewBannerData =
     landingValues?.bannerEnabled && landingValues.banner.title.trim() ? landingValues.banner : null
@@ -75,45 +55,44 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
       <form action={formAction} className="space-y-5">
+        <input type="hidden" name="landing_template" value={template} />
+
         <Card className="overflow-hidden">
           <CardContent className="space-y-3 p-5 lg:p-6">
             <div className="flex items-center gap-1.5">
-              <Wand2 className="size-4 text-muted-foreground" aria-hidden />
-              <h2 className="text-sm font-medium text-muted-foreground">Plantillas prearmadas</h2>
+              <LayoutGrid className="size-4 text-muted-foreground" aria-hidden />
+              <h2 className="text-sm font-medium text-muted-foreground">Elegí una plantilla</h2>
             </div>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {PERSONALIZATION_TEMPLATES.map((item) => {
-                const templateAccent = getAccentColor(item.accentColor)
-                const isSelected = accentColor === item.accentColor
+            <div className="grid gap-2 sm:grid-cols-2">
+              {STORE_TEMPLATES.map((item) => {
+                const isSelected = template === item.key
                 return (
                   <button
                     key={item.key}
                     type="button"
-                    onClick={() => applyTemplate(item.key)}
+                    onClick={() => setTemplate(item.key)}
                     aria-pressed={isSelected}
                     className={cn(
-                      'group relative overflow-hidden rounded-lg border p-3 text-left transition-all',
+                      'group relative overflow-hidden rounded-lg border p-4 text-left transition-all',
                       isSelected
                         ? 'border-transparent shadow-[0_0_0_2px_var(--tpl-color)]'
                         : 'border-border hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-sm'
                     )}
-                    style={{ '--tpl-color': templateAccent.swatch } as React.CSSProperties}
+                    style={{ '--tpl-color': selectedAccent.swatch } as React.CSSProperties}
                   >
-                    <span
-                      className="absolute inset-x-0 top-0 h-1"
-                      style={{ backgroundColor: templateAccent.swatch }}
-                      aria-hidden
-                    />
                     <div className="flex items-center gap-1.5">
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: templateAccent.swatch }}
-                        aria-hidden
-                      />
                       <p className="text-sm font-medium">{item.label}</p>
                       {isSelected && <Check className="ml-auto size-3.5 text-muted-foreground" aria-hidden />}
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{item.description}</p>
+                    <ul className="mt-2 space-y-0.5">
+                      {item.features.map((feature) => (
+                        <li key={feature} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <span className="size-1 shrink-0 rounded-full bg-current opacity-40" aria-hidden />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                   </button>
                 )
               })}
@@ -121,48 +100,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           </CardContent>
         </Card>
 
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {STEPS.map((step) => {
-              const Icon = step.icon
-              const isDone =
-                (step.key === 'color' && true) ||
-                (step.key === 'banner' && bannerComplete) ||
-                (step.key === 'services' && servicesComplete) ||
-                (step.key === 'gallery' && galleryComplete) ||
-                (step.key === 'video' && videoComplete)
-              const isActive = activeStep === step.key
-              return (
-                <button
-                  key={step.key}
-                  type="button"
-                  onClick={() => setActiveStep(step.key)}
-                  className={cn(
-                    'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all',
-                    isActive
-                      ? 'border-transparent bg-foreground text-background shadow-sm'
-                      : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
-                  )}
-                >
-                  <Icon className="size-3.5" aria-hidden />
-                  {step.label}
-                  {isDone && !isActive && <Check className="size-3 text-emerald-500" aria-hidden />}
-                </button>
-              )
-            })}
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${(completedCount / 5) * 100}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-xs text-muted-foreground">{completedCount}/5 secciones</span>
-          </div>
-        </div>
-
-        <Card className={cn('transition-shadow', activeStep !== 'color' && 'hidden')}>
+        <Card>
           <CardContent className="space-y-5 p-5 lg:p-6">
             <h2 className="text-sm font-medium text-muted-foreground">Color de tu tienda</h2>
             <input type="hidden" name="accent_color" value={accentColor} />
@@ -191,32 +129,29 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           </CardContent>
         </Card>
 
-        <Card className={cn(activeStep === 'color' && 'hidden')}>
-          <CardContent className="p-5 lg:p-6">
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'banner' && 'hidden')}>
-              Banner promocional
-            </h2>
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'services' && 'hidden')}>
-              Servicios destacados
-            </h2>
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'gallery' && 'hidden')}>
-              Galería de fotos
-            </h2>
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'video' && 'hidden')}>
-              Video
-            </h2>
+        <Card>
+          <CardContent className="space-y-4 p-5 lg:p-6">
             <div>
-              <LandingSectionsEditor
-                shopId={shop.id}
-                landingBanner={shop.landing_banner}
-                landingServices={shop.landing_services}
-                landingGallery={shop.landing_gallery}
-                landingVideoUrl={shop.landing_video_url}
-                onChange={setLandingValues}
-                applyTemplate={template}
-                visibleSection={activeStep === 'color' ? 'all' : activeStep}
-              />
+              <h2 className="text-sm font-medium text-muted-foreground">
+                {isShopmore ? 'Banner y servicios' : 'Contenido de tu tienda'}
+              </h2>
+              {isShopmore && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Cargá tu banner y los servicios que ofrecés. Tus productos se muestran
+                  automáticamente, y los horarios y el contacto salen de la Configuración de tu
+                  tienda.
+                </p>
+              )}
             </div>
+            <LandingSectionsEditor
+              shopId={shop.id}
+              landingBanner={shop.landing_banner}
+              landingServices={shop.landing_services}
+              landingGallery={shop.landing_gallery}
+              landingVideoUrl={shop.landing_video_url}
+              onChange={setLandingValues}
+              visibleSection={isShopmore ? ['banner', 'services'] : 'all'}
+            />
           </CardContent>
         </Card>
 
@@ -255,23 +190,52 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           <CardContent className="p-5">
             <div className="space-y-4 rounded-lg border border-border bg-background p-4">
               <LandingBannerSection data={previewBannerData} />
-              <LandingServicesSection data={previewServicesData} />
-              <LandingGallerySection data={previewGalleryData} />
-              <LandingVideoSection url={landingValues?.videoUrl.trim() ? landingValues.videoUrl : null} />
-              {!previewBannerData &&
-                previewServicesData.length === 0 &&
-                previewGalleryData.length === 0 &&
-                !landingValues?.videoUrl.trim() && (
-                <div className="flex flex-col items-center gap-2 py-10 text-center">
-                  <Sparkles className="size-5 text-muted-foreground/50" aria-hidden />
-                  <p className="text-xs text-muted-foreground">
-                    Configurá el banner, servicios o video para verlos acá.
-                  </p>
-                </div>
+              {isShopmore ? (
+                <>
+                  <LandingServicesSection data={previewServicesData} />
+                  <ShopmorePreviewBlock label="Todos los productos" />
+                  {!previewBannerData && (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Subí un banner para completar tu portada.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <LandingServicesSection data={previewServicesData} />
+                  <LandingGallerySection data={previewGalleryData} />
+                  <LandingVideoSection url={landingValues?.videoUrl.trim() ? landingValues.videoUrl : null} />
+                  {!previewBannerData &&
+                    previewServicesData.length === 0 &&
+                    previewGalleryData.length === 0 &&
+                    !landingValues?.videoUrl.trim() && (
+                      <div className="flex flex-col items-center gap-2 py-10 text-center">
+                        <Sparkles className="size-5 text-muted-foreground/50" aria-hidden />
+                        <p className="text-xs text-muted-foreground">
+                          Configurá el banner, servicios o video para verlos acá.
+                        </p>
+                      </div>
+                    )}
+                </>
               )}
             </div>
           </CardContent>
         </Card>
+      </div>
+    </div>
+  )
+}
+
+/** Placeholder de un bloque automático (categorías/destacados/productos) que se
+ * llena con datos reales del catálogo en la tienda pública. */
+function ShopmorePreviewBlock({ label }: { label: string }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="flex gap-2 overflow-hidden">
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="h-16 flex-1 rounded-lg bg-muted" aria-hidden />
+        ))}
       </div>
     </div>
   )

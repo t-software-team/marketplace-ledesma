@@ -351,6 +351,7 @@ export async function updateShopPersonalization(
 
   const parsed = personalizationSchema.safeParse({
     accent_color: formData.get('accent_color') ?? '',
+    landing_template: formData.get('landing_template') ?? '',
     landing_banner_text: formData.get('landing_banner_text') ?? '',
     landing_services_text: formData.get('landing_services_text') ?? '',
     landing_gallery_text: formData.get('landing_gallery_text') ?? '',
@@ -465,6 +466,7 @@ export async function updateShopPersonalization(
     .from('shops')
     .update({
       accent_color: accentColor,
+      landing_template: parsed.data.landing_template || null,
       landing_banner: landingBanner as never,
       landing_services: landingServices as never,
       landing_gallery: landingGallery as never,
