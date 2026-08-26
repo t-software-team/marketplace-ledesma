@@ -137,9 +137,9 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
               </h2>
               {isShopmore && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Cargá tu banner y los servicios que ofrecés. Las categorías y los productos
-                  destacados se muestran automáticamente a partir de tu catálogo, y los horarios y
-                  contacto salen de la Configuración de tu tienda.
+                  Cargá tu banner y los servicios que ofrecés. Tus productos se muestran
+                  automáticamente, y los horarios y el contacto salen de la Configuración de tu
+                  tienda.
                 </p>
               )}
             </div>
@@ -192,10 +192,8 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
               <LandingBannerSection data={previewBannerData} />
               {isShopmore ? (
                 <>
-                  <ShopmorePreviewBlock label="Categorías que vendés" />
-                  <ShopmorePreviewBlock label="Destacados" />
-                  <ShopmorePreviewBlock label="Todos los productos" />
                   <LandingServicesSection data={previewServicesData} />
+                  <ShopmorePreviewBlock label="Todos los productos" />
                   {!previewBannerData && (
                     <p className="text-center text-xs text-muted-foreground">
                       Subí un banner para completar tu portada.

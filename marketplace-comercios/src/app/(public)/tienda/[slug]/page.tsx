@@ -30,9 +30,7 @@ import { Button } from '@/components/ui/button'
 import {
   getRelatedShops,
   getShopBySlug,
-  getShopFeaturedProducts,
   getShopFollowStats,
-  getShopProductCategories,
   getShopProducts,
   getShopRating,
   getShopReviews,
@@ -104,15 +102,12 @@ export default async function ShopPage({ params }: ShopPageProps) {
   const template = isService ? 'clasica' : resolveStoreTemplate(shop.landing_template)
   const isShopmore = template === 'shopmore'
 
-  const [products, rating, reviews, followerCount, relatedShops, shopmoreData] = await Promise.all([
+  const [products, rating, reviews, followerCount, relatedShops] = await Promise.all([
     getShopProducts(shop.id),
     getShopRating(shop.id),
     getShopReviews(shop.id),
     getShopFollowStats(shop.id),
     getRelatedShops(shop.id, shop.category_id, shop.city),
-    isShopmore
-      ? Promise.all([getShopFeaturedProducts(shop.id), getShopProductCategories(shop.id)])
-      : Promise.resolve(null),
   ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
@@ -159,6 +154,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
       )}
       <ShopViewTracker shopId={shop.id} />
 
+      {!isShopmore && (
       <div className="-mx-4 overflow-hidden rounded-xl bg-surface md:-mx-6">
         <div className="relative h-28 bg-muted md:h-36">
           {shop.cover_url ? (
@@ -280,14 +276,19 @@ export default async function ShopPage({ params }: ShopPageProps) {
           </div>
         </div>
       </div>
+      )}
 
       {isShopmore ? (
         <ShopmoreTemplate
           shopId={shop.id}
           shopName={shop.name}
+          logoUrl={shop.logo_url}
+          shopUrl={shopUrl}
+          isVerified={isVerified}
+          avgRating={rating.avgRating}
+          reviewCount={rating.reviewCount}
           landingBanner={shop.landing_banner}
           landingServices={shop.landing_services}
-          description={shop.description}
           businessHours={shop.business_hours}
           address={shop.address}
           city={shop.city}
@@ -296,8 +297,6 @@ export default async function ShopPage({ params }: ShopPageProps) {
           facebookUrl={shop.facebook_url}
           websiteUrl={shop.website_url}
           initialProducts={products}
-          featured={shopmoreData?.[0] ?? []}
-          categories={shopmoreData?.[1] ?? []}
         />
       ) : (
         <>

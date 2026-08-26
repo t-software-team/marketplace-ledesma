@@ -1,36 +1,28 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { createElement } from 'react'
-import { Clock, Globe, MapPin } from 'lucide-react'
+import { ArrowRight, Check, Clock, Globe, MapPin, Store } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
-import { LandingServicesSection } from '@/components/shop/landing-sections'
-import { ExpandableDescription } from '@/components/shop/expandable-description'
+import { FollowShopButton } from '@/components/shop/follow-shop-button'
+import { ShareButton } from '@/components/shared/share-button'
+import { WhatsAppButton } from '@/components/shared/whatsapp-button'
+import { StarRating } from '@/components/shared/star-rating'
+import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { ShopProductGrid, type ShopProductItem } from '@/components/shop/shop-product-grid'
-import { ShopmoreFeatured } from '@/components/shop/store-templates/shopmore-featured'
-import { parseBanner } from '@/components/shop/landing/landing-sections-types'
-import { getRubroIcon } from '@/lib/category-icons'
-
-interface FeaturedProduct {
-  id: string
-  name: string
-  price: number | null
-  currency: string
-  main_image: string | null
-}
-
-interface ShopCategory {
-  id: string
-  name: string
-  slug: string
-}
+import { ShopmoreHeroCarousel } from '@/components/shop/store-templates/shopmore-hero-carousel'
+import { parseBanner, parseServices } from '@/components/shop/landing/landing-sections-types'
+import { getOpenStatus } from '@/lib/shops/business-hours'
 
 interface ShopmoreTemplateProps {
   shopId: string
   shopName: string
+  logoUrl: string | null
+  shopUrl: string
+  isVerified: boolean
+  avgRating: number
+  reviewCount: number
   landingBanner: unknown
   landingServices: unknown
-  description: string | null
   businessHours: unknown
   address: string | null
   city: string | null
@@ -39,61 +31,87 @@ interface ShopmoreTemplateProps {
   facebookUrl: string | null
   websiteUrl: string | null
   initialProducts: ShopProductItem[]
-  featured: FeaturedProduct[]
-  categories: ShopCategory[]
 }
 
 /**
- * Plantilla "Marketplace": replica el diseño tipo tienda online (hero,
- * categorías, destacados, grilla) y suma secciones de información del comercio
- * (servicios, sobre la tienda, horarios y contacto). Sin carrito. El contenido
- * lo carga el comercio y reutiliza columnas existentes (landing_banner,
- * landing_services, description, business_hours, datos de contacto).
+ * Plantilla "Tienda online": una portada de ecommerce completa que se apropia de
+ * toda la página (barra de tienda, hero, servicios, banda de contacto, catálogo
+ * e información). Reemplaza el header genérico de la ficha. Sin carrito — el
+ * contacto sale por WhatsApp, coherente con Proxi.
  */
-export function ShopmoreTemplate({
-  shopId,
-  shopName,
-  landingBanner,
-  landingServices,
-  description,
-  businessHours,
-  address,
-  city,
-  whatsappNumber,
-  instagramUrl,
-  facebookUrl,
-  websiteUrl,
-  initialProducts,
-  featured,
-  categories,
-}: ShopmoreTemplateProps) {
+export function ShopmoreTemplate(props: ShopmoreTemplateProps) {
+  const {
+    shopId,
+    shopName,
+    logoUrl,
+    shopUrl,
+    isVerified,
+    avgRating,
+    reviewCount,
+    landingBanner,
+    landingServices,
+    businessHours,
+    address,
+    city,
+    whatsappNumber,
+    instagramUrl,
+    facebookUrl,
+    websiteUrl,
+    initialProducts,
+  } = props
+
+  const services = parseServices(landingServices)
+
   return (
-    <div className="space-y-8">
-      <ShopmoreHero banner={landingBanner} />
+    <div className="space-y-12 sm:space-y-16">
+      <StoreBar
+        shopId={shopId}
+        shopName={shopName}
+        logoUrl={logoUrl}
+        shopUrl={shopUrl}
+        isVerified={isVerified}
+        avgRating={avgRating}
+        reviewCount={reviewCount}
+      />
 
-      {categories.length > 0 && <ShopmoreCategories categories={categories} />}
+      <ShopmoreHero
+        banner={landingBanner}
+        shopName={shopName}
+        shopId={shopId}
+        whatsappNumber={whatsappNumber}
+      />
 
-      <ShopmoreFeatured title="Destacados" products={featured} />
-
-      <section id="productos" className="scroll-mt-20 space-y-4">
-        <h2 className="text-lg font-heading">Todos los productos</h2>
-        <ShopProductGrid shopId={shopId} initialProducts={initialProducts} shopName={shopName} />
-      </section>
-
-      <LandingServicesSection data={landingServices} />
-
-      {description && (
-        <section className="space-y-2">
-          <h2 className="text-lg font-heading">Sobre {shopName}</h2>
-          <ExpandableDescription html={description} />
+      {services.length > 0 && (
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {services.map((service, index) => (
+            <div key={index} className="flex items-start gap-3 rounded-2xl border border-border bg-surface p-4">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Check className="size-5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="font-heading text-sm leading-snug">{service.name}</p>
+                {service.description && (
+                  <p className="mt-0.5 text-sm text-muted-foreground">{service.description}</p>
+                )}
+              </div>
+            </div>
+          ))}
         </section>
       )}
 
-      <ShopmoreContact
+      {whatsappNumber && (
+        <ContactBand shopName={shopName} whatsappNumber={whatsappNumber} />
+      )}
+
+      <section id="productos" className="scroll-mt-20 space-y-5">
+        <SectionHeader title="Todos los productos" />
+        <ShopProductGrid shopId={shopId} initialProducts={initialProducts} shopName={shopName} />
+      </section>
+
+      <ShopmoreInfo
         businessHours={businessHours}
         address={address}
         city={city}
-        whatsappNumber={whatsappNumber}
         instagramUrl={instagramUrl}
         facebookUrl={facebookUrl}
         websiteUrl={websiteUrl}
@@ -102,68 +120,177 @@ export function ShopmoreTemplate({
   )
 }
 
-function ShopmoreHero({ banner: rawBanner }: { banner: unknown }) {
-  const banner = parseBanner(rawBanner)
-  if (!banner.title.trim()) return null
-
-  const image = banner.images[0] || banner.image_url || null
-  const ctaLabel = banner.cta_label?.trim() || 'Ver productos'
-  const ctaHref = banner.cta_url?.trim() || '#productos'
-
+function SectionHeader({
+  title,
+  href,
+  linkLabel,
+}: {
+  title: string
+  href?: string
+  linkLabel?: string
+}) {
   return (
-    <div className="relative -mx-4 overflow-hidden rounded-2xl bg-gradient-to-br from-primary/25 via-primary/10 to-surface p-6 sm:p-8 md:-mx-6">
-      <div className="flex items-center gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">Novedades</p>
-          <h2 className="mt-1 font-heading text-2xl leading-tight sm:text-3xl">{banner.title}</h2>
-          {banner.subtitle && (
-            <p className="mt-1.5 text-sm text-muted-foreground">{banner.subtitle}</p>
+    <div className="flex items-end justify-between gap-4">
+      <h2 className="font-heading text-2xl sm:text-[1.75rem]">{title}</h2>
+      {href && linkLabel && (
+        <Link
+          href={href}
+          className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary transition-opacity hover:opacity-80"
+        >
+          {linkLabel}
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      )}
+    </div>
+  )
+}
+
+function StoreBar({
+  shopId,
+  shopName,
+  logoUrl,
+  shopUrl,
+  isVerified,
+  avgRating,
+  reviewCount,
+}: {
+  shopId: string
+  shopName: string
+  logoUrl: string | null
+  shopUrl: string
+  isVerified: boolean
+  avgRating: number
+  reviewCount: number
+}) {
+  return (
+    <div className="-mx-4 flex items-center justify-between gap-3 px-4 pt-1 pb-1 md:-mx-6 md:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="relative size-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+          {logoUrl ? (
+            <Image src={logoUrl} alt={`Logo de ${shopName}`} fill className="object-cover" sizes="40px" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              <Store className="size-5" aria-hidden />
+            </div>
           )}
-          <Link
-            href={ctaHref}
-            className="mt-4 inline-flex items-center rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            {ctaLabel}
-          </Link>
         </div>
-        {image && (
-          <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block sm:size-40">
-            <Image src={image} alt="" fill className="object-cover" sizes="160px" priority />
+        <div className="min-w-0">
+          <div className="flex items-center gap-1">
+            <span className="truncate font-heading text-lg">{shopName}</span>
+            {isVerified && <VerifiedStamp className="size-4 shrink-0" />}
           </div>
-        )}
+          {reviewCount > 0 && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <StarRating rating={avgRating} starClassName="size-3" />
+              {avgRating} ({reviewCount})
+            </span>
+          )}
+        </div>
+      </div>
+
+      <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+        <a href="#productos" className="transition-colors hover:text-foreground">Productos</a>
+        <a href="#categorias" className="transition-colors hover:text-foreground">Categorías</a>
+        <a href="#info" className="transition-colors hover:text-foreground">Información</a>
+      </nav>
+
+      <div className="flex shrink-0 items-center gap-1.5">
+        <FollowShopButton shopId={shopId} />
+        <ShareButton
+          title={shopName}
+          text={`Mirá ${shopName} en Proxi Marketplace`}
+          url={shopUrl}
+          size="icon"
+        />
       </div>
     </div>
   )
 }
 
-// Paleta pastel para los círculos de categoría, replicando la variedad de
-// colores del diseño de referencia. Se cicla por índice.
-const CATEGORY_SWATCHES = [
-  'bg-pink-100 text-pink-600 dark:bg-pink-950/40 dark:text-pink-400',
-  'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400',
-  'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
-  'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
-  'bg-violet-100 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400',
-  'bg-orange-100 text-orange-600 dark:bg-orange-950/40 dark:text-orange-400',
-]
+function ShopmoreHero({
+  banner: rawBanner,
+  shopName,
+  shopId,
+  whatsappNumber,
+}: {
+  banner: unknown
+  shopName: string
+  shopId: string
+  whatsappNumber: string | null
+}) {
+  const banner = parseBanner(rawBanner)
+  const title = banner.title.trim() || shopName
+  const images = banner.images.length > 0 ? banner.images : banner.image_url ? [banner.image_url] : []
 
-function ShopmoreCategories({ categories }: { categories: ShopCategory[] }) {
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-heading">Categorías</h2>
-      <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-1 md:-mx-6 md:px-6">
-        {categories.map((category, index) => (
-          <div key={category.id} className="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center">
-            <span
-              className={`flex size-14 items-center justify-center rounded-full ${CATEGORY_SWATCHES[index % CATEGORY_SWATCHES.length]}`}
-            >
-              {createElement(getRubroIcon(category.slug), { className: 'size-6', 'aria-hidden': true })}
-            </span>
-            <span className="line-clamp-2 text-xs font-medium leading-tight text-muted-foreground">
-              {category.name}
-            </span>
+    <section className="-mx-4 md:-mx-6">
+      <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-primary/12 via-secondary/50 to-surface">
+        <div className="grid items-center gap-8 px-6 py-10 sm:px-10 sm:py-14 md:grid-cols-2">
+          <div className="space-y-6">
+            <h1 className="font-heading text-4xl leading-[1.05] tracking-tight sm:text-5xl">{title}</h1>
+            {banner.subtitle && (
+              <p className="max-w-md text-base leading-relaxed text-muted-foreground">{banner.subtitle}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="#productos"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-[0_8px_20px_-8px_var(--primary)] transition-transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Ver productos
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+              {whatsappNumber && (
+                <WhatsAppButton
+                  shopId={shopId}
+                  phoneNumber={whatsappNumber}
+                  message={`Hola ${shopName}, vi tu tienda en Proxi Marketplace`}
+                  variant="outline"
+                  className="h-auto px-5 py-2.5 text-sm"
+                />
+              )}
+            </div>
           </div>
-        ))}
+
+          {images.length > 0 ? (
+            <ShopmoreHeroCarousel images={images} />
+          ) : (
+            <div className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-primary/10">
+              <Store className="size-16 text-primary/40" aria-hidden />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ContactBand({
+  shopName,
+  whatsappNumber,
+}: {
+  shopName: string
+  whatsappNumber: string
+}) {
+  const digits = whatsappNumber.replace(/\D/g, '')
+  const message = encodeURIComponent(`Hola ${shopName}, vi tu tienda en Proxi Marketplace`)
+  const href = `https://wa.me/${digits}?text=${message}`
+
+  return (
+    <section className="-mx-4 md:-mx-6">
+      <div className="flex flex-col items-start gap-5 rounded-3xl bg-gradient-to-r from-primary to-[#9a5cf0] px-6 py-8 text-primary-foreground sm:flex-row sm:items-center sm:justify-between sm:px-10">
+        <div className="space-y-1">
+          <h3 className="font-heading text-2xl text-white">¿Buscás algo puntual?</h3>
+          <p className="text-sm text-white/80">Escribinos por WhatsApp y te ayudamos a encontrarlo.</p>
+        </div>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-primary shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Escribir por WhatsApp
+          <ArrowRight className="size-4" aria-hidden />
+        </a>
       </div>
     </section>
   )
@@ -185,11 +312,35 @@ function formatHoursRange(raw: unknown): string {
   return `${from} a ${to}`
 }
 
-function ShopmoreContact({
+const WEEKDAY_TO_KEY: Record<string, string> = {
+  Monday: 'lunes',
+  Tuesday: 'martes',
+  Wednesday: 'miercoles',
+  Thursday: 'jueves',
+  Friday: 'viernes',
+  Saturday: 'sabado',
+  Sunday: 'domingo',
+}
+
+function getTodayKey(): string {
+  const weekday = new Date().toLocaleString('en-US', {
+    timeZone: 'America/Argentina/Buenos_Aires',
+    weekday: 'long',
+  })
+  return WEEKDAY_TO_KEY[weekday] ?? ''
+}
+
+interface ContactRow {
+  href: string
+  icon: React.ReactNode
+  label: string
+  detail: string
+}
+
+function ShopmoreInfo({
   businessHours,
   address,
   city,
-  whatsappNumber,
   instagramUrl,
   facebookUrl,
   websiteUrl,
@@ -197,7 +348,6 @@ function ShopmoreContact({
   businessHours: unknown
   address: string | null
   city: string | null
-  whatsappNumber: string | null
   instagramUrl: string | null
   facebookUrl: string | null
   websiteUrl: string | null
@@ -207,91 +357,104 @@ function ShopmoreContact({
       ? (businessHours as Record<string, unknown>)
       : null
   const hasHours = schedule ? HOURS_DAYS.some((day) => typeof schedule[day.key] === 'string') : false
+  const openStatus = getOpenStatus(businessHours)
+  const todayKey = getTodayKey()
   const locationText = [address, city].filter(Boolean).join(', ')
-  const mapsUrl = locationText
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}`
-    : null
-  const hasContact = Boolean(whatsappNumber || instagramUrl || facebookUrl || websiteUrl || locationText)
 
-  if (!hasHours && !hasContact) return null
+  const contactRows: ContactRow[] = []
+  if (locationText) {
+    contactRows.push({
+      href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}`,
+      icon: <MapPin className="size-4" aria-hidden />,
+      label: 'Dirección',
+      detail: locationText,
+    })
+  }
+  if (instagramUrl) {
+    contactRows.push({ href: instagramUrl, icon: <InstagramIcon className="size-4" />, label: 'Instagram', detail: 'Ver perfil' })
+  }
+  if (facebookUrl) {
+    contactRows.push({ href: facebookUrl, icon: <FacebookIcon className="size-4" />, label: 'Facebook', detail: 'Ver página' })
+  }
+  if (websiteUrl) {
+    contactRows.push({ href: websiteUrl, icon: <Globe className="size-4" aria-hidden />, label: 'Sitio web', detail: 'Visitar' })
+  }
+
+  if (!hasHours && contactRows.length === 0) return null
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-heading">Información</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+    <section id="info" className="scroll-mt-20 space-y-5">
+      <SectionHeader title="Información" />
+      <div className="grid gap-4 lg:grid-cols-2">
         {hasHours && schedule && (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-              <Clock className="size-4 text-primary" aria-hidden />
-              Horarios
+          <div className="rounded-3xl border border-border bg-surface p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 font-heading">
+                <Clock className="size-4 text-primary" aria-hidden />
+                Horarios
+              </div>
+              {openStatus && (
+                <span
+                  className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                    openStatus.isOpen
+                      ? 'bg-success/40 text-success-foreground'
+                      : 'bg-secondary text-muted-foreground'
+                  }`}
+                >
+                  <span
+                    className={`size-1.5 rounded-full ${openStatus.isOpen ? 'bg-success-foreground' : 'bg-muted-foreground'}`}
+                    aria-hidden
+                  />
+                  {openStatus.isOpen ? 'Abierto ahora' : 'Cerrado ahora'}
+                </span>
+              )}
             </div>
-            <ul className="space-y-1 text-sm">
-              {HOURS_DAYS.map((day) => (
-                <li key={day.key} className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">{day.label}</span>
-                  <span className="font-medium">{formatHoursRange(schedule[day.key])}</span>
-                </li>
-              ))}
+            <ul className="text-sm">
+              {HOURS_DAYS.map((day) => {
+                const isToday = day.key === todayKey
+                return (
+                  <li
+                    key={day.key}
+                    className={`flex items-center justify-between gap-4 border-b border-border/60 py-2 last:border-0 ${
+                      isToday ? 'text-foreground' : ''
+                    }`}
+                  >
+                    <span className={isToday ? 'font-medium' : 'text-muted-foreground'}>
+                      {day.label}
+                      {isToday && <span className="ml-1.5 text-xs text-primary">· hoy</span>}
+                    </span>
+                    <span className={isToday ? 'font-semibold' : 'font-medium'}>
+                      {formatHoursRange(schedule[day.key])}
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
 
-        {hasContact && (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="mb-2 text-sm font-medium">Contacto</div>
-            <ul className="space-y-2 text-sm">
-              {locationText && (
-                <li>
+        {contactRows.length > 0 && (
+          <div className="rounded-3xl border border-border bg-surface p-6">
+            <div className="mb-4 font-heading">Contacto</div>
+            <ul className="space-y-1">
+              {contactRows.map((row) => (
+                <li key={row.label}>
                   <a
-                    href={mapsUrl ?? undefined}
+                    href={row.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+                    className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-secondary/60"
                   >
-                    <MapPin className="size-4 shrink-0 text-primary" aria-hidden />
-                    {locationText}
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      {row.icon}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium">{row.label}</span>
+                      <span className="block truncate text-xs text-muted-foreground">{row.detail}</span>
+                    </span>
                   </a>
                 </li>
-              )}
-              {instagramUrl && (
-                <li>
-                  <a
-                    href={instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <InstagramIcon className="size-4 shrink-0" />
-                    Instagram
-                  </a>
-                </li>
-              )}
-              {facebookUrl && (
-                <li>
-                  <a
-                    href={facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <FacebookIcon className="size-4 shrink-0" />
-                    Facebook
-                  </a>
-                </li>
-              )}
-              {websiteUrl && (
-                <li>
-                  <a
-                    href={websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    <Globe className="size-4 shrink-0 text-primary" aria-hidden />
-                    Sitio web
-                  </a>
-                </li>
-              )}
+              ))}
             </ul>
           </div>
         )}
