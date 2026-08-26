@@ -192,7 +192,7 @@ export function FeedClient({
             <X className="size-4" aria-hidden />
           </button>
           <Link
-            href="/login"
+            href="/registro"
             className="flex flex-col gap-3 pr-8 sm:flex-row sm:items-center sm:justify-between sm:pr-10"
           >
             <div className="min-w-0">

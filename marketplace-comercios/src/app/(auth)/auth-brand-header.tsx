@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 
 export function AuthBrandHeader() {
   const pathname = usePathname()
-  if (pathname === '/onboarding') return null
+  if (pathname === '/onboarding' || pathname === '/registro') return null
 
   return (
     <Link href="/" className="mb-8 flex flex-col items-center gap-2">
