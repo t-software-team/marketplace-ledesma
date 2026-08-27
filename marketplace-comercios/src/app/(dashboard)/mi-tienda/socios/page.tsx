@@ -9,7 +9,7 @@ import {
   getMyShopId,
   type GymMemberStatus,
 } from '@/lib/gym/queries'
-import { getGymMemberLimitInfo } from '@/lib/shops/queries'
+import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { SociosList } from './socios-list'
 
 const FILTERS: { value: GymMemberStatus | 'all'; label: string }[] = [
@@ -35,10 +35,11 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
     ? (status as GymMemberStatus)
     : undefined
 
-  const [members, plans, limitInfo] = await Promise.all([
+  const [members, plans, limitInfo, benefits] = await Promise.all([
     getGymMembers(shopId, { search, status: statusFilter }),
     getGymPlans(shopId),
     getGymMemberLimitInfo(shopId),
+    getGymBenefits(shopId),
   ])
   const activePlans = plans
     .filter((p) => p.is_active)
@@ -55,15 +56,34 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
               : `${limitInfo.used} de ${limitInfo.max} socios de tu plan`}
           </p>
         </div>
-        {limitInfo.reached ? (
-          <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false}>
-            Mejorar plan
-          </Button>
-        ) : (
-          <Button render={<Link href="/mi-tienda/socios/nuevo" />} nativeButton={false}>
-            Nuevo socio
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {benefits.exportCsv ? (
+            <Button
+              render={<a href="/api/gym/export" />}
+              nativeButton={false}
+              variant="outline"
+            >
+              Exportar CSV
+            </Button>
+          ) : (
+            <Button
+              render={<Link href="/mi-tienda/suscripcion" />}
+              nativeButton={false}
+              variant="outline"
+            >
+              Exportar (Plan Gimnasio)
+            </Button>
+          )}
+          {limitInfo.reached ? (
+            <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false}>
+              Mejorar plan
+            </Button>
+          ) : (
+            <Button render={<Link href="/mi-tienda/socios/nuevo" />} nativeButton={false}>
+              Nuevo socio
+            </Button>
+          )}
+        </div>
       </div>
 
       {limitInfo.reached && (
