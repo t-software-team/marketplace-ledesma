@@ -73,6 +73,7 @@ export default async function MiTiendaLayout({
     ? [
         { href: '/mi-tienda', label: 'Resumen', icon: 'dashboard' },
         { href: '/mi-tienda/socios', label: 'Socios', icon: 'users' },
+        { href: '/mi-tienda/ingresos', label: 'Ingresos', icon: 'login' },
         { href: '/mi-tienda/planes', label: 'Planes', icon: 'tag' },
         { href: '/mi-tienda/caja', label: 'Caja', icon: 'wallet' },
         { href: '/mi-tienda/suscripcion', label: 'Suscripción', icon: 'credit-card', badge: planName },

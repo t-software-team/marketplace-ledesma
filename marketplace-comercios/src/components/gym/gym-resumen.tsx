@@ -27,6 +27,7 @@ export function GymResumen({ shopName, stats }: GymResumenProps) {
       label: 'Vencen en 7 días',
       value: stats.expiring_soon,
       highlight: stats.expiring_soon > 0,
+      href: '/mi-tienda/vencimientos',
     },
     { icon: AlertTriangle, label: 'Vencidos', value: stats.expired_members },
     { icon: UserPlus, label: 'Altas del mes', value: stats.new_members_month },
@@ -46,18 +47,29 @@ export function GymResumen({ shopName, stats }: GymResumenProps) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {kpis.map(({ icon: Icon, label, value, highlight }) => (
-          <Card key={label} className={highlight ? 'border-warning' : undefined}>
-            <CardContent className="space-y-1 px-3 pt-4 sm:px-4 sm:pt-5">
-              <Icon
-                className={`size-4 ${highlight ? 'text-warning-foreground' : 'text-muted-foreground'}`}
-                aria-hidden
-              />
-              <p className="truncate text-xs text-muted-foreground">{label}</p>
-              <p className="font-heading text-xl sm:text-2xl">{value}</p>
-            </CardContent>
-          </Card>
-        ))}
+        {kpis.map(({ icon: Icon, label, value, highlight, href }) => {
+          const card = (
+            <Card
+              className={`h-full ${highlight ? 'border-warning' : ''} ${href ? 'transition-colors hover:border-primary' : ''}`}
+            >
+              <CardContent className="space-y-1 px-3 pt-4 sm:px-4 sm:pt-5">
+                <Icon
+                  className={`size-4 ${highlight ? 'text-warning-foreground' : 'text-muted-foreground'}`}
+                  aria-hidden
+                />
+                <p className="truncate text-xs text-muted-foreground">{label}</p>
+                <p className="font-heading text-xl sm:text-2xl">{value}</p>
+              </CardContent>
+            </Card>
+          )
+          return href ? (
+            <Link key={label} href={href} className="block">
+              {card}
+            </Link>
+          ) : (
+            <div key={label}>{card}</div>
+          )
+        })}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">

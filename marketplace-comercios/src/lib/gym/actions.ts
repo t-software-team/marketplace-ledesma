@@ -3,7 +3,12 @@
 import { revalidatePath } from 'next/cache'
 import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { gymMemberSchema, gymPlanSchema, gymRenewalSchema } from '@/lib/validations/gym'
+import {
+  gymMemberSchema,
+  gymMemberUpdateSchema,
+  gymPlanSchema,
+  gymRenewalSchema,
+} from '@/lib/validations/gym'
 
 export type ActionState = {
   error: string | null
@@ -243,6 +248,105 @@ export async function setGymMemberArchived(
   revalidatePath('/mi-tienda/socios')
   revalidatePath('/mi-tienda')
   return { error: null }
+}
+
+export async function updateGymMember(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, shopId } = await requireShop()
+  if (!shopId) return { error: 'No tenés un comercio creado' }
+
+  const parsed = gymMemberUpdateSchema.safeParse({
+    member_id: formData.get('member_id'),
+    full_name: formData.get('full_name'),
+    phone: formData.get('phone') ?? '',
+    email: formData.get('email') ?? '',
+    document: formData.get('document') ?? '',
+    notes: formData.get('notes') ?? '',
+  })
+
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? 'Revisá los campos',
+      fieldErrors: buildFieldErrors(parsed.error),
+    }
+  }
+
+  const { error } = await supabase
+    .from('gym_members')
+    .update({
+      full_name: parsed.data.full_name,
+      phone: parsed.data.phone || null,
+      email: parsed.data.email || null,
+      document: parsed.data.document || null,
+      notes: parsed.data.notes || null,
+    })
+    .eq('id', parsed.data.member_id)
+    .eq('shop_id', shopId)
+
+  if (error) {
+    console.error('updateGymMember: fallo al actualizar socio', { error })
+    return { error: 'No pudimos guardar los cambios' }
+  }
+
+  revalidatePath('/mi-tienda/socios')
+  revalidatePath(`/mi-tienda/socios/${parsed.data.member_id}`)
+  return { error: null }
+}
+
+export type CheckInResult = {
+  error: string | null
+  member_name?: string
+  status?: 'active' | 'expired'
+  expires_at?: string | null
+}
+
+/**
+ * Records a gym entry. Always logs the check-in, but reports whether the
+ * member's membership is currently valid so the desk can act on a lapsed one.
+ */
+export async function checkInGymMember(memberId: string): Promise<CheckInResult> {
+  const { supabase, user, shopId } = await requireShop()
+  if (!shopId) return { error: 'No tenés un comercio creado' }
+
+  const { data: member } = await supabase
+    .from('gym_members')
+    .select('id, full_name')
+    .eq('id', memberId)
+    .eq('shop_id', shopId)
+    .maybeSingle()
+
+  if (!member) return { error: 'No encontramos al socio' }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: activePeriod } = await supabase
+    .from('gym_memberships')
+    .select('expires_at')
+    .eq('member_id', memberId)
+    .gte('expires_at', today)
+    .order('expires_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const { error } = await supabase.from('gym_check_ins').insert({
+    shop_id: shopId,
+    member_id: memberId,
+    created_by: user.id,
+  })
+
+  if (error) {
+    console.error('checkInGymMember: fallo al registrar ingreso', { memberId, error })
+    return { error: 'No pudimos registrar el ingreso' }
+  }
+
+  revalidatePath('/mi-tienda/ingresos')
+  return {
+    error: null,
+    member_name: member.full_name,
+    status: activePeriod ? 'active' : 'expired',
+    expires_at: activePeriod?.expires_at ?? null,
+  }
 }
 
 /**

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import {
   getGymMembers,
+  getGymPlans,
   getMyShopId,
   type GymMemberStatus,
 } from '@/lib/gym/queries'
@@ -32,7 +33,13 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
     ? (status as GymMemberStatus)
     : undefined
 
-  const members = await getGymMembers(shopId, { search, status: statusFilter })
+  const [members, plans] = await Promise.all([
+    getGymMembers(shopId, { search, status: statusFilter }),
+    getGymPlans(shopId),
+  ])
+  const activePlans = plans
+    .filter((p) => p.is_active)
+    .map((p) => ({ id: p.id, name: p.name, price: p.price }))
 
   return (
     <div className="space-y-4">
@@ -87,7 +94,7 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
           }
         />
       ) : (
-        <SociosList members={members} />
+        <SociosList members={members} plans={activePlans} />
       )}
     </div>
   )

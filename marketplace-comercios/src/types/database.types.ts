@@ -378,6 +378,45 @@ export type Database = {
           },
         ]
       }
+      gym_check_ins: {
+        Row: {
+          checked_in_at: string
+          created_by: string | null
+          id: string
+          member_id: string
+          shop_id: string
+        }
+        Insert: {
+          checked_in_at?: string
+          created_by?: string | null
+          id?: string
+          member_id: string
+          shop_id: string
+        }
+        Update: {
+          checked_in_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_check_ins_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_check_ins_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gym_members: {
         Row: {
           created_at: string

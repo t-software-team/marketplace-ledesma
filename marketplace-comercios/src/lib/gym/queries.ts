@@ -208,3 +208,171 @@ export async function getGymPayments(shopId: string, limit = 50): Promise<GymPay
     }
   })
 }
+
+export interface GymMembershipHistoryRow {
+  id: string
+  plan_name: string | null
+  start_date: string
+  expires_at: string
+  price: number
+  created_at: string
+}
+
+export interface GymCheckInRow {
+  id: string
+  checked_in_at: string
+  member_name?: string | null
+}
+
+export interface GymMemberDetail extends GymMemberWithStatus {
+  memberships: GymMembershipHistoryRow[]
+  payments: GymPaymentRow[]
+  check_ins: GymCheckInRow[]
+}
+
+export async function getGymMember(
+  shopId: string,
+  memberId: string
+): Promise<GymMemberDetail | null> {
+  const supabase = await createClient()
+
+  const { data: member, error } = await supabase
+    .from('gym_members')
+    .select('id, shop_id, full_name, phone, email, document, is_archived, notes, created_at')
+    .eq('shop_id', shopId)
+    .eq('id', memberId)
+    .maybeSingle()
+
+  if (error || !member) {
+    if (error) console.error('getGymMember: fallo al traer socio', { memberId, error })
+    return null
+  }
+
+  const [membershipsRes, paymentsRes, checkInsRes] = await Promise.all([
+    supabase
+      .from('gym_memberships')
+      .select('id, start_date, expires_at, price, created_at, gym_plans(name)')
+      .eq('member_id', memberId)
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('gym_payments')
+      .select('id, amount, method, status, paid_at, created_at, gym_memberships!inner(member_id)')
+      .eq('shop_id', shopId)
+      .eq('gym_memberships.member_id', memberId)
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('gym_check_ins')
+      .select('id, checked_in_at')
+      .eq('member_id', memberId)
+      .order('checked_in_at', { ascending: false })
+      .limit(50),
+  ])
+
+  const memberships: GymMembershipHistoryRow[] = (membershipsRes.data ?? []).map((row) => {
+    const plan = row.gym_plans as { name: string } | null
+    return {
+      id: row.id,
+      plan_name: plan?.name ?? null,
+      start_date: row.start_date,
+      expires_at: row.expires_at,
+      price: row.price,
+      created_at: row.created_at,
+    }
+  })
+
+  const today = new Date().toISOString().slice(0, 10)
+  const latestExpiry = memberships.reduce<string | null>(
+    (latest, m) => (latest === null || m.expires_at > latest ? m.expires_at : latest),
+    null
+  )
+  const status: GymMemberStatus = member.is_archived
+    ? 'archived'
+    : latestExpiry && latestExpiry >= today
+      ? 'active'
+      : 'expired'
+
+  return {
+    ...member,
+    expires_at: latestExpiry,
+    status,
+    memberships,
+    payments: (paymentsRes.data ?? []).map((row) => ({
+      id: row.id,
+      amount: row.amount,
+      method: row.method as GymPaymentMethod,
+      status: row.status,
+      paid_at: row.paid_at,
+      created_at: row.created_at,
+      member_name: member.full_name,
+    })),
+    check_ins: (checkInsRes.data ?? []).map((row) => ({
+      id: row.id,
+      checked_in_at: row.checked_in_at,
+    })),
+  }
+}
+
+export interface ExpiringMember {
+  id: string
+  full_name: string
+  phone: string | null
+  expires_at: string
+  days_left: number
+}
+
+/** Members whose latest membership lapses within `withinDays` (and hasn't yet). */
+export async function getExpiringMembers(
+  shopId: string,
+  withinDays = 7
+): Promise<ExpiringMember[]> {
+  const members = await getGymMembers(shopId, { status: 'active', limit: 500 })
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const result: ExpiringMember[] = []
+  for (const m of members) {
+    if (!m.expires_at) continue
+    const expiry = new Date(`${m.expires_at}T00:00:00`)
+    const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    if (daysLeft >= 0 && daysLeft <= withinDays) {
+      result.push({
+        id: m.id,
+        full_name: m.full_name,
+        phone: m.phone,
+        expires_at: m.expires_at,
+        days_left: daysLeft,
+      })
+    }
+  }
+  return result.sort((a, b) => a.days_left - b.days_left)
+}
+
+export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {
+  const supabase = await createClient()
+  const startOfDay = new Date()
+  startOfDay.setHours(0, 0, 0, 0)
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('id, checked_in_at, gym_members(full_name)')
+    .eq('shop_id', shopId)
+    .gte('checked_in_at', startOfDay.toISOString())
+    .order('checked_in_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('getTodayCheckIns: fallo al traer ingresos', { shopId, error })
+    return []
+  }
+
+  return (data ?? []).map((row) => {
+    const member = row.gym_members as { full_name: string } | null
+    return {
+      id: row.id,
+      checked_in_at: row.checked_in_at,
+      member_name: member?.full_name ?? null,
+    }
+  })
+}

@@ -41,6 +41,21 @@ export const gymMemberSchema = z.object({
   payment_method: z.enum(['cash', 'transfer']).optional(),
 })
 
+// Edit an existing member's ficha (no plan/payment involved).
+export const gymMemberUpdateSchema = z.object({
+  member_id: z.string().uuid(),
+  full_name: z.string().trim().min(1, 'Poné el nombre').max(120, 'Máximo 120 caracteres'),
+  phone: optionalText(40),
+  email: z
+    .string()
+    .trim()
+    .email('Email inválido')
+    .optional()
+    .or(z.literal('')),
+  document: optionalText(40),
+  notes: optionalText(500),
+})
+
 // Renew / add a new membership period to an existing member.
 export const gymRenewalSchema = z.object({
   member_id: z.string().uuid(),
