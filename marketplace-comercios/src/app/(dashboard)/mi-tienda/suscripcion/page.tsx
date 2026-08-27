@@ -9,11 +9,12 @@ import {
   getMyActiveSubscription,
   getMyPendingSubscription,
   getMyShop,
+  getPlanGymMemberCaps,
 } from '@/lib/shops/queries'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { syncMercadoPagoSubscription } from '@/lib/mercadopago/sync'
 import { getBenefitLines } from '@/lib/shops/benefits'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { cn } from '@/lib/utils'
 import { SubscribeButton } from './subscribe-button'
@@ -104,6 +105,7 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
   }
 
   const isService = isServiceRubro(shop.categories?.slug)
+  const isGym = isGymRubro(shop.categories?.slug)
 
   const [allPlans, activeSubscription, freeMaxForShop] = await Promise.all([
     getActiveSubscriptionPlans(),
@@ -123,10 +125,20 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
         planMatchesShop(plan, { categoryId: shop.category_id, isService })
     )
     .map((plan) =>
-      plan.price === 0
+      // Los gyms muestran cupo de socios, no de productos, así que no inyectamos
+      // el límite de productos del free en sus tarjetas.
+      plan.price === 0 && !isGym
         ? { ...plan, benefits: { ...(plan.benefits as object), max_products: freeMaxForShop } }
         : plan
     )
+
+  // Cupo de socios por plan, para las viñetas de las tarjetas de un gimnasio.
+  const gymCaps = isGym ? await getPlanGymMemberCaps(plans.map((plan) => plan.id)) : {}
+  const gymMemberLine = (planId: string, benefits: unknown): string => {
+    const benefitCap = (benefits as { max_gym_members?: number | null } | null)?.max_gym_members
+    const cap = benefitCap ?? gymCaps[planId] ?? null
+    return cap === null ? 'Socios ilimitados' : `Hasta ${cap} socios`
+  }
 
   const freePlanId = !activePlanId ? (plans.find((plan) => plan.price === 0)?.id ?? null) : null
   const currentPlanPrice = activePlanId
@@ -236,9 +248,15 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
             const visibilityLines = isFree
               ? []
               : ['Reseñas de clientes habilitadas', 'Mejor posicionamiento en el feed']
-            const benefitLines = isService
-              ? [...visibilityLines, ...getBenefitLines(plan.benefits, noun, nounPlural)]
-              : [...getBenefitLines(plan.benefits, noun, nounPlural), ...visibilityLines]
+            const benefitLines = isGym
+              ? [
+                  gymMemberLine(plan.id, plan.benefits),
+                  ...getBenefitLines(plan.benefits, noun, nounPlural),
+                  ...visibilityLines,
+                ]
+              : isService
+                ? [...visibilityLines, ...getBenefitLines(plan.benefits, noun, nounPlural)]
+                : [...getBenefitLines(plan.benefits, noun, nounPlural), ...visibilityLines]
 
             return (
               <Card

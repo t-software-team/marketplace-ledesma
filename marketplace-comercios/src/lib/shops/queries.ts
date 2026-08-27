@@ -1342,6 +1342,31 @@ export async function getGymMemberLimitInfo(
   };
 }
 
+// Cupo de socios por plan (para mostrar en las tarjetas de suscripción de un
+// gimnasio). Sale de plan_limits.max_gym_members; null = ilimitado.
+export async function getPlanGymMemberCaps(
+  planIds: string[],
+): Promise<Record<string, number | null>> {
+  if (planIds.length === 0) return {};
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("plan_limits")
+    .select("plan_id, max_gym_members")
+    .in("plan_id", planIds);
+
+  if (error) {
+    console.error("getPlanGymMemberCaps: fallo al traer cupos de socios", { error });
+    return {};
+  }
+
+  const caps: Record<string, number | null> = {};
+  for (const row of data ?? []) {
+    if (row.plan_id) caps[row.plan_id] = row.max_gym_members;
+  }
+  return caps;
+}
+
 export async function getProductImageLimitInfo(shopId: string) {
   const supabase = await createClient();
 
