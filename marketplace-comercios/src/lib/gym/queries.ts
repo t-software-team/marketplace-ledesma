@@ -1,4 +1,5 @@
 import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import {
   argentinaStartOfTodayUTC,
   argentinaToday,
@@ -86,6 +87,36 @@ export async function getGymPlans(shopId: string): Promise<GymPlan[]> {
     return []
   }
   return (data as GymPlan[]) ?? []
+}
+
+export interface PublicGymPlan {
+  id: string
+  name: string
+  kind: GymPlanKind
+  duration_days: number
+  price: number
+}
+
+/**
+ * Active plans for a gym's public page. Uses the anon client (no session) and
+ * relies on the public-read RLS policy on active plans.
+ */
+export async function getPublicGymPlans(shopId: string): Promise<PublicGymPlan[]> {
+  const supabase = createPublicClient()
+  const { data, error } = await supabase
+    .from('gym_plans')
+    .select('id, name, kind, duration_days, price')
+    .eq('shop_id', shopId)
+    .eq('is_active', true)
+    .order('duration_days', { ascending: true })
+    .order('price', { ascending: true })
+    .limit(20)
+
+  if (error) {
+    console.error('getPublicGymPlans: fallo al traer planes públicos', { shopId, error })
+    return []
+  }
+  return (data as PublicGymPlan[]) ?? []
 }
 
 interface GetGymMembersOptions {

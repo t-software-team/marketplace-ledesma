@@ -523,7 +523,7 @@ export const getShopBySlug = unstable_cache(
         landing_gallery,
         landing_video_url,
         business_hours,
-        categories ( name, is_service )
+        categories ( name, slug, is_service )
       `,
       )
       .eq("slug", slug)

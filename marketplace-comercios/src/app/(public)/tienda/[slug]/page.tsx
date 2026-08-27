@@ -18,6 +18,7 @@ import { ReportShopDialog } from '@/components/shop/report-shop-dialog'
 import { ShareButton } from '@/components/shared/share-button'
 import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopServiceList } from '@/components/shop/shop-service-list'
+import { GymPlansSection } from '@/components/shop/gym-plans-section'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopMoreLinksMenu } from '@/components/shop/shop-more-links-menu'
 import { ExpandableDescription } from '@/components/shop/expandable-description'
@@ -34,6 +35,8 @@ import {
   getShopRating,
   getShopReviews,
 } from '@/lib/shops/queries'
+import { getPublicGymPlans } from '@/lib/gym/queries'
+import { isGymRubro } from '@/lib/category-icons'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import { getAccentColor } from '@/lib/accent-colors'
 import { getBaseUrl } from '@/lib/site-url'
@@ -94,12 +97,15 @@ export default async function ShopPage({ params }: ShopPageProps) {
   const baseUrl = getBaseUrl()
   const shopUrl = `${baseUrl}/tienda/${slug}`
 
-  const [products, rating, reviews, followerCount, relatedShops] = await Promise.all([
+  const isGym = isGymRubro(shop.categories?.slug)
+
+  const [products, rating, reviews, followerCount, relatedShops, gymPlans] = await Promise.all([
     getShopProducts(shop.id),
     getShopRating(shop.id),
     getShopReviews(shop.id),
     getShopFollowStats(shop.id),
     getRelatedShops(shop.id, shop.category_id, shop.city),
+    isGym ? getPublicGymPlans(shop.id) : Promise.resolve([]),
   ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
@@ -275,19 +281,27 @@ export default async function ShopPage({ params }: ShopPageProps) {
       <LandingGallerySection data={shop.landing_gallery} />
       <LandingVideoSection url={shop.landing_video_url} />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
-        {isService ? (
-          <ShopServiceList
-            shopId={shop.id}
-            initialProducts={products}
-            shopName={shop.name}
-            whatsappNumber={shop.whatsapp_number}
-          />
-        ) : (
-          <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
-        )}
-      </section>
+      {isGym ? (
+        <GymPlansSection
+          plans={gymPlans}
+          shopName={shop.name}
+          whatsappNumber={shop.whatsapp_number}
+        />
+      ) : (
+        <section className="space-y-4">
+          <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
+          {isService ? (
+            <ShopServiceList
+              shopId={shop.id}
+              initialProducts={products}
+              shopName={shop.name}
+              whatsappNumber={shop.whatsapp_number}
+            />
+          ) : (
+            <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
+          )}
+        </section>
+      )}
 
       {isFeatured && (
         <section className="space-y-4">
