@@ -118,12 +118,19 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
 
   const activePlanId = activeSubscription?.plan_id ?? null
 
+  // Si la categoría del comercio tiene planes exclusivos, mostramos SOLO esos
+  // (además del plan activo actual). Si no hay ninguno, caemos a los genéricos
+  // por applies_to para no dejar al comercio sin opciones.
+  const hasCategoryPlans = Boolean(
+    shop.category_id && allPlans.some((plan) => plan.category_id === shop.category_id)
+  )
+
   const plans = allPlans
-    .filter(
-      (plan) =>
-        plan.id === activePlanId ||
-        planMatchesShop(plan, { categoryId: shop.category_id, isService })
-    )
+    .filter((plan) => {
+      if (plan.id === activePlanId) return true
+      if (hasCategoryPlans) return plan.category_id === shop.category_id
+      return planMatchesShop(plan, { categoryId: shop.category_id, isService })
+    })
     .map((plan) =>
       // Los gyms muestran cupo de socios, no de productos, así que no inyectamos
       // el límite de productos del free en sus tarjetas.

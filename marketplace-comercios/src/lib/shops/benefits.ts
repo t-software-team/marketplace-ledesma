@@ -2,6 +2,11 @@ function getBenefitLabels(noun: string, nounPlural: string): Record<string, (val
   return {
     max_products: (value) =>
       value === null ? `${nounPlural} ilimitados` : `Hasta ${value} ${noun}s`,
+    max_videos: (value) =>
+      value === null ? 'Videos ilimitados' : `Hasta ${value} videos`,
+    // El cupo de socios se muestra con su propia línea (gymMemberLine) en la
+    // página de suscripción, así que acá se omite para no duplicarlo crudo.
+    max_gym_members: () => null,
     featured: (value) => (value ? `Destacá tus ${noun}s en el feed` : null),
     analytics: (value) => (value ? 'Estadísticas de tu tienda' : null),
     priority_support: (value) => (value ? 'Soporte prioritario' : null),
