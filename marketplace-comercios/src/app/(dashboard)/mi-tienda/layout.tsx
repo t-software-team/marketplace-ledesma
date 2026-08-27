@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { getMyActiveSubscription, getMyShop } from '@/lib/shops/queries'
 import { getMyClientNotifications } from '@/lib/notifications/queries'
 import {
@@ -66,20 +66,31 @@ export default async function MiTiendaLayout({
   }
 
   const isService = isServiceRubro(rubroSlug)
+  const isGym = isGymRubro(rubroSlug)
 
-  const navItems: DashboardNavItem[] = [
-    { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
-    { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
-    { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
-    {
-      href: '/mi-tienda/personalizar',
-      label: 'Personalizar',
-      icon: 'sparkles',
-      badge: hasCustomBranding ? undefined : 'PRO',
-    },
-    { href: '/mi-tienda/suscripcion', label: 'Planes', icon: 'credit-card', badge: planName },
-    { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
-  ]
+  // Gyms swap the whole catalog nav for gym-management sections.
+  const navItems: DashboardNavItem[] = isGym
+    ? [
+        { href: '/mi-tienda', label: 'Resumen', icon: 'dashboard' },
+        { href: '/mi-tienda/socios', label: 'Socios', icon: 'users' },
+        { href: '/mi-tienda/planes', label: 'Planes', icon: 'tag' },
+        { href: '/mi-tienda/caja', label: 'Caja', icon: 'wallet' },
+        { href: '/mi-tienda/suscripcion', label: 'Suscripción', icon: 'credit-card', badge: planName },
+        { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
+      ]
+    : [
+        { href: '/mi-tienda', label: 'Resumen', icon: 'store' },
+        { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
+        { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
+        {
+          href: '/mi-tienda/personalizar',
+          label: 'Personalizar',
+          icon: 'sparkles',
+          badge: hasCustomBranding ? undefined : 'PRO',
+        },
+        { href: '/mi-tienda/suscripcion', label: 'Planes', icon: 'credit-card', badge: planName },
+        { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
+      ]
 
   return (
     <DashboardShell

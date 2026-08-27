@@ -11,7 +11,9 @@ import { ShareButton } from '@/components/shared/share-button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { GymResumen } from '@/components/gym/gym-resumen'
+import { getGymDashboardStats } from '@/lib/gym/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
@@ -77,6 +79,12 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         </div>
       </div>
     )
+  }
+
+  // Gyms get a dedicated management dashboard instead of the catalog resumen.
+  if (isGymRubro(shop.categories?.slug)) {
+    const stats = await getGymDashboardStats(shop.id)
+    return <GymResumen shopName={shop.name} stats={stats} />
   }
 
   const isService = isServiceRubro(shop.categories?.slug)
