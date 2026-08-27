@@ -101,7 +101,9 @@ export default async function MiTiendaLayout({
       userAvatarUrl={avatarUrl}
       sectionTitle="Mi tienda"
       rootHref="/mi-tienda"
-      showInstallButton={false}
+      showInstallButton={isGym}
+      showSiteLink={!isGym}
+      installLabel={isGym ? 'Descargar app' : undefined}
       reviewInvite={reviewInvite ?? undefined}
       notifications={notifications}
       unreadNotificationsCount={unreadCount}

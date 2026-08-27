@@ -15,6 +15,7 @@ interface DashboardShellProps {
   unreadNotificationsCount?: number
   showSiteLink?: boolean
   showInstallButton?: boolean
+  installLabel?: string
   reviewInvite?: { shopName: string; shopUrl: string }
   onMarkRead?: (id: string) => Promise<void>
   onMarkAllRead?: () => Promise<void>
@@ -37,6 +38,7 @@ export function DashboardShell({
   unreadNotificationsCount,
   showSiteLink,
   showInstallButton,
+  installLabel,
   reviewInvite,
   onMarkRead,
   onMarkAllRead,
@@ -59,6 +61,7 @@ export function DashboardShell({
           unreadNotificationsCount={unreadNotificationsCount}
           showSiteLink={showSiteLink}
           showInstallButton={showInstallButton}
+          installLabel={installLabel}
           reviewInvite={reviewInvite}
           accent={accent}
           onMarkRead={onMarkRead}

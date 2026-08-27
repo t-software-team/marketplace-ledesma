@@ -122,6 +122,7 @@ interface DashboardHeaderProps {
   unreadNotificationsCount?: number
   showSiteLink?: boolean
   showInstallButton?: boolean
+  installLabel?: string
   reviewInvite?: { shopName: string; shopUrl: string }
   accent?: boolean
   onMarkRead?: (id: string) => Promise<void>
@@ -153,6 +154,7 @@ export function DashboardHeader({
   unreadNotificationsCount,
   showSiteLink = true,
   showInstallButton = true,
+  installLabel,
   reviewInvite,
   accent = false,
   onMarkRead,
@@ -197,7 +199,7 @@ export function DashboardHeader({
 
         <div className="flex items-center gap-1">
           
-          {showInstallButton && <InstallAppButton />}
+          {showInstallButton && <InstallAppButton label={installLabel} />}
           {showSiteLink && (
             <Button
               render={<Link href="/" />}
