@@ -1,4 +1,9 @@
 import { createClient, getAuthUser } from '@/lib/supabase/server'
+import {
+  argentinaStartOfTodayUTC,
+  argentinaToday,
+  daysFromArgentinaToday,
+} from '@/lib/timezone'
 
 export type GymPlanKind = 'daily' | 'multi_day' | 'monthly' | 'custom'
 export type GymPaymentMethod = 'cash' | 'transfer' | 'mercadopago'
@@ -123,7 +128,7 @@ export async function getGymMembers(
     return []
   }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = argentinaToday()
 
   const members: GymMemberWithStatus[] = (data ?? []).map((row) => {
     const periods = (row.gym_memberships ?? []) as { expires_at: string }[]
@@ -282,7 +287,7 @@ export async function getGymMember(
     }
   })
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = argentinaToday()
   const latestExpiry = memberships.reduce<string | null>(
     (latest, m) => (latest === null || m.expires_at > latest ? m.expires_at : latest),
     null
@@ -335,14 +340,11 @@ export async function getExpiringMembers(
   withinDays = 7
 ): Promise<ExpiringMember[]> {
   const members = await getGymMembers(shopId, { status: 'active', limit: 500 })
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
 
   const result: ExpiringMember[] = []
   for (const m of members) {
     if (!m.expires_at) continue
-    const expiry = new Date(`${m.expires_at}T00:00:00`)
-    const daysLeft = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    const daysLeft = daysFromArgentinaToday(m.expires_at)
     if (daysLeft >= 0 && daysLeft <= withinDays) {
       result.push({
         id: m.id,
@@ -358,8 +360,7 @@ export async function getExpiringMembers(
 
 export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {
   const supabase = await createClient()
-  const startOfDay = new Date()
-  startOfDay.setHours(0, 0, 0, 0)
+  const startOfDay = argentinaStartOfTodayUTC()
 
   const { data, error } = await supabase
     .from('gym_check_ins')

@@ -10,6 +10,7 @@ import {
   gymRenewalSchema,
 } from '@/lib/validations/gym'
 import { getGymMembers, type GymMemberSearchResult } from '@/lib/gym/queries'
+import { argentinaToday, argentinaTodayPlusDays } from '@/lib/timezone'
 
 export type ActionState = {
   error: string | null
@@ -45,13 +46,9 @@ async function requireShop() {
   return { supabase, user, shopId: shop?.id ?? null }
 }
 
-/** start + duration_days, both as YYYY-MM-DD strings. */
+/** start + duration_days in Argentina's calendar, both as YYYY-MM-DD strings. */
 function computeExpiry(durationDays: number): { start: string; expires: string } {
-  const start = new Date()
-  const expires = new Date()
-  expires.setDate(expires.getDate() + durationDays)
-  const iso = (d: Date) => d.toISOString().slice(0, 10)
-  return { start: iso(start), expires: iso(expires) }
+  return { start: argentinaToday(), expires: argentinaTodayPlusDays(durationDays) }
 }
 
 // ---------------------------------------------------------------------------
@@ -320,7 +317,7 @@ export async function checkInGymMember(memberId: string): Promise<CheckInResult>
 
   if (!member) return { error: 'No encontramos al socio' }
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = argentinaToday()
   const { data: activePeriod } = await supabase
     .from('gym_memberships')
     .select('expires_at')

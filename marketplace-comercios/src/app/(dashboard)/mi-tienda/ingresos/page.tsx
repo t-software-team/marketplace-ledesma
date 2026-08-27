@@ -4,7 +4,11 @@ import { getMyShopId, getTodayCheckIns } from '@/lib/gym/queries'
 import { CheckInClient } from './check-in-client'
 
 function formatTime(value: string) {
-  return new Date(value).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return new Date(value).toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  })
 }
 
 export default async function IngresosPage() {

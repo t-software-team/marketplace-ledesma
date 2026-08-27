@@ -38,7 +38,11 @@ function formatDate(value: string) {
 }
 
 function formatDateTime(value: string) {
-  return new Date(value).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })
+  return new Date(value).toLocaleString('es-AR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  })
 }
 
 export default async function MemberDetailPage({
