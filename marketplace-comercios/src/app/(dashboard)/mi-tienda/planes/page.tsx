@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/empty-state'
+import { EmptyDumbbellIllustration } from '@/components/shared/empty-illustrations'
 import { getGymPlans, getMyShopId, type GymPlanKind } from '@/lib/gym/queries'
 import { PlanForm } from './plan-form'
 import { PlanRowActions } from './plan-row-actions'
@@ -47,7 +48,10 @@ export default async function PlanesPage() {
       </Card>
 
       {plans.length === 0 ? (
-        <EmptyState message="Todavía no cargaste ningún plan. Creá el primero para poder dar de alta socios." />
+        <EmptyState
+          illustration={<EmptyDumbbellIllustration />}
+          message="Todavía no cargaste ningún plan. Creá el primero para poder dar de alta socios."
+        />
       ) : (
         <div className="space-y-2">
           {plans.map((plan) => (

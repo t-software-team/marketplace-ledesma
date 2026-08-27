@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
+import { EmptyDumbbellIllustration } from '@/components/shared/empty-illustrations'
 import {
   getGymMembers,
   getGymPlans,
@@ -76,6 +77,7 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
 
       {members.length === 0 ? (
         <EmptyState
+          illustration={search ? undefined : <EmptyDumbbellIllustration />}
           message={
             search
               ? 'No encontramos socios con ese nombre.'

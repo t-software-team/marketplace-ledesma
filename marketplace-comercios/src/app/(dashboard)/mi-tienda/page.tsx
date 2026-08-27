@@ -84,7 +84,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   // Gyms get a dedicated management dashboard instead of the catalog resumen.
   if (isGymRubro(shop.categories?.slug)) {
     const stats = await getGymDashboardStats(shop.id)
-    return <GymResumen shopName={shop.name} stats={stats} />
+    return <GymResumen shopName={shop.name} logoUrl={shop.logo_url} stats={stats} />
   }
 
   const isService = isServiceRubro(shop.categories?.slug)

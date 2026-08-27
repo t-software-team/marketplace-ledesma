@@ -1,5 +1,14 @@
 import Link from 'next/link'
-import { AlertTriangle, CalendarClock, TrendingUp, UserPlus, Users, UserX } from 'lucide-react'
+import Image from 'next/image'
+import {
+  AlertTriangle,
+  CalendarClock,
+  Dumbbell,
+  TrendingUp,
+  UserPlus,
+  Users,
+  UserX,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import type { GymDashboardStats } from '@/lib/gym/queries'
@@ -14,10 +23,11 @@ function formatARS(value: number) {
 
 interface GymResumenProps {
   shopName: string
+  logoUrl?: string | null
   stats: GymDashboardStats
 }
 
-export function GymResumen({ shopName, stats }: GymResumenProps) {
+export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
   const monthRevenue = stats.revenue_month_cash + stats.revenue_month_transfer
 
   const kpis = [
@@ -36,10 +46,21 @@ export function GymResumen({ shopName, stats }: GymResumenProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-8">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 className="text-2xl font-heading">{shopName}</h1>
-          <p className="text-sm text-muted-foreground">Panel de tu gimnasio</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+            {logoUrl ? (
+              <Image src={logoUrl} alt={shopName} fill className="object-cover" sizes="48px" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <Dumbbell className="size-5" aria-hidden />
+              </div>
+            )}
+          </div>
+          <div>
+            <h1 className="text-2xl font-heading leading-tight">{shopName}</h1>
+            <p className="text-sm text-muted-foreground">Panel de tu gimnasio</p>
+          </div>
         </div>
         <Button render={<Link href="/mi-tienda/socios/nuevo" />} nativeButton={false}>
           Nuevo socio

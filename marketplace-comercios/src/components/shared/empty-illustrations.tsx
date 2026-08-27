@@ -59,6 +59,21 @@ export function EmptyHeartIllustration() {
   )
 }
 
+export function EmptyDumbbellIllustration() {
+  return (
+    <IllustrationBase>
+      {/* barra central */}
+      <rect x="30" y="44" width="36" height="8" rx="4" className="fill-destacado" />
+      {/* placas internas */}
+      <rect x="24" y="34" width="8" height="28" rx="3" className="fill-muted stroke-border" strokeWidth="2" />
+      <rect x="64" y="34" width="8" height="28" rx="3" className="fill-muted stroke-border" strokeWidth="2" />
+      {/* placas externas */}
+      <rect x="14" y="38" width="8" height="20" rx="3" className="fill-muted stroke-border" strokeWidth="2" />
+      <rect x="74" y="38" width="8" height="20" rx="3" className="fill-muted stroke-border" strokeWidth="2" />
+    </IllustrationBase>
+  )
+}
+
 export function EmptyBellIllustration() {
   return (
     <IllustrationBase>
