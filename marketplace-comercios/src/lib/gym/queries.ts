@@ -145,7 +145,10 @@ export async function getGymMembers(
     .limit(options.limit ?? GYM_MEMBERS_DEFAULT_LIMIT)
 
   if (options.search) {
-    query = query.ilike('full_name', `%${options.search}%`)
+    // Match by name or document. Strip PostgREST-or metacharacters so the
+    // filter can't be broken by commas/parens in the query.
+    const q = options.search.replace(/[%,()]/g, ' ').trim()
+    query = query.or(`full_name.ilike.%${q}%,document.ilike.%${q}%`)
   }
   if (options.status === 'archived') {
     query = query.eq('is_archived', true)
@@ -353,6 +356,8 @@ export async function getGymMember(
 export interface GymMemberSearchResult {
   id: string
   full_name: string
+  document: string | null
+  phone: string | null
   status: GymMemberStatus
   expires_at: string | null
 }

@@ -104,7 +104,10 @@ export async function setGymPlanActive(planId: string, isActive: boolean): Promi
     .eq('id', planId)
     .eq('shop_id', shopId)
 
-  if (error) return { error: 'No pudimos actualizar el plan' }
+  if (error) {
+    console.error('setGymPlanActive: fallo al actualizar plan', { planId, isActive, error })
+    return { error: 'No pudimos actualizar el plan' }
+  }
   revalidatePath('/mi-tienda/planes')
   return { error: null }
 }
@@ -119,7 +122,10 @@ export async function deleteGymPlan(planId: string): Promise<ActionState> {
     .eq('id', planId)
     .eq('shop_id', shopId)
 
-  if (error) return { error: 'No pudimos borrar el plan' }
+  if (error) {
+    console.error('deleteGymPlan: fallo al borrar plan', { planId, error })
+    return { error: 'No pudimos borrar el plan' }
+  }
   revalidatePath('/mi-tienda/planes')
   return { error: null }
 }
@@ -242,7 +248,10 @@ export async function setGymMemberArchived(
     .eq('id', memberId)
     .eq('shop_id', shopId)
 
-  if (error) return { error: 'No pudimos actualizar al socio' }
+  if (error) {
+    console.error('setGymMemberArchived: fallo al actualizar socio', { memberId, archived, error })
+    return { error: 'No pudimos actualizar al socio' }
+  }
   revalidatePath('/mi-tienda/socios')
   revalidatePath('/mi-tienda')
   return { error: null }
@@ -362,6 +371,8 @@ export async function searchGymMembers(query: string): Promise<GymMemberSearchRe
   return members.map((m) => ({
     id: m.id,
     full_name: m.full_name,
+    document: m.document,
+    phone: m.phone,
     status: m.status,
     expires_at: m.expires_at,
   }))

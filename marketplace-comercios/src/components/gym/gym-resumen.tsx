@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CalendarClock,
   Dumbbell,
+  LogIn,
   TrendingUp,
   UserPlus,
   Users,
@@ -62,7 +63,32 @@ export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
             <p className="text-sm text-muted-foreground">Panel de tu gimnasio</p>
           </div>
         </div>
-        <Button render={<Link href="/mi-tienda/socios/nuevo" />} nativeButton={false}>
+        <Button
+          render={<Link href="/mi-tienda/socios/nuevo" />}
+          nativeButton={false}
+          className="hidden sm:inline-flex"
+        >
+          Nuevo socio
+        </Button>
+      </div>
+
+      {/* Accesos rápidos de mostrador — solo mobile */}
+      <div className="grid grid-cols-2 gap-2 sm:hidden">
+        <Button
+          render={<Link href="/mi-tienda/ingresos" />}
+          nativeButton={false}
+          className="h-12 gap-1.5"
+        >
+          <LogIn className="size-4" aria-hidden />
+          Registrar ingreso
+        </Button>
+        <Button
+          render={<Link href="/mi-tienda/socios/nuevo" />}
+          nativeButton={false}
+          variant="outline"
+          className="h-12 gap-1.5"
+        >
+          <UserPlus className="size-4" aria-hidden />
           Nuevo socio
         </Button>
       </div>

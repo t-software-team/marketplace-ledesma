@@ -4,6 +4,14 @@ import Link from 'next/link'
 import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { setGymMemberArchived, type ActionState } from '@/lib/gym/actions'
 import type { GymMemberStatus, GymMemberWithStatus } from '@/lib/gym/queries'
 import { RenewMemberDialog } from './renew-member-dialog'
@@ -41,29 +49,35 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/mi-tienda/socios/${member.id}`}
-            className="truncate font-medium hover:underline"
-          >
-            {member.full_name}
-          </Link>
-          <Badge variant={status.variant}>{status.label}</Badge>
+    <TableRow>
+      <TableCell>
+        <Link
+          href={`/mi-tienda/socios/${member.id}`}
+          className="font-medium hover:text-primary hover:underline"
+        >
+          {member.full_name}
+        </Link>
+      </TableCell>
+      <TableCell>
+        <Badge variant={status.variant}>{status.label}</Badge>
+      </TableCell>
+      <TableCell className="whitespace-nowrap text-muted-foreground">
+        {formatDate(member.expires_at)}
+      </TableCell>
+      <TableCell className="whitespace-nowrap text-muted-foreground">
+        {member.phone || '—'}
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center justify-end gap-2">
+          {!member.is_archived && (
+            <RenewMemberDialog memberId={member.id} plans={plans} />
+          )}
+          <Button variant="ghost" size="sm" disabled={isPending} onClick={toggleArchived}>
+            {member.is_archived ? 'Reactivar' : 'Baja'}
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {member.phone ? `${member.phone} · ` : ''}
-          Vence {formatDate(member.expires_at)}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        {!member.is_archived && <RenewMemberDialog memberId={member.id} plans={plans} />}
-        <Button variant="ghost" size="sm" disabled={isPending} onClick={toggleArchived}>
-          {member.is_archived ? 'Reactivar' : 'Baja'}
-        </Button>
-      </div>
-    </div>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -75,10 +89,21 @@ export function SociosList({
   plans: PlanOption[]
 }) {
   return (
-    <div className="space-y-2">
-      {members.map((member) => (
-        <MemberRow key={member.id} member={member} plans={plans} />
-      ))}
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Socio</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead>Vence</TableHead>
+          <TableHead>Teléfono</TableHead>
+          <TableHead className="text-right">Acciones</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {members.map((member) => (
+          <MemberRow key={member.id} member={member} plans={plans} />
+        ))}
+      </TableBody>
+    </Table>
   )
 }
