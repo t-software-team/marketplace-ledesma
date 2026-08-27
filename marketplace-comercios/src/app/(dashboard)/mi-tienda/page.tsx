@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
 import { getGymDashboardStats } from '@/lib/gym/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
@@ -96,7 +97,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       getMyActiveSubscription(shop.id),
       getActiveSubscriptionPlans(),
       getShopFollowStats(shop.id),
-      getFreeProductMax(isService),
+      getFreeProductMax(isService, shop.category_id),
     ])
   const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
@@ -113,8 +114,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   const daysUntilExpiry = shop.subscription_expires_at ? daysUntil(shop.subscription_expires_at) : null
 
   const freePlan = allPlans.find(
-    (plan) =>
-      plan.price === 0 && (plan.applies_to === 'all' || plan.applies_to === (isService ? 'service' : 'product'))
+    (plan) => plan.price === 0 && planMatchesShop(plan, { categoryId: shop.category_id, isService })
   )
 
   const planName = activeSubscription?.subscription_plans?.name ?? freePlan?.name ?? 'Free'

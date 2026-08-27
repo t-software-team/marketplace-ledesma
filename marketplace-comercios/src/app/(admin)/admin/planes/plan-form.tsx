@@ -20,6 +20,7 @@ interface PlanBenefits {
 
 interface PlanFormProps {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>
+  categories: { id: string; name: string }[]
   defaultValues?: {
     name: string
     description: string | null
@@ -28,10 +29,12 @@ interface PlanFormProps {
     benefits: unknown
     is_active: boolean
     applies_to?: string
+    category_id?: string | null
     max_products_service?: number | null
     max_products_product?: number | null
     max_images?: number | null
     max_variants?: number | null
+    max_gym_members?: number | null
   }
   submitLabel: string
 }
@@ -53,7 +56,7 @@ const APPLIES_TO_OPTIONS = [
 
 const initialState: ActionState = { error: null }
 
-export function PlanForm({ action, defaultValues, submitLabel }: PlanFormProps) {
+export function PlanForm({ action, categories, defaultValues, submitLabel }: PlanFormProps) {
   const [state, formAction, isPending] = useActionState(action, initialState)
   const [price, setPrice] = useState(defaultValues?.price ?? 0)
   const isFreePlan = price === 0
@@ -130,6 +133,29 @@ export function PlanForm({ action, defaultValues, submitLabel }: PlanFormProps) 
         <p className="text-xs text-muted-foreground">
           Los comercios de rubros de servicio solo ven planes &quot;Todos&quot; o &quot;Solo
           servicios&quot;; el resto solo ve &quot;Todos&quot; o &quot;Solo productos&quot;.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="category_id" className="text-sm font-medium">
+          Categoría exclusiva (opcional)
+        </label>
+        <select
+          id="category_id"
+          name="category_id"
+          defaultValue={defaultValues?.category_id ?? ''}
+          className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <option value="">Ninguna (usar &quot;Aplica a&quot;)</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-muted-foreground">
+          Si elegís una categoría, el plan será exclusivo de ese rubro (ej. Gimnasio) y no se
+          mostrará a los demás. Tiene prioridad sobre &quot;Aplica a&quot;.
         </p>
       </div>
 
@@ -244,6 +270,20 @@ export function PlanForm({ action, defaultValues, submitLabel }: PlanFormProps) 
                 step="1"
                 placeholder="Usar valor por defecto"
                 defaultValue={defaultValues?.max_variants ?? undefined}
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="max_gym_members" className="text-sm font-medium">
+                Máx. socios (gimnasio)
+              </label>
+              <Input
+                id="max_gym_members"
+                name="max_gym_members"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Sin límite"
+                defaultValue={defaultValues?.max_gym_members ?? undefined}
               />
             </div>
           </div>

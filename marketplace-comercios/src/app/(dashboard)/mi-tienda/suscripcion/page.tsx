@@ -14,6 +14,7 @@ import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { syncMercadoPagoSubscription } from '@/lib/mercadopago/sync'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { isServiceRubro } from '@/lib/category-icons'
+import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { cn } from '@/lib/utils'
 import { SubscribeButton } from './subscribe-button'
 
@@ -107,7 +108,7 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
   const [allPlans, activeSubscription, freeMaxForShop] = await Promise.all([
     getActiveSubscriptionPlans(),
     getMyActiveSubscription(shop.id),
-    getFreeProductMax(isService),
+    getFreeProductMax(isService, shop.category_id),
   ])
 
   const noun = isService ? 'servicio' : 'producto'
@@ -119,8 +120,7 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
     .filter(
       (plan) =>
         plan.id === activePlanId ||
-        plan.applies_to === 'all' ||
-        plan.applies_to === (isService ? 'service' : 'product')
+        planMatchesShop(plan, { categoryId: shop.category_id, isService })
     )
     .map((plan) =>
       plan.price === 0

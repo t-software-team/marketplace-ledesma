@@ -9,6 +9,7 @@ import {
   getMyShopId,
   type GymMemberStatus,
 } from '@/lib/gym/queries'
+import { getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { SociosList } from './socios-list'
 
 const FILTERS: { value: GymMemberStatus | 'all'; label: string }[] = [
@@ -34,9 +35,10 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
     ? (status as GymMemberStatus)
     : undefined
 
-  const [members, plans] = await Promise.all([
+  const [members, plans, limitInfo] = await Promise.all([
     getGymMembers(shopId, { search, status: statusFilter }),
     getGymPlans(shopId),
+    getGymMemberLimitInfo(shopId),
   ])
   const activePlans = plans
     .filter((p) => p.is_active)
@@ -48,13 +50,31 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
         <div>
           <h1 className="text-2xl font-heading">Socios</h1>
           <p className="text-xs text-muted-foreground">
-            Alta rápida sin cuenta: el socio es una ficha que administrás vos.
+            {limitInfo.max === null
+              ? `${limitInfo.used} socios activos`
+              : `${limitInfo.used} de ${limitInfo.max} socios de tu plan`}
           </p>
         </div>
-        <Button render={<Link href="/mi-tienda/socios/nuevo" />} nativeButton={false}>
-          Nuevo socio
-        </Button>
+        {limitInfo.reached ? (
+          <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false}>
+            Mejorar plan
+          </Button>
+        ) : (
+          <Button render={<Link href="/mi-tienda/socios/nuevo" />} nativeButton={false}>
+            Nuevo socio
+          </Button>
+        )}
       </div>
+
+      {limitInfo.reached && (
+        <p className="rounded-lg border border-warning bg-warning/30 p-3 text-sm text-warning-foreground">
+          Llegaste al límite de {limitInfo.max} socios de tu plan.{' '}
+          <Link href="/mi-tienda/suscripcion" className="underline">
+            Mejorá al Plan Gimnasio
+          </Link>{' '}
+          para sumar socios sin tope.
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((filter) => {

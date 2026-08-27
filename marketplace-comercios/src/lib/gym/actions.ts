@@ -10,6 +10,7 @@ import {
   gymRenewalSchema,
 } from '@/lib/validations/gym'
 import { getGymMembers, type GymMemberSearchResult } from '@/lib/gym/queries'
+import { getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { argentinaToday, argentinaTodayPlusDays } from '@/lib/timezone'
 
 export type ActionState = {
@@ -139,6 +140,13 @@ export async function createGymMember(
 ): Promise<ActionState> {
   const { supabase, user, shopId } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+
+  const limitInfo = await getGymMemberLimitInfo(shopId)
+  if (limitInfo.reached) {
+    return {
+      error: `Llegaste al límite de ${limitInfo.max} socios de tu plan. Mejorá al Plan Gimnasio para sumar socios sin tope.`,
+    }
+  }
 
   const parsed = gymMemberSchema.safeParse({
     full_name: formData.get('full_name'),

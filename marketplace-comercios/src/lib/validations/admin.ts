@@ -55,6 +55,9 @@ export const subscriptionPlanSchema = z.object({
   benefits_verified_badge: z.boolean(),
   is_active: z.boolean(),
   applies_to: z.enum(['all', 'product', 'service']).default('all'),
+  // Vacío = plan genérico (usa applies_to). Con valor = plan exclusivo de esa
+  // categoría (ej. Gimnasio), no se muestra a otros rubros.
+  category_id: z.string().uuid().optional().or(z.literal('')),
   // Límites (tabla plan_limits), opcionales: vacío = sin fila propia, el
   // plan cae al fallback (fila "por defecto" para imágenes/variantes; para
   // productos, a benefits.max_products si lo trae, o sin límite).
@@ -62,6 +65,7 @@ export const subscriptionPlanSchema = z.object({
   max_products_product: nullableNonNegativeIntString('el máximo de productos (productos)'),
   max_images: nullableNonNegativeIntString('el máximo de imágenes por producto'),
   max_variants: nullableNonNegativeIntString('el máximo de variantes por producto'),
+  max_gym_members: nullableNonNegativeIntString('el máximo de socios del gimnasio'),
 })
 
 export type SubscriptionPlanFormValues = z.infer<typeof subscriptionPlanSchema>

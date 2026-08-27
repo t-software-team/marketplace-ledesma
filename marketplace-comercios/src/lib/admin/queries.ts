@@ -109,7 +109,7 @@ export async function getPlanLimitsByPlanId(planId: string) {
 
   const { data, error } = await supabase
     .from('plan_limits')
-    .select('max_products_service, max_products_product, max_images, max_variants')
+    .select('max_products_service, max_products_product, max_images, max_variants, max_gym_members')
     .eq('plan_id', planId)
     .maybeSingle()
 
@@ -215,7 +215,7 @@ export async function getSubscriptionPlanById(planId: string) {
   const [{ data: plan, error }, limits] = await Promise.all([
     supabase
       .from('subscription_plans')
-      .select('id, name, description, price, duration_days, benefits, is_active, applies_to')
+      .select('id, name, description, price, duration_days, benefits, is_active, applies_to, category_id')
       .eq('id', planId)
       .maybeSingle(),
     getPlanLimitsByPlanId(planId),
@@ -231,6 +231,7 @@ export async function getSubscriptionPlanById(planId: string) {
     max_products_product: limits?.max_products_product ?? null,
     max_images: limits?.max_images ?? null,
     max_variants: limits?.max_variants ?? null,
+    max_gym_members: limits?.max_gym_members ?? null,
   }
 }
 

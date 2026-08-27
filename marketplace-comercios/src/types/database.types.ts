@@ -615,6 +615,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          max_gym_members: number | null
           max_images: number
           max_products_product: number | null
           max_products_service: number | null
@@ -625,6 +626,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          max_gym_members?: number | null
           max_images: number
           max_products_product?: number | null
           max_products_service?: number | null
@@ -635,6 +637,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          max_gym_members?: number | null
           max_images?: number
           max_products_product?: number | null
           max_products_service?: number | null
@@ -1337,6 +1340,7 @@ export type Database = {
         Row: {
           applies_to: string
           benefits: Json | null
+          category_id: string | null
           created_at: string
           description: string | null
           duration_days: number
@@ -1348,6 +1352,7 @@ export type Database = {
         Insert: {
           applies_to?: string
           benefits?: Json | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_days: number
@@ -1359,6 +1364,7 @@ export type Database = {
         Update: {
           applies_to?: string
           benefits?: Json | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_days?: number
@@ -1367,7 +1373,15 @@ export type Database = {
           name?: string
           price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {

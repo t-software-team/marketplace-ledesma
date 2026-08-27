@@ -33,6 +33,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const limitInfo = await getProductLimitInfo(shop.id, {
     usedCount: search ? undefined : totalCount,
     isService,
+    categoryId: shop.category_id,
   })
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
