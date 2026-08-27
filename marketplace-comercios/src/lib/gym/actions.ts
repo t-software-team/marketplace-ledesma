@@ -11,7 +11,7 @@ import {
 } from '@/lib/validations/gym'
 import { getGymMembers, type GymMemberSearchResult } from '@/lib/gym/queries'
 import { getGymMemberLimitInfo } from '@/lib/shops/queries'
-import { argentinaToday, argentinaTodayPlusDays } from '@/lib/timezone'
+import { addDaysToDate, argentinaToday } from '@/lib/timezone'
 
 export type ActionState = {
   error: string | null
@@ -45,11 +45,6 @@ async function requireShop() {
     .maybeSingle()
 
   return { supabase, user, shopId: shop?.id ?? null }
-}
-
-/** start + duration_days in Argentina's calendar, both as YYYY-MM-DD strings. */
-function computeExpiry(durationDays: number): { start: string; expires: string } {
-  return { start: argentinaToday(), expires: argentinaTodayPlusDays(durationDays) }
 }
 
 // ---------------------------------------------------------------------------
@@ -407,7 +402,19 @@ async function settleMembership(
 
   if (!plan) return 'El plan elegido no existe'
 
-  const { start, expires } = computeExpiry(plan.duration_days)
+  // Renovación que suma: si el socio sigue vigente, el nuevo período arranca
+  // desde su vencimiento actual (no pierde los días que le quedan). Si venció
+  // o es nuevo, arranca hoy.
+  const today = argentinaToday()
+  const { data: latest } = await supabase
+    .from('gym_memberships')
+    .select('expires_at')
+    .eq('member_id', memberId)
+    .order('expires_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const start = latest && latest.expires_at >= today ? latest.expires_at : today
+  const expires = addDaysToDate(start, plan.duration_days)
 
   const { data: membership, error: membershipError } = await supabase
     .from('gym_memberships')

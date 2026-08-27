@@ -26,13 +26,18 @@ export function argentinaToday(): string {
   return argentinaDateString()
 }
 
-/** Today in Argentina shifted by `days`, as 'YYYY-MM-DD'. */
-export function argentinaTodayPlusDays(days: number): string {
-  const [y, m, d] = argentinaToday().split('-').map(Number)
-  // Pure calendar-date math via UTC to avoid the host timezone leaking in.
+/** A 'YYYY-MM-DD' date shifted by `days`, as 'YYYY-MM-DD'. Pure calendar math. */
+export function addDaysToDate(dateString: string, days: number): string {
+  const [y, m, d] = dateString.split('-').map(Number)
+  // UTC math avoids the host timezone leaking into a date-only value.
   const dt = new Date(Date.UTC(y, m - 1, d))
   dt.setUTCDate(dt.getUTCDate() + days)
   return dt.toISOString().slice(0, 10)
+}
+
+/** Today in Argentina shifted by `days`, as 'YYYY-MM-DD'. */
+export function argentinaTodayPlusDays(days: number): string {
+  return addDaysToDate(argentinaToday(), days)
 }
 
 /** The instant of 00:00 Argentina time today, for timestamptz comparisons. */
