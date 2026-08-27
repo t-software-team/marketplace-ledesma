@@ -1367,6 +1367,27 @@ export async function getPlanGymMemberCaps(
   return caps;
 }
 
+export interface GymBenefits {
+  freeze: boolean;
+  exportCsv: boolean;
+  stats: boolean;
+}
+
+// Features premium del Plan Gimnasio, leídas de la suscripción activa. Un gym
+// en Free no tiene suscripción activa → todo false.
+export async function getGymBenefits(shopId: string): Promise<GymBenefits> {
+  const activeSubscription = await getMyActiveSubscription(shopId);
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    | { gym_freeze?: boolean; gym_export?: boolean; gym_stats?: boolean }
+    | null
+    | undefined;
+  return {
+    freeze: Boolean(benefits?.gym_freeze),
+    exportCsv: Boolean(benefits?.gym_export),
+    stats: Boolean(benefits?.gym_stats),
+  };
+}
+
 export async function getProductImageLimitInfo(shopId: string) {
   const supabase = await createClient();
 

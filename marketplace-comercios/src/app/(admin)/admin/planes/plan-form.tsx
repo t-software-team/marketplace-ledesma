@@ -16,6 +16,9 @@ interface PlanBenefits {
   custom_branding?: boolean
   promotions?: boolean
   verified_badge?: boolean
+  gym_freeze?: boolean
+  gym_export?: boolean
+  gym_stats?: boolean
 }
 
 interface PlanFormProps {
@@ -46,6 +49,9 @@ const BENEFIT_CHECKBOXES: { name: keyof PlanBenefits; label: string }[] = [
   { name: 'custom_branding', label: 'Personalización de tienda pública' },
   { name: 'promotions', label: 'Promociones destacadas en el feed' },
   { name: 'verified_badge', label: 'Ícono de comercio verificado' },
+  { name: 'gym_freeze', label: 'Congelar membresías (gimnasio)' },
+  { name: 'gym_export', label: 'Exportar socios/pagos a CSV (gimnasio)' },
+  { name: 'gym_stats', label: 'Estadísticas de asistencia (gimnasio)' },
 ]
 
 const APPLIES_TO_OPTIONS = [

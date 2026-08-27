@@ -10,7 +10,7 @@ import {
   gymRenewalSchema,
 } from '@/lib/validations/gym'
 import { getGymMembers, type GymMemberSearchResult } from '@/lib/gym/queries'
-import { getGymMemberLimitInfo } from '@/lib/shops/queries'
+import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { addDaysToDate, argentinaToday } from '@/lib/timezone'
 
 export type ActionState = {
@@ -379,6 +379,57 @@ export async function searchGymMembers(query: string): Promise<GymMemberSearchRe
     status: m.status,
     expires_at: m.expires_at,
   }))
+}
+
+/**
+ * Congela (pausa) la membresía vigente de un socio extendiendo su vencimiento
+ * `days` días. Feature premium del Plan Gimnasio (benefit gym_freeze).
+ */
+export async function freezeGymMembership(
+  memberId: string,
+  days: number
+): Promise<ActionState> {
+  const { supabase, shopId } = await requireShop()
+  if (!shopId) return { error: 'No tenés un comercio creado' }
+
+  const benefits = await getGymBenefits(shopId)
+  if (!benefits.freeze) {
+    return { error: 'Congelar membresías es una función del Plan Gimnasio.' }
+  }
+
+  if (!Number.isInteger(days) || days < 1 || days > 180) {
+    return { error: 'Ingresá una cantidad de días entre 1 y 180.' }
+  }
+
+  const { data: latest } = await supabase
+    .from('gym_memberships')
+    .select('id, expires_at')
+    .eq('member_id', memberId)
+    .eq('shop_id', shopId)
+    .order('expires_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!latest) return { error: 'El socio no tiene una membresía para congelar.' }
+  if (latest.expires_at < argentinaToday()) {
+    return { error: 'No se puede congelar una membresía vencida. Renovala primero.' }
+  }
+
+  const { error } = await supabase
+    .from('gym_memberships')
+    .update({ expires_at: addDaysToDate(latest.expires_at, days) })
+    .eq('id', latest.id)
+    .eq('shop_id', shopId)
+
+  if (error) {
+    console.error('freezeGymMembership: fallo al congelar', { memberId, days, error })
+    return { error: 'No pudimos congelar la membresía' }
+  }
+
+  revalidatePath(`/mi-tienda/socios/${memberId}`)
+  revalidatePath('/mi-tienda/socios')
+  revalidatePath('/mi-tienda')
+  return { error: null }
 }
 
 /**

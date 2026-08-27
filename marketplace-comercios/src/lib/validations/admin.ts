@@ -53,6 +53,9 @@ export const subscriptionPlanSchema = z.object({
   benefits_custom_branding: z.boolean(),
   benefits_promotions: z.boolean(),
   benefits_verified_badge: z.boolean(),
+  benefits_gym_freeze: z.boolean(),
+  benefits_gym_export: z.boolean(),
+  benefits_gym_stats: z.boolean(),
   is_active: z.boolean(),
   applies_to: z.enum(['all', 'product', 'service']).default('all'),
   // Vacío = plan genérico (usa applies_to). Con valor = plan exclusivo de esa

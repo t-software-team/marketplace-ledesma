@@ -9,7 +9,9 @@ import {
   type GymMemberStatus,
   type GymPaymentMethod,
 } from '@/lib/gym/queries'
+import { getGymBenefits } from '@/lib/shops/queries'
 import { MemberEditForm } from './member-edit-form'
+import { FreezeMemberDialog } from './freeze-member-dialog'
 import { RenewMemberDialog } from '../renew-member-dialog'
 
 const STATUS: Record<GymMemberStatus, { label: string; variant: 'success' | 'warning' | 'outline' }> =
@@ -54,7 +56,11 @@ export default async function MemberDetailPage({
   const shopId = await getMyShopId()
   if (!shopId) redirect('/mi-tienda')
 
-  const [member, plans] = await Promise.all([getGymMember(shopId, id), getGymPlans(shopId)])
+  const [member, plans, benefits] = await Promise.all([
+    getGymMember(shopId, id),
+    getGymPlans(shopId),
+    getGymBenefits(shopId),
+  ])
   if (!member) notFound()
 
   const activePlans = plans
@@ -74,7 +80,12 @@ export default async function MemberDetailPage({
               <Badge variant={status.variant}>{status.label}</Badge>
             </div>
             {!member.is_archived && (
-              <RenewMemberDialog memberId={member.id} plans={activePlans} triggerVariant="default" />
+              <div className="flex items-center gap-2">
+                {member.status === 'active' && (
+                  <FreezeMemberDialog memberId={member.id} canFreeze={benefits.freeze} />
+                )}
+                <RenewMemberDialog memberId={member.id} plans={activePlans} triggerVariant="default" />
+              </div>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
