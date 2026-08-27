@@ -314,6 +314,13 @@ export async function getGymMember(
   }
 }
 
+export interface GymMemberSearchResult {
+  id: string
+  full_name: string
+  status: GymMemberStatus
+  expires_at: string | null
+}
+
 export interface ExpiringMember {
   id: string
   full_name: string

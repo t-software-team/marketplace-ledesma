@@ -1,47 +1,78 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { checkInGymMember, type CheckInResult } from '@/lib/gym/actions'
-import type { GymMemberStatus } from '@/lib/gym/queries'
-
-interface SearchableMember {
-  id: string
-  full_name: string
-  status: GymMemberStatus
-  expires_at: string | null
-}
+import {
+  checkInGymMember,
+  searchGymMembers,
+  type CheckInResult,
+} from '@/lib/gym/actions'
+import type { GymMemberSearchResult } from '@/lib/gym/queries'
 
 function formatDate(value: string | null | undefined) {
   if (!value) return '—'
   return new Date(`${value}T00:00:00`).toLocaleDateString('es-AR')
 }
 
-export function CheckInClient({ members }: { members: SearchableMember[] }) {
+export function CheckInClient() {
   const router = useRouter()
   const [search, setSearch] = useState('')
+  const [matches, setMatches] = useState<GymMemberSearchResult[]>([])
+  const [searching, setSearching] = useState(false)
   const [result, setResult] = useState<CheckInResult | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const matches = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return []
-    return members.filter((m) => m.full_name.toLowerCase().includes(q)).slice(0, 8)
-  }, [members, search])
+  // Debounced server-side search — only the matches travel to the client,
+  // never the whole roster. The `ignore` guard drops stale responses.
+  useEffect(() => {
+    const q = search.trim()
+    if (!q) {
+      setMatches([])
+      setSearching(false)
+      return
+    }
+
+    let ignore = false
+    setSearching(true)
+    const handle = setTimeout(async () => {
+      try {
+        const res = await searchGymMembers(q)
+        if (!ignore) setMatches(res)
+      } catch (err) {
+        console.error('CheckInClient: fallo la búsqueda de socios', err)
+        if (!ignore) setMatches([])
+      } finally {
+        if (!ignore) setSearching(false)
+      }
+    }, 250)
+
+    return () => {
+      ignore = true
+      clearTimeout(handle)
+    }
+  }, [search])
 
   const register = (memberId: string) => {
     startTransition(async () => {
-      const res = await checkInGymMember(memberId)
-      setResult(res)
-      if (!res.error) {
-        setSearch('')
-        router.refresh()
+      try {
+        const res = await checkInGymMember(memberId)
+        setResult(res)
+        if (!res.error) {
+          setSearch('')
+          setMatches([])
+          router.refresh()
+        }
+      } catch (err) {
+        console.error('CheckInClient: fallo al registrar ingreso', err)
+        setResult({ error: 'No pudimos registrar el ingreso. Reintentá.' })
       }
     })
   }
+
+  const showNoResults = search.trim() !== '' && !searching && matches.length === 0
 
   return (
     <div className="space-y-3">
@@ -78,6 +109,8 @@ export function CheckInClient({ members }: { members: SearchableMember[] }) {
         autoFocus
       />
 
+      {searching && <p className="text-sm text-muted-foreground">Buscando…</p>}
+
       {matches.length > 0 && (
         <div className="space-y-2">
           {matches.map((m) => (
@@ -100,7 +133,7 @@ export function CheckInClient({ members }: { members: SearchableMember[] }) {
         </div>
       )}
 
-      {search.trim() && matches.length === 0 && (
+      {showNoResults && (
         <p className="text-sm text-muted-foreground">No hay socios que coincidan.</p>
       )}
     </div>

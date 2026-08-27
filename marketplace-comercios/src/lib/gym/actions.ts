@@ -9,6 +9,7 @@ import {
   gymPlanSchema,
   gymRenewalSchema,
 } from '@/lib/validations/gym'
+import { getGymMembers, type GymMemberSearchResult } from '@/lib/gym/queries'
 
 export type ActionState = {
   error: string | null
@@ -347,6 +348,26 @@ export async function checkInGymMember(memberId: string): Promise<CheckInResult>
     status: activePeriod ? 'active' : 'expired',
     expires_at: activePeriod?.expires_at ?? null,
   }
+}
+
+/**
+ * Server-side member lookup for the check-in desk. Returns only the matches
+ * (capped) instead of shipping the whole roster to the client.
+ */
+export async function searchGymMembers(query: string): Promise<GymMemberSearchResult[]> {
+  const q = query.trim()
+  if (!q) return []
+
+  const { shopId } = await requireShop()
+  if (!shopId) return []
+
+  const members = await getGymMembers(shopId, { search: q, limit: 8 })
+  return members.map((m) => ({
+    id: m.id,
+    full_name: m.full_name,
+    status: m.status,
+    expires_at: m.expires_at,
+  }))
 }
 
 /**

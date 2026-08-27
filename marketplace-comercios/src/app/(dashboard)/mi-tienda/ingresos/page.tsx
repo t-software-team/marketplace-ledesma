@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getGymMembers, getMyShopId, getTodayCheckIns } from '@/lib/gym/queries'
+import { getMyShopId, getTodayCheckIns } from '@/lib/gym/queries'
 import { CheckInClient } from './check-in-client'
 
 function formatTime(value: string) {
@@ -11,17 +11,7 @@ export default async function IngresosPage() {
   const shopId = await getMyShopId()
   if (!shopId) redirect('/mi-tienda')
 
-  const [members, todayCheckIns] = await Promise.all([
-    getGymMembers(shopId, { limit: 500 }),
-    getTodayCheckIns(shopId),
-  ])
-
-  const searchable = members.map((m) => ({
-    id: m.id,
-    full_name: m.full_name,
-    status: m.status,
-    expires_at: m.expires_at,
-  }))
+  const todayCheckIns = await getTodayCheckIns(shopId)
 
   return (
     <div className="space-y-4">
@@ -34,7 +24,7 @@ export default async function IngresosPage() {
 
       <Card>
         <CardContent className="pt-6">
-          <CheckInClient members={searchable} />
+          <CheckInClient />
         </CardContent>
       </Card>
 
