@@ -1,6 +1,8 @@
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { createPublicClient } from '@/lib/supabase/public'
 import {
+  addDaysToDate,
+  argentinaDateString,
   argentinaStartOfTodayUTC,
   argentinaToday,
   daysFromArgentinaToday,
@@ -392,6 +394,46 @@ export async function getExpiringMembers(
     }
   }
   return result.sort((a, b) => a.days_left - b.days_left)
+}
+
+export type GymAttendancePoint = {
+  date: string
+  ingresos: number
+}
+
+/** Ingresos (check-ins) por día de los últimos `days`, agrupados en hora AR. */
+export async function getGymCheckInsSeries(
+  shopId: string,
+  days = 14
+): Promise<GymAttendancePoint[]> {
+  const supabase = await createClient()
+  const since = argentinaStartOfTodayUTC()
+  since.setUTCDate(since.getUTCDate() - (days - 1))
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('checked_in_at')
+    .eq('shop_id', shopId)
+    .gte('checked_in_at', since.toISOString())
+
+  if (error) {
+    console.error('getGymCheckInsSeries: fallo al traer asistencia', { shopId, days, error })
+    return []
+  }
+
+  const counts = new Map<string, number>()
+  for (let i = 0; i < days; i++) {
+    counts.set(addDaysToDate(argentinaToday(), i - (days - 1)), 0)
+  }
+  for (const row of data ?? []) {
+    const day = argentinaDateString(new Date(row.checked_in_at))
+    if (counts.has(day)) counts.set(day, (counts.get(day) ?? 0) + 1)
+  }
+
+  return Array.from(counts.entries()).map(([date, ingresos]) => {
+    const [, mm, dd] = date.split('-')
+    return { date: `${dd}/${mm}`, ingresos }
+  })
 }
 
 export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {
