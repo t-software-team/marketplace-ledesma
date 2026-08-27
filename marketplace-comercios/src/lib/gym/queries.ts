@@ -176,7 +176,7 @@ export async function getGymDashboardStats(shopId: string): Promise<GymDashboard
     }
   }
 
-  return data as GymDashboardStats
+  return data as unknown as GymDashboardStats
 }
 
 export async function getGymPayments(shopId: string, limit = 50): Promise<GymPaymentRow[]> {
