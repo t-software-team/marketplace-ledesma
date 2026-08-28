@@ -1,7 +1,13 @@
+'use client'
+
+import { useState } from 'react'
 import { DashboardSidebar, type DashboardNavItem } from './dashboard-sidebar'
 import { DashboardHeader, type AdminNotification } from './dashboard-header'
 import { DashboardFooter } from './dashboard-footer'
 import { Breadcrumbs } from './breadcrumbs'
+import { PanelLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface DashboardShellProps {
   navItems: DashboardNavItem[]
@@ -48,10 +54,17 @@ export function DashboardShell({
   notificationsHref,
   children,
 }: DashboardShellProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+
   return (
     <div className="flex min-h-screen">
-      <DashboardSidebar navItems={navItems} accent={accent} />
-      <div className="flex min-h-screen w-full flex-1 flex-col md:ml-60">
+      <DashboardSidebar navItems={navItems} accent={accent} open={sidebarOpen} />
+      <div
+        className={cn(
+          'flex min-h-screen w-full flex-1 flex-col transition-all duration-200',
+          sidebarOpen ? 'md:ml-60' : 'md:ml-0'
+        )}
+      >
         <DashboardHeader
           navItems={navItems}
           userEmail={userEmail}
@@ -70,6 +83,8 @@ export function DashboardShell({
           onDeleteAllRead={onDeleteAllRead}
           realtimeTable={realtimeTable}
           notificationsHref={notificationsHref}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+          sidebarOpen={sidebarOpen}
         />
         <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">
           <Breadcrumbs navItems={navItems} rootHref={rootHref} rootLabel={sectionTitle} className="mb-4" />

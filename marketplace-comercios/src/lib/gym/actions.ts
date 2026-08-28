@@ -9,7 +9,7 @@ import {
   gymPlanSchema,
   gymRenewalSchema,
 } from '@/lib/validations/gym'
-import { getGymMembers, type GymMemberSearchResult } from '@/lib/gym/queries'
+import { getGymMembers, getTodayCheckIns, type GymMemberSearchResult } from '@/lib/gym/queries'
 import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { addDaysToDate, argentinaToday } from '@/lib/timezone'
 
@@ -370,8 +370,15 @@ export async function searchGymMembers(query: string): Promise<GymMemberSearchRe
   const { shopId } = await requireShop()
   if (!shopId) return []
 
-  const members = await getGymMembers(shopId, { search: q, limit: 8 })
-  return members.map((m) => ({
+  const [members, todayCheckIns] = await Promise.all([
+    getGymMembers(shopId, { search: q, limit: 8 }),
+    getTodayCheckIns(shopId, 100),
+  ])
+
+  const alreadyCheckedIn = new Set(todayCheckIns.map((c) => c.member_id))
+  const filtered = members.filter((m) => !alreadyCheckedIn.has(m.id))
+
+  return filtered.map((m) => ({
     id: m.id,
     full_name: m.full_name,
     document: m.document,

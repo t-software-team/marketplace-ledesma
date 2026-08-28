@@ -261,6 +261,7 @@ export interface GymMembershipHistoryRow {
 
 export interface GymCheckInRow {
   id: string
+  member_id: string
   checked_in_at: string
   member_name?: string | null
 }
@@ -305,7 +306,7 @@ export async function getGymMember(
       .limit(100),
     supabase
       .from('gym_check_ins')
-      .select('id, checked_in_at')
+      .select('id, member_id, checked_in_at')
       .eq('member_id', memberId)
       .order('checked_in_at', { ascending: false })
       .limit(50),
@@ -350,6 +351,7 @@ export async function getGymMember(
     })),
     check_ins: (checkInsRes.data ?? []).map((row) => ({
       id: row.id,
+      member_id: row.member_id,
       checked_in_at: row.checked_in_at,
     })),
   }
@@ -442,7 +444,7 @@ export async function getTodayCheckIns(shopId: string, limit = 100): Promise<Gym
 
   const { data, error } = await supabase
     .from('gym_check_ins')
-    .select('id, checked_in_at, gym_members(full_name)')
+    .select('id, member_id, checked_in_at, gym_members(full_name)')
     .eq('shop_id', shopId)
     .gte('checked_in_at', startOfDay.toISOString())
     .order('checked_in_at', { ascending: false })
@@ -457,6 +459,7 @@ export async function getTodayCheckIns(shopId: string, limit = 100): Promise<Gym
     const member = row.gym_members as { full_name: string } | null
     return {
       id: row.id,
+      member_id: row.member_id,
       checked_in_at: row.checked_in_at,
       member_name: member?.full_name ?? null,
     }

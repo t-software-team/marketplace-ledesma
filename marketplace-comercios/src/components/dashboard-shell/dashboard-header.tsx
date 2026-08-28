@@ -12,6 +12,7 @@ import {
   Menu,
   MessageCircle,
   Package,
+  PanelLeft,
   ReceiptText,
   ShieldCheck,
   ShieldX,
@@ -131,6 +132,8 @@ interface DashboardHeaderProps {
   onDeleteAllRead?: () => Promise<void>
   realtimeTable?: string
   notificationsHref?: string
+  onToggleSidebar?: () => void
+  sidebarOpen?: boolean
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -163,6 +166,8 @@ export function DashboardHeader({
   onDeleteAllRead = deleteReadAdminNotifications,
   realtimeTable = 'admin_notifications',
   notificationsHref = '/admin/notificaciones',
+  onToggleSidebar,
+  sidebarOpen = true,
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [isSigningOut, startSignOut] = useTransition()
@@ -191,6 +196,21 @@ export function DashboardHeader({
               <SidebarNav navItems={navItems} onNavigate={() => setMobileNavOpen(false)} />
             </SheetContent>
           </Sheet>
+
+          {onToggleSidebar && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="hidden md:flex"
+              onClick={onToggleSidebar}
+              aria-label={sidebarOpen ? 'Ocultar menú' : 'Mostrar menú'}
+            >
+              <PanelLeft
+                className={cn('size-5 transition-transform duration-200', !sidebarOpen && 'rotate-180')}
+                aria-hidden
+              />
+            </Button>
+          )}
 
           {accent && (
             <Badge className="bg-violet-500 text-white hover:bg-violet-500 md:hidden">Admin</Badge>

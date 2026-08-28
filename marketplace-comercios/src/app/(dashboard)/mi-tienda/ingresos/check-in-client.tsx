@@ -1,14 +1,16 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, CheckCircle2, AlertTriangle, XCircle, RotateCcw } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toast'
 import { checkInGymMember, searchGymMembers } from '@/lib/gym/actions'
 import type { GymMemberSearchResult } from '@/lib/gym/queries'
+
+type View = 'form' | 'success' | 'warning' | 'error'
 
 function formatDate(value: string | null | undefined) {
   if (!value) return '—'
@@ -21,9 +23,38 @@ export function CheckInClient() {
   const [matches, setMatches] = useState<GymMemberSearchResult[]>([])
   const [searching, setSearching] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [view, setView] = useState<View>('form')
+  const [lastResult, setLastResult] = useState<{
+    member_name: string
+    status: string
+    expires_at: string | null
+    error?: string
+  } | null>(null)
 
-  // Debounced server-side search — only the matches travel to the client,
-  // never the whole roster. The `ignore` guard drops stale responses.
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const viewConfig = {
+    success: {
+      bg: 'bg-green-500',
+      icon: CheckCircle2,
+      title: 'Ingreso registrado',
+      subtitle: lastResult ? `Membresía vigente hasta ${formatDate(lastResult.expires_at)}.` : '',
+    },
+    warning: {
+      bg: 'bg-amber-500',
+      icon: AlertTriangle,
+      title: 'Ingreso registrado',
+      subtitle: lastResult?.error || 'Membresía vencida. Conviene renovar.',
+    },
+    error: {
+      bg: 'bg-red-500',
+      icon: XCircle,
+      title: 'No se pudo registrar',
+      subtitle: lastResult?.error || 'Reintentá en un momento.',
+    },
+  } as const
+
+  // Debounced server-side search
   useEffect(() => {
     const q = search.trim()
     if (!q) {
@@ -44,7 +75,7 @@ export function CheckInClient() {
       } finally {
         if (!ignore) setSearching(false)
       }
-    }, 250)
+    }, 150)
 
     return () => {
       ignore = true
@@ -52,32 +83,53 @@ export function CheckInClient() {
     }
   }, [search])
 
+  // Auto-reset after success/warning/error
+  useEffect(() => {
+    if (view === 'form') {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      return
+    }
+
+    timerRef.current = setTimeout(() => {
+      resetToForm()
+    }, 4000)
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [view])
+
+  const resetToForm = () => {
+    setView('form')
+    setLastResult(null)
+    setSearch('')
+    setMatches([])
+  }
+
   const register = (member: GymMemberSearchResult) => {
     startTransition(async () => {
       try {
         const res = await checkInGymMember(member.id)
         if (res.error) {
+          setLastResult({ member_name: res.member_name ?? member.full_name, status: 'error', expires_at: null, error: res.error })
+          setView('error')
           toast.add({ title: 'No pudimos registrar el ingreso', description: res.error, type: 'error' })
           return
         }
         if (res.status === 'active') {
-          toast.add({
-            title: `Ingreso registrado — ${res.member_name}`,
-            description: `Membresía vigente hasta ${formatDate(res.expires_at)}.`,
-            type: 'success',
-          })
+          setLastResult({ member_name: res.member_name!, status: 'active', expires_at: res.expires_at ?? null })
+          setView('success')
         } else {
-          toast.add({
-            title: `Ingreso registrado — ${res.member_name}`,
-            description: 'Membresía vencida. Conviene renovar.',
-            type: 'warning',
-          })
+          setLastResult({ member_name: res.member_name!, status: 'expired', expires_at: res.expires_at ?? null })
+          setView('warning')
         }
         setSearch('')
         setMatches([])
         router.refresh()
       } catch (err) {
         console.error('CheckInClient: fallo al registrar ingreso', err)
+        setLastResult({ member_name: 'Error', status: 'error', expires_at: null, error: 'Reintentá en un momento.' })
+        setView('error')
         toast.add({
           title: 'No pudimos registrar el ingreso',
           description: 'Reintentá en un momento.',
@@ -87,59 +139,102 @@ export function CheckInClient() {
     })
   }
 
+  // Enter registra si hay 1 solo match
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && matches.length === 1 && !isPending) {
+      register(matches[0])
+    }
+  }
+
   const showNoResults = search.trim() !== '' && !searching && matches.length === 0
+
+  const currentView = view === 'form' ? null : viewConfig[view === 'error' ? 'error' : view === 'warning' ? 'warning' : 'success']
 
   return (
     <div className="space-y-3">
-      <div className="relative">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar socio por nombre o DNI…"
-          aria-label="Buscar socio por nombre o DNI"
-          className="h-11 pl-9 text-base"
-          autoFocus
-        />
-      </div>
+      {view === 'form' ? (
+        <>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Buscar socio por nombre o DNI…"
+              aria-label="Buscar socio por nombre o DNI"
+              className="h-11 pl-9 text-base"
+              autoFocus
+            />
+          </div>
 
-      {searching && <p className="px-1 text-sm text-muted-foreground">Buscando…</p>}
+          {searching && <p className="px-1 text-sm text-muted-foreground">Buscando…</p>}
 
-      {matches.length > 0 && (
-        <div className="space-y-2">
-          {matches.map((m) => {
-            const vigente = m.status === 'active'
+          {matches.length > 0 && (
+            <div className="space-y-2">
+              {matches.map((m) => {
+                const vigente = m.status === 'active'
+                return (
+                  <div
+                    key={m.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{m.full_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {m.document ? `DNI ${m.document} · ` : ''}
+                        Vence {formatDate(m.expires_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={vigente ? 'success' : 'warning'}>
+                        {vigente ? 'Vigente' : 'Vencida'}
+                      </Badge>
+                      <Button size="sm" disabled={isPending} onClick={() => register(m)}>
+                        Registrar ingreso
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {showNoResults && (
+            <p className="px-1 text-sm text-muted-foreground">No hay socios que coincidan.</p>
+          )}
+        </>
+      ) : (
+        <div className={`flex flex-col items-center justify-center gap-4 rounded-xl py-10 text-white ${currentView?.bg ?? 'bg-green-500'}`}>
+          {lastResult && (() => {
+            const config = currentView!
+            const Icon = config.icon
             return (
-              <div
-                key={m.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{m.full_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {m.document ? `DNI ${m.document} · ` : ''}
-                    Vence {formatDate(m.expires_at)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={vigente ? 'success' : 'warning'}>
-                    {vigente ? 'Vigente' : 'Vencida'}
-                  </Badge>
-                  <Button size="sm" disabled={isPending} onClick={() => register(m)}>
-                    Registrar ingreso
-                  </Button>
-                </div>
-              </div>
+              <>
+                <Icon className="size-16 shrink-0" aria-hidden />
+                <p className="text-center text-xl font-semibold">{config.title}</p>
+                {lastResult.member_name && (
+                  <p className="text-center text-2xl font-bold">{lastResult.member_name}</p>
+                )}
+                {config.subtitle && (
+                  <p className="text-center text-base opacity-90">{config.subtitle}</p>
+                )}
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="mt-2"
+                  onClick={resetToForm}
+                  disabled={isPending}
+                >
+                  <RotateCcw className="mr-2 size-4" aria-hidden />
+                  Registrar otro
+                </Button>
+              </>
             )
-          })}
+          })()}
         </div>
-      )}
-
-      {showNoResults && (
-        <p className="px-1 text-sm text-muted-foreground">No hay socios que coincidan.</p>
       )}
     </div>
   )

@@ -21,9 +21,9 @@ export default async function IngresosPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-heading">Ingresos</h1>
-        <p className="text-sm text-muted-foreground">
-          Buscá al socio y registrá su entrada. Te avisamos si su membresía está vigente o vencida.
-        </p>
+          <p className="text-sm text-muted-foreground">
+            Buscá al socio y registrá su entrada. Te avisamos si su membresía está vigente o vencida. Los que ya ingresaron hoy no vuelven a aparecer.
+          </p>
       </div>
 
       <Card>
