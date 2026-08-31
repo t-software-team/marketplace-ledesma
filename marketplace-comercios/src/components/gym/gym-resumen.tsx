@@ -75,7 +75,7 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
   const hasRisk = stats.expired_members > 0 || stats.expiring_soon > 0
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-8">
+    <div className="space-y-6 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
