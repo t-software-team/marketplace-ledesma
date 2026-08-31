@@ -30,23 +30,51 @@ export async function inviteGymStaff(_prev: ActionState, formData: FormData): Pr
   } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
 
-  const { data: invite, error } = await supabase
+  // (shop_id, invited_email) is unique, so a second invite attempt hits that
+  // constraint instead of inserting — resolve it first instead of hard-failing,
+  // since re-inviting (typo'd the link, person lost the email) is the common case.
+  const { data: existing } = await supabase
     .from('shop_staff')
-    .insert({ shop_id: access.shopId, invited_email: email, invited_by: user.id })
-    .select('invite_token')
-    .single()
+    .select('id, status, invite_token')
+    .eq('shop_id', access.shopId)
+    .eq('invited_email', email)
+    .maybeSingle()
 
-  if (error || !invite) {
-    // unique_violation: an invite (pending, active, or revoked) already
-    // exists for this email at this shop.
-    if (error?.code === '23505') {
-      return { error: 'Ya existe una invitación para ese email en este gimnasio' }
-    }
-    console.error('inviteGymStaff: fallo al crear la invitación', { shopId: access.shopId, error })
-    return { error: 'No pudimos enviar la invitación' }
+  if (existing?.status === 'active') {
+    return { error: 'Esa persona ya tiene acceso a este gimnasio' }
   }
 
-  const { subject, html } = gymStaffInviteEmail(access.shopName, invite.invite_token)
+  let inviteToken = existing?.invite_token as string | undefined
+
+  if (existing) {
+    // 'pending' (resend the same link) or 'revoked' (reactivate with a fresh
+    // token, since the old one may have been shared/leaked before revoking).
+    const nextToken = existing.status === 'revoked' ? crypto.randomUUID() : existing.invite_token
+    const { error: updateError } = await supabase
+      .from('shop_staff')
+      .update({ status: 'pending', invite_token: nextToken, invited_by: user.id })
+      .eq('id', existing.id)
+
+    if (updateError) {
+      console.error('inviteGymStaff: fallo al reenviar la invitación', { shopId: access.shopId, error: updateError })
+      return { error: 'No pudimos enviar la invitación' }
+    }
+    inviteToken = nextToken
+  } else {
+    const { data: invite, error } = await supabase
+      .from('shop_staff')
+      .insert({ shop_id: access.shopId, invited_email: email, invited_by: user.id })
+      .select('invite_token')
+      .single()
+
+    if (error || !invite) {
+      console.error('inviteGymStaff: fallo al crear la invitación', { shopId: access.shopId, error })
+      return { error: 'No pudimos enviar la invitación' }
+    }
+    inviteToken = invite.invite_token
+  }
+
+  const { subject, html } = gymStaffInviteEmail(access.shopName, inviteToken!)
   await sendEmail(email, subject, html)
 
   revalidatePath('/mi-tienda/equipo')

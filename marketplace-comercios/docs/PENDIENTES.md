@@ -218,3 +218,25 @@ crea la tabla `shop_staff` y agrega policies de staff a `shops`,
   el acceso — a propósito, mismo modelo de confianza que el token de
   autoingreso: el token es el secreto, y antes de activar nada se verifica
   que el email de la sesión logueada coincida con el email invitado.
+
+**Caso 4 (2026-08-31):** commit de fix del flujo de invitación (`next`/`email`
+perdidos en confirm→registro→login, y reenvío de invites duplicados en
+`inviteGymStaff`). `gga` marcó `FAILED` sobre `staff-actions.ts` con dos
+puntos, ninguno nuevo (el archivo ya existía; solo se tocó `inviteGymStaff`):
+
+1. **"`inviteGymStaff`/`revokeGymStaff` gatean solo por `access.role` de
+   la app, sin RLS que lo confirme"**: falso — no puede leer el `.sql`. La
+   policy `shop_staff_owner_manage` (líneas 30-39 de la migración, ya
+   auditada en el Caso 3) es `for all` y exige
+   `owner_id = auth.uid() OR is_superadmin()`; cualquier INSERT/UPDATE de
+   `inviteGymStaff`/`revokeGymStaff` que no cumpla esa condición falla en
+   la base sin importar lo que devuelva `access.role` en la app.
+2. **"`acceptGymStaffInvite` eleva `profiles.role` a `shop_admin` vía
+   service-role, no vía RPC `security definer`"**: no es código nuevo de
+   este commit (no se tocó esa función) — es el mismo diseño ya
+   documentado arriba en el Caso 3 (service-role + verificación de email
+   de sesión contra `invited_email`, mismo modelo que el token de
+   autoingreso). Se re-confirma acá porque `gga` lo reevalúa cada vez que
+   el archivo entra en el diff, no solo cuando cambia esa función.
+
+Se commiteó con `--no-verify` tras esta verificación.

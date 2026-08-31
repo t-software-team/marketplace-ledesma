@@ -27,7 +27,9 @@ export default async function InvitacionPage({ params }: PageProps) {
 
   const user = await getAuthUser()
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(`/invitacion/${token}`)}`)
+    const next = encodeURIComponent(`/invitacion/${token}`)
+    const email = encodeURIComponent(preview.invitedEmail)
+    redirect(`/login?next=${next}&email=${email}`)
   }
 
   const emailMatches = user.email?.toLowerCase() === preview.invitedEmail.toLowerCase()
