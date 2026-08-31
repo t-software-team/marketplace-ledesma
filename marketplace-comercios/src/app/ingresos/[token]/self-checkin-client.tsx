@@ -1,12 +1,19 @@
 'use client'
 
 import { useCallback, useEffect, useState, useTransition } from 'react'
-import { CheckCircle2, AlertTriangle, XCircle, UserX, Users, Clock } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, UserX, Users, Clock, WifiOff } from 'lucide-react'
 import { NumberPad } from '@/components/ui/number-pad'
 import { InstallAppButton } from '@/components/shared/install-app-button'
+import { useGymOfflineCheckin } from '@/hooks/use-gym-offline-checkin'
 import { gymSelfCheckin, type SelfCheckinResult } from '@/lib/gym/self-checkin-actions'
 
-type View = 'form' | SelfCheckinResult['status']
+// A check-in resolved from the on-device cache while offline. The real
+// outcome (active/expired/already) is decided later, server-side, once the
+// device syncs — this status only means "we wrote it down, hang tight".
+type OfflinePendingResult = { status: 'offline_pending'; firstName: string }
+type ViewResult = SelfCheckinResult | OfflinePendingResult
+
+type View = 'form' | ViewResult['status']
 type Mode = 'partial' | 'full'
 
 const RESET_MS = 4000
@@ -36,8 +43,9 @@ export function SelfCheckinClient({ token, gymName }: { token: string; gymName: 
   const [value, setValue] = useState('')
   const [mode, setMode] = useState<Mode>('partial')
   const [view, setView] = useState<View>('form')
-  const [result, setResult] = useState<SelfCheckinResult | null>(null)
+  const [result, setResult] = useState<ViewResult | null>(null)
   const [isPending, startTransition] = useTransition()
+  const { isOnline, pendingCount, matchLocal, enqueue } = useGymOfflineCheckin(token)
 
   const reset = useCallback(() => {
     setView('form')
@@ -76,9 +84,30 @@ export function SelfCheckinClient({ token, gymName }: { token: string; gymName: 
         setResult(res)
         setView(res.status)
       } catch (err) {
-        console.error('SelfCheckinClient: fallo el autoingreso', err)
-        setResult({ status: 'error', message: 'No pudimos registrar tu ingreso. Avisá en recepción.' })
-        setView('error')
+        // gymSelfCheckin never throws for a business outcome (denied, not
+        // found, etc.) — it always resolves. A throw here means the request
+        // itself never reached the server, i.e. we're offline. Fall back to
+        // the on-device roster cache instead of failing the tap outright.
+        console.error('SelfCheckinClient: sin conexión, resolviendo con el padrón local', err)
+        const local = matchLocal(clean)
+        if (local.kind === 'not_found') {
+          setResult({ status: 'not_found' })
+          setView('not_found')
+          return
+        }
+        if (local.kind === 'ambiguous') {
+          if (mode === 'partial') {
+            setMode('full')
+            setValue('')
+            return
+          }
+          setResult({ status: 'ambiguous' })
+          setView('ambiguous')
+          return
+        }
+        await enqueue(clean)
+        setResult({ status: 'offline_pending', firstName: local.firstName })
+        setView('offline_pending')
       }
     })
   }
@@ -86,6 +115,13 @@ export function SelfCheckinClient({ token, gymName }: { token: string; gymName: 
   if (view === 'form') {
     return (
       <main className="dark flex min-h-dvh flex-col items-center justify-center gap-7 bg-background px-6 py-8 text-foreground">
+        {!isOnline && (
+          <div className="fixed top-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-xs text-muted-foreground ring-1 ring-border">
+            <WifiOff className="size-3.5" aria-hidden />
+            Sin conexión{pendingCount > 0 ? ` · ${pendingCount} pendiente${pendingCount === 1 ? '' : 's'}` : ''}
+          </div>
+        )}
+
         <header className="text-center">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">Autoingreso</p>
           <h1 className="mt-1.5 font-heading text-3xl font-semibold sm:text-4xl">{gymName}</h1>
@@ -184,9 +220,15 @@ const RESULT_CONFIG = {
     title: () => 'Ups',
     subtitle: () => 'Reintentá en un momento.',
   },
+  offline_pending: {
+    bg: 'bg-sky-600',
+    Icon: WifiOff,
+    title: () => 'Ingreso guardado',
+    subtitle: () => 'Sin conexión — se confirmará apenas vuelva internet.',
+  },
 } as const
 
-function ResultScreen({ result }: { result: SelfCheckinResult | null }) {
+function ResultScreen({ result }: { result: ViewResult | null }) {
   const [entered, setEntered] = useState(false)
   useEffect(() => {
     requestAnimationFrame(() => setEntered(true))
@@ -196,7 +238,10 @@ function ResultScreen({ result }: { result: SelfCheckinResult | null }) {
   const config = RESULT_CONFIG[result.status]
   const { Icon } = config
   const name =
-    result.status === 'active' || result.status === 'already' || result.status === 'expired'
+    result.status === 'active' ||
+    result.status === 'already' ||
+    result.status === 'expired' ||
+    result.status === 'offline_pending'
       ? result.firstName
       : null
 

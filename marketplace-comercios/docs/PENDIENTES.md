@@ -107,3 +107,41 @@ no introducido por el rediseño de planes (`feat(admin): planes agrupados por
 rubro...`) que solo agregó `category_name` en snake_case a `getSubscriptionPlans`
 siguiendo la convención ya usada ahí. Ese commit se hizo con `--no-verify` por
 este mismo motivo — mismo precedente que `7f4440d`.
+
+## 6. Exposición del padrón de socios al kiosco offline (decisión aceptada, no deuda)
+
+**Contexto:** el autoingreso del gym (`/ingresos/[token]`) soporta modo
+offline: `getGymOfflineRoster` (`src/lib/gym/self-checkin-actions.ts`) es una
+RPC pública, gateada solo por el token secreto de la URL, que devuelve el
+padrón completo de socios activos (id, dígitos de celular, primer nombre,
+fecha de vencimiento) para que la tablet pueda cachearlo en IndexedDB
+(`src/lib/gym/offline-db.ts`) y seguir resolviendo autoingresos sin conexión.
+
+**Decisión (2026-08-31, confirmada explícitamente por el dueño del producto):**
+se acepta esta exposición como trade-off inherente al requisito — sin un
+cache local del padrón no hay forma de validar nada sin internet. No es un
+descuido, es la única forma de que el offline funcione tal como se pidió.
+
+**Mitigaciones aplicadas:**
+- Solo los campos mínimos indispensables para matchear (nunca DNI, email,
+  ni apellido).
+- El endpoint requiere el token secreto del gym (no es de lectura pública sin
+  restricción) y está rate-limited.
+- El cache se purga automáticamente a los 3 días sin poder refrescarse
+  (`ROSTER_MAX_AGE_MS` en `offline-db.ts`) — un dispositivo perdido o
+  abandonado deja de retener datos reales de socios indefinidamente.
+- El match local **nunca decide la verdad**: solo elige qué mostrarle a la
+  persona en la puerta (`offline_pending`). El servidor revalida todo desde
+  cero al sincronizar (`resolveSelfCheckin`), igual que si el dato local
+  hubiera sido manipulado.
+
+**Riesgo residual:** mientras el cache esté vigente (≤3 días), un acceso
+físico no autorizado a la tablet expone el padrón de esos socios. Mitigación
+operativa (fuera del código): el gym debe mantener la tablet con PIN/bloqueo
+de pantalla, como cualquier dispositivo de punto de venta.
+
+**Nota de proceso:** el gate de review (`gga`) marcó este endpoint como
+"bulk exposure a llamador anónimo" y pidió sign-off explícito en vez de una
+justificación solo en comentario de código — este ítem es ese sign-off. El
+commit que introduce el modo offline se hizo con `--no-verify` únicamente en
+este punto, ya confirmado con el usuario antes de saltear el gate.

@@ -40,9 +40,14 @@ export function argentinaTodayPlusDays(days: number): string {
   return addDaysToDate(argentinaToday(), days)
 }
 
+/** The instant of 00:00 Argentina time on `dateString`, for timestamptz comparisons. */
+export function argentinaStartOfDayUTC(dateString: string): Date {
+  return new Date(`${dateString}T00:00:00${AR_OFFSET}`)
+}
+
 /** The instant of 00:00 Argentina time today, for timestamptz comparisons. */
 export function argentinaStartOfTodayUTC(): Date {
-  return new Date(`${argentinaToday()}T00:00:00${AR_OFFSET}`)
+  return argentinaStartOfDayUTC(argentinaToday())
 }
 
 /** Whole days from Argentina's today until `dateString` ('YYYY-MM-DD'); can be negative. */
