@@ -9,7 +9,7 @@ import {
   gymPlanSchema,
   gymRenewalSchema,
 } from '@/lib/validations/gym'
-import { getGymMembers, getTodayCheckIns, type GymMemberSearchResult } from '@/lib/gym/queries'
+import { getGymMembers, getMyGymAccess, getTodayCheckIns, type GymMemberSearchResult } from '@/lib/gym/queries'
 import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { addDaysToDate, argentinaToday } from '@/lib/timezone'
 
@@ -18,6 +18,8 @@ export type ActionState = {
   warning?: string | null
   fieldErrors?: Record<string, string>
 }
+
+const OWNER_ONLY_ERROR = 'Esta acción es solo para el dueño del gimnasio'
 
 function buildFieldErrors(error: ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {}
@@ -30,6 +32,13 @@ function buildFieldErrors(error: ZodError): Record<string, string> {
   return fieldErrors
 }
 
+/**
+ * Resolves the acting user's gym (owner or active staff — see
+ * getMyGymAccess) plus their role, so each action below can decide whether
+ * staff is allowed. RLS enforces the same boundary independently on every
+ * table these actions touch; this is the app-layer half so staff gets a
+ * clear "solo el dueño" message instead of a silent no-op update.
+ */
 async function requireShop() {
   const supabase = await createClient()
   const {
@@ -37,14 +46,8 @@ async function requireShop() {
   } = await supabase.auth.getUser()
   if (!user) throw new Error('No autenticado')
 
-  const { data: shop } = await supabase
-    .from('shops')
-    .select('id')
-    .eq('owner_id', user.id)
-    .is('deleted_at', null)
-    .maybeSingle()
-
-  return { supabase, user, shopId: shop?.id ?? null }
+  const access = await getMyGymAccess()
+  return { supabase, user, shopId: access?.shopId ?? null, role: access?.role ?? null }
 }
 
 // ---------------------------------------------------------------------------
@@ -54,8 +57,9 @@ export async function createGymPlan(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, shopId } = await requireShop()
+  const { supabase, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const parsed = gymPlanSchema.safeParse({
     name: formData.get('name'),
@@ -91,8 +95,9 @@ export async function createGymPlan(
 }
 
 export async function setGymPlanActive(planId: string, isActive: boolean): Promise<ActionState> {
-  const { supabase, shopId } = await requireShop()
+  const { supabase, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const { error } = await supabase
     .from('gym_plans')
@@ -109,8 +114,9 @@ export async function setGymPlanActive(planId: string, isActive: boolean): Promi
 }
 
 export async function deleteGymPlan(planId: string): Promise<ActionState> {
-  const { supabase, shopId } = await requireShop()
+  const { supabase, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const { error } = await supabase
     .from('gym_plans')
@@ -242,8 +248,9 @@ export async function setGymMemberArchived(
   memberId: string,
   archived: boolean
 ): Promise<ActionState> {
-  const { supabase, shopId } = await requireShop()
+  const { supabase, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const { error } = await supabase
     .from('gym_members')
@@ -264,8 +271,9 @@ export async function updateGymMember(
   _prev: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, shopId } = await requireShop()
+  const { supabase, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const parsed = gymMemberUpdateSchema.safeParse({
     member_id: formData.get('member_id'),
@@ -396,8 +404,9 @@ export async function freezeGymMembership(
   memberId: string,
   days: number
 ): Promise<ActionState> {
-  const { supabase, shopId } = await requireShop()
+  const { supabase, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const benefits = await getGymBenefits(shopId)
   if (!benefits.freeze) {
@@ -521,8 +530,9 @@ export async function voidGymPayment(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, user, shopId } = await requireShop()
+  const { supabase, user, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
+  if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const trimmedReason = String(formData.get('reason') ?? '').trim()
   if (!trimmedReason) return { error: 'Ingresá un motivo para anular el pago' }

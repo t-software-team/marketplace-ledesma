@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { Eye, MessageCircle, Package, Percent, Store, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +15,7 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
-import { getGymDashboardStats, getRecentGymCheckIns } from '@/lib/gym/queries'
+import { getGymDashboardStats, getMyGymAccess, getRecentGymCheckIns } from '@/lib/gym/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
@@ -62,6 +63,13 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   const shop = await getMyShop()
 
   if (!shop) {
+    // Not an owner — a gym employee (see shop_staff) has no shop of their own
+    // and no Resumen to look at; send them straight to their actual work.
+    const gymAccess = await getMyGymAccess()
+    if (gymAccess?.role === 'staff') {
+      redirect('/mi-tienda/ingresos')
+    }
+
     const categories = await getActiveCategories()
     return (
       <div className="-mx-4 -my-6 md:-mx-6 sm:mx-0 sm:my-0">

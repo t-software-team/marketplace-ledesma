@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
-  getMyShopId,
+  getMyGymAccess,
   getTodayAccessLog,
   GYM_ACCESS_SOURCE_LABEL,
   type GymAccessOutcome,
@@ -28,8 +28,9 @@ const OUTCOME: Record<
 }
 
 export default async function IngresosPage() {
-  const shopId = await getMyShopId()
-  if (!shopId) redirect('/mi-tienda')
+  const access = await getMyGymAccess()
+  if (!access) redirect('/mi-tienda')
+  const { shopId, role } = access
 
   const log = await getTodayAccessLog(shopId)
   const allowed = log.filter((r) => r.outcome === 'allowed').length
@@ -45,7 +46,7 @@ export default async function IngresosPage() {
             Buscá al socio y registrá su entrada. Te avisamos si su membresía está vigente o vencida. Los que ya ingresaron hoy no vuelven a aparecer.
           </p>
         </div>
-        <SelfCheckinLaunch />
+        {role === 'owner' && <SelfCheckinLaunch />}
       </div>
 
       <Card>

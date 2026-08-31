@@ -2,14 +2,15 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BackLink } from '@/components/shared/back-link'
-import { getGymPlans, getMyShopId } from '@/lib/gym/queries'
+import { getGymPlans, getMyGymAccess } from '@/lib/gym/queries'
 import { getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { Button } from '@/components/ui/button'
 import { MemberForm } from '../member-form'
 
 export default async function NuevoSocioPage() {
-  const shopId = await getMyShopId()
-  if (!shopId) redirect('/mi-tienda')
+  const access = await getMyGymAccess()
+  if (!access) redirect('/mi-tienda')
+  const { shopId } = access
 
   const [rawPlans, limitInfo] = await Promise.all([
     getGymPlans(shopId),
