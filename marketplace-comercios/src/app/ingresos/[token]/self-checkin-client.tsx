@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, useTransition } from 'react'
 import { CheckCircle2, AlertTriangle, XCircle, UserX, Users, Clock } from 'lucide-react'
 import { NumberPad } from '@/components/ui/number-pad'
+import { InstallAppButton } from '@/components/shared/install-app-button'
 import { gymSelfCheckin, type SelfCheckinResult } from '@/lib/gym/self-checkin-actions'
 
 type View = 'form' | SelfCheckinResult['status']
@@ -133,6 +134,12 @@ export function SelfCheckinClient({ token, gymName }: { token: string; gymName: 
         <p className="h-5 text-sm text-muted-foreground" aria-live="polite">
           {isPending ? 'Registrando…' : ''}
         </p>
+
+        {/* One-time setup by gym staff: pins this screen to the tablet's home
+            screen. Self-hides once installed. */}
+        <div className="fixed bottom-3 left-1/2 -translate-x-1/2">
+          <InstallAppButton label="Instalar en esta tablet" />
+        </div>
       </main>
     )
   }
