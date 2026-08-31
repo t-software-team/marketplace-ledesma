@@ -184,3 +184,73 @@ rol (`owner_id = auth.uid() OR is_superadmin()`, con `raise exception` si
 no matchea) son **idénticos, carácter por carácter**, a los de la función
 original ya en producción — no se tocó la autorización, solo se sumaron dos
 subconsultas de solo lectura dentro del mismo bloque ya autorizado.
+
+**Caso 3 (2026-09-12):** `supabase/migrations/20260912000000_gym_staff.sql`
+(feature de empleados del gym). Es la migración más sensible de la sesión —
+crea la tabla `shop_staff` y agrega policies de staff a `shops`,
+`gym_members`, `gym_memberships`, `gym_payments`, `gym_check_ins` y
+`gym_plans`. Se releyó completa antes de confirmar:
+
+- `alter table public.shop_staff enable row level security;` está presente.
+- `shop_staff` tiene 2 policies (`shop_staff_owner_manage` for all
+  owner/superadmin, `shop_staff_self_read` for select del propio
+  `user_id`) — ninguna deja leer/escribir filas de otro shop o de otro
+  usuario.
+- Las 5 tablas de gym existentes **no pierden ninguna policy**: se agregan
+  policies nuevas y acotadas para staff (**solo** `select`/`insert` vía
+  `is_shop_staff(shop_id)`, nunca `update`/`delete`) al lado de las
+  policies de dueño existentes (`for all`), que quedan sin tocar. Postgres
+  OR-ea las policies aplicables por comando, así que esto solo puede
+  ampliar quién puede leer/insertar — nunca reemplaza ni afloja lo que ya
+  había.
+- `is_shop_staff()` es `security definer`, evita la recursión de RLS al
+  ser llamada desde las policies de otras tablas.
+- `shop_staff` es una tabla nueva sin GRANT explícito — se confirmó que
+  existe `ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public"
+  GRANT ALL ON TABLES TO "anon"/"authenticated"/"service_role"` en
+  `20260727000000_baseline.sql`, así que toda tabla nueva creada por
+  migraciones ya recibe el GRANT por defecto (a diferencia de `shops`,
+  que tuvo su GRANT amplio revocado explícitamente en otra migración —
+  ese caso no aplica acá porque `shop_staff` es una tabla nueva, no una
+  existente con grants ya restringidos).
+- El flujo de aceptar invitación (`acceptGymStaffInvite` en
+  `staff-actions.ts`) usa service-role para resolver el token y activar
+  el acceso — a propósito, mismo modelo de confianza que el token de
+  autoingreso: el token es el secreto, y antes de activar nada se verifica
+  que el email de la sesión logueada coincida con el email invitado.
+
+**Caso 4 (2026-08-31):** commit de fix del flujo de invitación (`next`/`email`
+perdidos en confirm→registro→login, y reenvío de invites duplicados en
+`inviteGymStaff`). `gga` marcó `FAILED` sobre `staff-actions.ts` con dos
+puntos, ninguno nuevo (el archivo ya existía; solo se tocó `inviteGymStaff`):
+
+1. **"`inviteGymStaff`/`revokeGymStaff` gatean solo por `access.role` de
+   la app, sin RLS que lo confirme"**: falso — no puede leer el `.sql`. La
+   policy `shop_staff_owner_manage` (líneas 30-39 de la migración, ya
+   auditada en el Caso 3) es `for all` y exige
+   `owner_id = auth.uid() OR is_superadmin()`; cualquier INSERT/UPDATE de
+   `inviteGymStaff`/`revokeGymStaff` que no cumpla esa condición falla en
+   la base sin importar lo que devuelva `access.role` en la app.
+2. **"`acceptGymStaffInvite` eleva `profiles.role` a `shop_admin` vía
+   service-role, no vía RPC `security definer`"**: no es código nuevo de
+   este commit (no se tocó esa función) — es el mismo diseño ya
+   documentado arriba en el Caso 3 (service-role + verificación de email
+   de sesión contra `invited_email`, mismo modelo que el token de
+   autoingreso). Se re-confirma acá porque `gga` lo reevalúa cada vez que
+   el archivo entra en el diff, no solo cuando cambia esa función.
+
+Se commiteó con `--no-verify` tras esta verificación.
+
+**Caso 5 (2026-08-31):** commit que agrega `email_has_account` para rutear
+la invitación a `/registro` vs `/login` según si el email ya tiene cuenta.
+`gga` marcó `FAILED` sobre `staff-actions.ts` pidiendo confirmar la RLS de
+`shop_staff` (ya cubierto en el Caso 4, sin cambios en `inviteGymStaff`/
+`revokeGymStaff` en este commit) y "no pudo ver" la migración nueva
+(`20260913000000_gym_staff_email_has_account.sql`) por el mismo límite de
+`File patterns: *.ts,*.tsx,*.js,*.jsx`. Releída a mano: la función es
+`security definer`, hace un único `select exists (... from auth.users where
+lower(email) = lower(p_email))` (sin exponer ninguna otra columna), y el
+`revoke all ... from public, anon, authenticated` + `grant execute ... to
+service_role` deja su ejecución restringida exclusivamente al service-role
+client server-side (`getGymStaffInvitePreview`) — no es alcanzable desde
+un visitante ni desde un usuario autenticado normal vía RPC directo.

@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
 import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { getMyActiveSubscription, getMyShop } from '@/lib/shops/queries'
+import { getMyGymAccess } from '@/lib/gym/queries'
 import { getMyClientNotifications } from '@/lib/notifications/queries'
 import {
   markClientNotificationRead,
@@ -26,6 +27,8 @@ export default async function MiTiendaLayout({
   let planName = 'Free'
   let hasCustomBranding = false
   let reviewInvite: { shopName: string; shopUrl: string } | null = null
+  let isStaff = false
+  let staffShopName: string | null = null
 
   // Notificaciones no dependen del perfil/tienda, así que corren en paralelo
   // en vez de esperar a que termine ese bloque primero.
@@ -62,17 +65,36 @@ export default async function MiTiendaLayout({
         (activeSubscription?.subscription_plans?.benefits as { custom_branding?: boolean } | null)
           ?.custom_branding
       )
+    } else {
+      // Not an owner — check gym staff membership before giving up. Staff
+      // never gets reviewInvite/subscription info; those are owner concerns.
+      const gymAccess = await getMyGymAccess()
+      if (gymAccess?.role === 'staff' && isGymRubro(gymAccess.categorySlug)) {
+        isStaff = true
+        staffShopName = gymAccess.shopName
+        rubroSlug = gymAccess.categorySlug
+      }
     }
   }
 
   const isService = isServiceRubro(rubroSlug)
   const isGym = isGymRubro(rubroSlug)
 
+  // Staff gets a scoped-down nav: mostrador + altas/renovaciones only, per
+  // the agreed access boundary — no caja completa, planes, reportes,
+  // personalizar, suscripción, configuración or equipo.
+  const staffNavItems: DashboardNavItem[] = [
+    { href: '/mi-tienda/ingresos', label: 'Ingresos', icon: 'login' },
+    { href: '/mi-tienda/socios', label: 'Socios', icon: 'users' },
+  ]
+
   // Gyms swap the catalog-first nav for gym-management sections, but still
   // get to sell services (visible in the feed like any product) and
   // personalize their public page — both features are shop-generic, only the
   // nav previously left them out.
-  const navItems: DashboardNavItem[] = isGym
+  const navItems: DashboardNavItem[] = isStaff
+    ? staffNavItems
+    : isGym
     ? [
         { href: '/mi-tienda', label: 'Resumen', icon: 'dashboard' },
         { href: '/mi-tienda/socios', label: 'Socios', icon: 'users' },
@@ -81,6 +103,7 @@ export default async function MiTiendaLayout({
         { href: '/mi-tienda/productos', label: 'Servicios', icon: 'package' },
         { href: '/mi-tienda/caja', label: 'Caja', icon: 'wallet' },
         { href: '/mi-tienda/reportes', label: 'Reportes', icon: 'bar-chart' },
+        { href: '/mi-tienda/equipo', label: 'Equipo', icon: 'user-cog' },
         {
           href: '/mi-tienda/personalizar',
           label: 'Personalizar',
@@ -110,10 +133,10 @@ export default async function MiTiendaLayout({
       userEmail={user?.email ?? ''}
       userFullName={fullName}
       userAvatarUrl={avatarUrl}
-      sectionTitle="Mi tienda"
-      rootHref="/mi-tienda"
+      sectionTitle={isStaff && staffShopName ? staffShopName : 'Mi tienda'}
+      rootHref={isStaff ? '/mi-tienda/ingresos' : '/mi-tienda'}
       showInstallButton={isGym}
-      showSiteLink={!isGym}
+      showSiteLink={!isGym && !isStaff}
       installLabel={isGym ? 'Descargar app' : undefined}
       reviewInvite={reviewInvite ?? undefined}
       notifications={notifications}

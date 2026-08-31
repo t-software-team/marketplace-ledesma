@@ -5,7 +5,7 @@ import { BackLink } from '@/components/shared/back-link'
 import {
   getGymMember,
   getGymPlans,
-  getMyShopId,
+  getMyGymAccess,
   type GymMemberStatus,
   type GymPaymentMethod,
 } from '@/lib/gym/queries'
@@ -53,8 +53,9 @@ export default async function MemberDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const shopId = await getMyShopId()
-  if (!shopId) redirect('/mi-tienda')
+  const access = await getMyGymAccess()
+  if (!access) redirect('/mi-tienda')
+  const { shopId } = access
 
   const [member, plans, benefits] = await Promise.all([
     getGymMember(shopId, id),

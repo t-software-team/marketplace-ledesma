@@ -79,6 +79,97 @@ export async function getMyShopId(): Promise<string | null> {
   return data?.id ?? null
 }
 
+export type GymAccessRole = 'owner' | 'staff'
+
+export interface GymAccess {
+  shopId: string
+  shopName: string
+  logoUrl: string | null
+  categorySlug: string | null
+  role: GymAccessRole
+}
+
+/**
+ * Resolves gym access for the current user — either as the shop's owner, or
+ * as an active staff member (see shop_staff). Scoped to the gym module only:
+ * `getMyShopId`/`getMyShop` deliberately stay owner-only and untouched, so
+ * every page/action that hasn't opted into this resolver still excludes
+ * staff for free — no separate guard needed on caja/reportes/planes/etc.
+ */
+export async function getMyGymAccess(): Promise<GymAccess | null> {
+  const supabase = await createClient()
+  const user = await getAuthUser()
+  if (!user) return null
+
+  const { data: owned } = await supabase
+    .from('shops')
+    .select('id, name, logo_url, categories ( slug )')
+    .eq('owner_id', user.id)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (owned) {
+    return {
+      shopId: owned.id,
+      shopName: owned.name,
+      logoUrl: owned.logo_url,
+      categorySlug: owned.categories?.slug ?? null,
+      role: 'owner',
+    }
+  }
+
+  const { data: staffRow } = await supabase
+    .from('shop_staff')
+    .select('shop_id, shops ( name, logo_url, categories ( slug ) )')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (!staffRow) return null
+  const shop = staffRow.shops as
+    | { name: string; logo_url: string | null; categories: { slug: string } | null }
+    | null
+  if (!shop) return null
+
+  return {
+    shopId: staffRow.shop_id,
+    shopName: shop.name,
+    logoUrl: shop.logo_url,
+    categorySlug: shop.categories?.slug ?? null,
+    role: 'staff',
+  }
+}
+
+export type GymStaffStatus = 'pending' | 'active' | 'revoked'
+
+export interface GymStaffRow {
+  id: string
+  invited_email: string
+  status: GymStaffStatus
+  created_at: string
+  accepted_at: string | null
+}
+
+/** Owner's team roster (Equipo page). Excludes revoked rows so the list only
+ * shows current/pending access — revocation history isn't shown, just cut. */
+export async function getGymStaff(shopId: string): Promise<GymStaffRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('shop_staff')
+    .select('id, invited_email, status, created_at, accepted_at')
+    .eq('shop_id', shopId)
+    .neq('status', 'revoked')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error) {
+    console.error('getGymStaff: fallo al traer el equipo', { shopId, error })
+    return []
+  }
+
+  return (data ?? []) as GymStaffRow[]
+}
+
 export async function getGymPlans(shopId: string): Promise<GymPlan[]> {
   const supabase = await createClient()
   const { data, error } = await supabase

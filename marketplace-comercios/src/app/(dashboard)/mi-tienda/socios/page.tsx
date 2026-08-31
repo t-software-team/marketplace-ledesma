@@ -6,7 +6,7 @@ import { EmptyDumbbellIllustration } from '@/components/shared/empty-illustratio
 import {
   getGymMembers,
   getGymPlans,
-  getMyShopId,
+  getMyGymAccess,
   type GymMemberStatus,
 } from '@/lib/gym/queries'
 import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
@@ -25,8 +25,9 @@ interface SociosPageProps {
 
 export default async function SociosPage({ searchParams }: SociosPageProps) {
   const { q, status } = await searchParams
-  const shopId = await getMyShopId()
-  if (!shopId) redirect('/mi-tienda')
+  const access = await getMyGymAccess()
+  if (!access) redirect('/mi-tienda')
+  const { shopId } = access
 
   const search = q?.trim() || undefined
   const statusFilter = (['active', 'expired', 'archived'] as const).includes(

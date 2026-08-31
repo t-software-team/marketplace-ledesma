@@ -1182,6 +1182,50 @@ export type Database = {
           },
         ]
       }
+      shop_staff: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          invite_token: string
+          invited_by: string | null
+          invited_email: string
+          shop_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string | null
+          invited_email: string
+          shop_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string | null
+          invited_email?: string
+          shop_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_staff_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           accent_color: string | null
@@ -1766,6 +1810,7 @@ export type Database = {
           }
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
+      email_has_account: { Args: { p_email: string }; Returns: boolean }
       enablelongtransactions: { Args: never; Returns: string }
       enqueue_appointment_reminders: {
         Args: never
