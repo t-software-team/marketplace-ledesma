@@ -20,7 +20,11 @@ async function upsertPlanLimitsForPlan(
   planId: string,
   data: Pick<
     SubscriptionPlanFormValues,
-    'max_products_service' | 'max_products_product' | 'max_images' | 'max_variants'
+    | 'max_products_service'
+    | 'max_products_product'
+    | 'max_images'
+    | 'max_variants'
+    | 'max_gym_members'
   >
 ) {
   const toNullableInt = (value: string | undefined) => (value ? Number(value) : null)
@@ -29,9 +33,14 @@ async function upsertPlanLimitsForPlan(
   const maxProductsProduct = toNullableInt(data.max_products_product)
   const maxImages = toNullableInt(data.max_images)
   const maxVariants = toNullableInt(data.max_variants)
+  const maxGymMembers = toNullableInt(data.max_gym_members)
 
   const hasAnyLimit =
-    maxProductsService !== null || maxProductsProduct !== null || maxImages !== null || maxVariants !== null
+    maxProductsService !== null ||
+    maxProductsProduct !== null ||
+    maxImages !== null ||
+    maxVariants !== null ||
+    maxGymMembers !== null
 
   if (!hasAnyLimit) {
     const { error } = await supabase.from('plan_limits').delete().eq('plan_id', planId)
@@ -47,6 +56,7 @@ async function upsertPlanLimitsForPlan(
       // deja el campo vacío, usamos el respaldo por defecto histórico.
       max_images: maxImages ?? 5,
       max_variants: maxVariants ?? 10,
+      max_gym_members: maxGymMembers,
     },
     { onConflict: 'plan_id' }
   )
@@ -73,12 +83,17 @@ export async function createSubscriptionPlan(
     benefits_custom_branding: formData.get('benefits_custom_branding') === 'on',
     benefits_promotions: formData.get('benefits_promotions') === 'on',
     benefits_verified_badge: formData.get('benefits_verified_badge') === 'on',
+    benefits_gym_freeze: formData.get('benefits_gym_freeze') === 'on',
+    benefits_gym_export: formData.get('benefits_gym_export') === 'on',
+    benefits_gym_stats: formData.get('benefits_gym_stats') === 'on',
     is_active: formData.get('is_active') === 'on',
     applies_to: formData.get('applies_to') || 'all',
+    category_id: formData.get('category_id') ?? '',
     max_products_service: formData.get('max_products_service') ?? '',
     max_products_product: formData.get('max_products_product') ?? '',
     max_images: formData.get('max_images') ?? '',
     max_variants: formData.get('max_variants') ?? '',
+    max_gym_members: formData.get('max_gym_members') ?? '',
   })
 
   if (!parsed.success) {
@@ -97,6 +112,7 @@ export async function createSubscriptionPlan(
       benefits: benefits as never,
       is_active: parsed.data.is_active,
       applies_to: parsed.data.applies_to,
+      category_id: parsed.data.category_id || null,
     })
     .select('id')
     .single()
@@ -138,12 +154,17 @@ export async function updateSubscriptionPlan(
     benefits_custom_branding: formData.get('benefits_custom_branding') === 'on',
     benefits_promotions: formData.get('benefits_promotions') === 'on',
     benefits_verified_badge: formData.get('benefits_verified_badge') === 'on',
+    benefits_gym_freeze: formData.get('benefits_gym_freeze') === 'on',
+    benefits_gym_export: formData.get('benefits_gym_export') === 'on',
+    benefits_gym_stats: formData.get('benefits_gym_stats') === 'on',
     is_active: formData.get('is_active') === 'on',
     applies_to: formData.get('applies_to') || 'all',
+    category_id: formData.get('category_id') ?? '',
     max_products_service: formData.get('max_products_service') ?? '',
     max_products_product: formData.get('max_products_product') ?? '',
     max_images: formData.get('max_images') ?? '',
     max_variants: formData.get('max_variants') ?? '',
+    max_gym_members: formData.get('max_gym_members') ?? '',
   })
 
   if (!parsed.success) {
@@ -162,6 +183,7 @@ export async function updateSubscriptionPlan(
       benefits: benefits as never,
       is_active: parsed.data.is_active,
       applies_to: parsed.data.applies_to,
+      category_id: parsed.data.category_id || null,
     })
     .eq('id', planId)
 

@@ -12,6 +12,7 @@ import {
   Menu,
   MessageCircle,
   Package,
+  PanelLeft,
   ReceiptText,
   ShieldCheck,
   ShieldX,
@@ -122,6 +123,7 @@ interface DashboardHeaderProps {
   unreadNotificationsCount?: number
   showSiteLink?: boolean
   showInstallButton?: boolean
+  installLabel?: string
   reviewInvite?: { shopName: string; shopUrl: string }
   accent?: boolean
   onMarkRead?: (id: string) => Promise<void>
@@ -130,6 +132,8 @@ interface DashboardHeaderProps {
   onDeleteAllRead?: () => Promise<void>
   realtimeTable?: string
   notificationsHref?: string
+  onToggleSidebar?: () => void
+  sidebarOpen?: boolean
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -153,6 +157,7 @@ export function DashboardHeader({
   unreadNotificationsCount,
   showSiteLink = true,
   showInstallButton = true,
+  installLabel,
   reviewInvite,
   accent = false,
   onMarkRead,
@@ -161,6 +166,8 @@ export function DashboardHeader({
   onDeleteAllRead = deleteReadAdminNotifications,
   realtimeTable = 'admin_notifications',
   notificationsHref = '/admin/notificaciones',
+  onToggleSidebar,
+  sidebarOpen = true,
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [isSigningOut, startSignOut] = useTransition()
@@ -190,6 +197,21 @@ export function DashboardHeader({
             </SheetContent>
           </Sheet>
 
+          {onToggleSidebar && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="hidden md:flex"
+              onClick={onToggleSidebar}
+              aria-label={sidebarOpen ? 'Ocultar menú' : 'Mostrar menú'}
+            >
+              <PanelLeft
+                className={cn('size-5 transition-transform duration-200', !sidebarOpen && 'rotate-180')}
+                aria-hidden
+              />
+            </Button>
+          )}
+
           {accent && (
             <Badge className="bg-violet-500 text-white hover:bg-violet-500 md:hidden">Admin</Badge>
           )}
@@ -197,7 +219,7 @@ export function DashboardHeader({
 
         <div className="flex items-center gap-1">
           
-          {showInstallButton && <InstallAppButton />}
+          {showInstallButton && <InstallAppButton label={installLabel} />}
           {showSiteLink && (
             <Button
               render={<Link href="/" />}

@@ -109,7 +109,7 @@ export async function getPlanLimitsByPlanId(planId: string) {
 
   const { data, error } = await supabase
     .from('plan_limits')
-    .select('max_products_service, max_products_product, max_images, max_variants')
+    .select('max_products_service, max_products_product, max_images, max_variants, max_gym_members')
     .eq('plan_id', planId)
     .maybeSingle()
 
@@ -200,13 +200,18 @@ export async function getSubscriptionPlans() {
 
   const { data: plans, error } = await supabase
     .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active, applies_to, created_at')
+    .select(
+      'id, name, description, price, duration_days, benefits, is_active, applies_to, category_id, categories ( name ), created_at'
+    )
     .order('created_at', { ascending: true })
     .limit(200)
 
   if (error) console.error('getSubscriptionPlans: fallo al traer subscription_plans', error)
 
-  return plans ?? []
+  return (plans ?? []).map((plan) => {
+    const { categories, ...rest } = plan
+    return { ...rest, category_name: (categories as { name: string } | null)?.name ?? null }
+  })
 }
 
 export async function getSubscriptionPlanById(planId: string) {
@@ -215,7 +220,7 @@ export async function getSubscriptionPlanById(planId: string) {
   const [{ data: plan, error }, limits] = await Promise.all([
     supabase
       .from('subscription_plans')
-      .select('id, name, description, price, duration_days, benefits, is_active, applies_to')
+      .select('id, name, description, price, duration_days, benefits, is_active, applies_to, category_id')
       .eq('id', planId)
       .maybeSingle(),
     getPlanLimitsByPlanId(planId),
@@ -231,6 +236,7 @@ export async function getSubscriptionPlanById(planId: string) {
     max_products_product: limits?.max_products_product ?? null,
     max_images: limits?.max_images ?? null,
     max_variants: limits?.max_variants ?? null,
+    max_gym_members: limits?.max_gym_members ?? null,
   }
 }
 

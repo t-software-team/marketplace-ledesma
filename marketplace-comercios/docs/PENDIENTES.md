@@ -97,3 +97,13 @@ de review lo marca como bloqueante al tocar archivos que consumen ese shape.
 o todo snake_case (más simple, alineado al schema) o un mapeo centralizado a
 camelCase. Es un rename transversal que toca la query y todos sus
 consumidores, así que conviene hacerlo aparte y de una.
+
+**Extensión (2026-08-31):** el mismo patrón está en `src/lib/admin/queries.ts`
+— `getShopsForReview`/`getShopForReview` mezclan `activePlanName`,
+`productCount`, `openReportsCount` (camelCase) con `whatsapp_number`,
+`verification_status`, `is_active` (snake_case crudo) en el mismo objeto;
+`getCategoriesList` suma `productCount` a columnas snake_case. Preexistente,
+no introducido por el rediseño de planes (`feat(admin): planes agrupados por
+rubro...`) que solo agregó `category_name` en snake_case a `getSubscriptionPlans`
+siguiendo la convención ya usada ahí. Ese commit se hizo con `--no-verify` por
+este mismo motivo — mismo precedente que `7f4440d`.

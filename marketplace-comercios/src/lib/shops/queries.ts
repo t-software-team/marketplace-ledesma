@@ -11,6 +11,13 @@ interface PlanLimitsRow {
   max_products_product: number | null;
   max_images: number;
   max_variants: number;
+  max_gym_members: number | null;
+}
+
+interface FreePlanScope {
+  id: string;
+  applies_to: string;
+  category_id: string | null;
 }
 
 interface PlanLimitsData {
@@ -20,8 +27,11 @@ interface PlanLimitsData {
   // "byPlanId.get is not a function").
   limitRows: PlanLimitsRow[];
   defaultLimits: PlanLimitsRow | null;
+  // Planes free genéricos (sin categoría) por rubro; los planes free
+  // scopeados a una categoría se resuelven vía `freePlans`.
   freeServicePlanId: string | null;
   freeProductPlanId: string | null;
+  freePlans: FreePlanScope[];
 }
 
 // Los límites por plan viven en la tabla plan_limits en Supabase (única
@@ -42,11 +52,11 @@ const getPlanLimitsData = unstable_cache(
       supabase
         .from("plan_limits")
         .select(
-          "plan_id, max_products_service, max_products_product, max_images, max_variants",
+          "plan_id, max_products_service, max_products_product, max_images, max_variants, max_gym_members",
         ),
       supabase
         .from("subscription_plans")
-        .select("id, applies_to")
+        .select("id, applies_to, category_id")
         .eq("price", 0)
         .eq("is_active", true),
     ]);
@@ -73,10 +83,19 @@ const getPlanLimitsData = unstable_cache(
       }
     }
 
+    const freePlanScopes: FreePlanScope[] = (freePlans ?? []).map((plan) => ({
+      id: plan.id,
+      applies_to: plan.applies_to,
+      category_id: plan.category_id,
+    }));
+
     let freeServicePlanId: string | null = null;
     let freeProductPlanId: string | null = null;
 
-    for (const plan of freePlans ?? []) {
+    // Los IDs "genéricos" salen solo de planes free sin categoría; los free
+    // scopeados a una categoría se resuelven aparte por category_id.
+    for (const plan of freePlanScopes) {
+      if (plan.category_id) continue;
       if (
         (plan.applies_to === "service" || plan.applies_to === "all") &&
         !freeServicePlanId
@@ -91,7 +110,13 @@ const getPlanLimitsData = unstable_cache(
       }
     }
 
-    return { limitRows: rowsByPlan, defaultLimits, freeServicePlanId, freeProductPlanId };
+    return {
+      limitRows: rowsByPlan,
+      defaultLimits,
+      freeServicePlanId,
+      freeProductPlanId,
+      freePlans: freePlanScopes,
+    };
   },
   ["plan-limits"],
   { revalidate: 60, tags: [PLAN_LIMITS_CACHE_TAG] },
@@ -100,8 +125,15 @@ const getPlanLimitsData = unstable_cache(
 function resolveFreeLimits(
   data: PlanLimitsData,
   isService: boolean,
+  categoryId?: string | null,
 ): PlanLimitsRow | null {
-  const planId = isService ? data.freeServicePlanId : data.freeProductPlanId;
+  // Un plan free scopeado a la categoría del comercio tiene prioridad sobre el
+  // free genérico del rubro (Modelo B: free y pago por categoría).
+  const categoryPlanId = categoryId
+    ? (data.freePlans.find((p) => p.category_id === categoryId)?.id ?? null)
+    : null;
+  const planId =
+    categoryPlanId ?? (isService ? data.freeServicePlanId : data.freeProductPlanId);
   const row = planId ? data.limitRows.find((r) => r.plan_id === planId) : undefined;
   return row ?? data.defaultLimits ?? null;
 }
@@ -120,9 +152,10 @@ function resolveAnyFreeLimits(data: PlanLimitsData): PlanLimitsRow | null {
 // hardcodeo que existía en mi-tienda/page.tsx y mi-tienda/suscripcion/page.tsx.
 export async function getFreeProductMax(
   isService: boolean,
+  categoryId?: string | null,
 ): Promise<number | null> {
   const data = await getPlanLimitsData();
-  const row = resolveFreeLimits(data, isService);
+  const row = resolveFreeLimits(data, isService, categoryId);
   return isService
     ? (row?.max_products_service ?? null)
     : (row?.max_products_product ?? null);
@@ -214,7 +247,8 @@ export async function getMyPromotions(shopId: string) {
       "id, image_url, text, created_at, expires_at, text_position, text_size, text_color, bg_color, products ( id, name )",
     )
     .eq("shop_id", shopId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error || !data) {
     if (error) {
@@ -523,7 +557,7 @@ export const getShopBySlug = unstable_cache(
         landing_gallery,
         landing_video_url,
         business_hours,
-        categories ( name, is_service )
+        categories ( name, slug, is_service )
       `,
       )
       .eq("slug", slug)
@@ -829,7 +863,7 @@ export async function getActiveSubscriptionPlans() {
 
   const { data: plans, error } = await supabase
     .from("subscription_plans")
-    .select("id, name, description, price, duration_days, benefits, applies_to")
+    .select("id, name, description, price, duration_days, benefits, applies_to, category_id")
     .eq("is_active", true)
     .order("price", { ascending: true })
     .limit(50);
@@ -1194,7 +1228,7 @@ export async function getShopProducts(
 //    cacheado, para no volver a pegarle a shops -> categories.
 export async function getProductLimitInfo(
   shopId: string,
-  opts?: { usedCount?: number; isService?: boolean },
+  opts?: { usedCount?: number; isService?: boolean; categoryId?: string | null },
 ) {
   const supabase = await createClient();
 
@@ -1214,7 +1248,11 @@ export async function getProductLimitInfo(
     // para este shopId, así que acá suele ser un cache hit.
     getMyActiveSubscription(shopId),
     needsShop
-      ? supabase.from("shops").select("categories ( is_service )").eq("id", shopId).maybeSingle()
+      ? supabase
+          .from("shops")
+          .select("category_id, categories ( is_service )")
+          .eq("id", shopId)
+          .maybeSingle()
       : Promise.resolve(null),
     getPlanLimitsData(),
   ]);
@@ -1238,7 +1276,8 @@ export async function getProductLimitInfo(
 
   const hasActivePlan = Boolean(activeSubscription);
   const isService = opts?.isService ?? Boolean(shopResult?.data?.categories?.is_service);
-  const freeLimits = resolveFreeLimits(limitsData, isService);
+  const categoryId = opts?.categoryId ?? shopResult?.data?.category_id ?? null;
+  const freeLimits = resolveFreeLimits(limitsData, isService, categoryId);
   const freeMax = isService
     ? (freeLimits?.max_products_service ?? null)
     : (freeLimits?.max_products_product ?? null);
@@ -1248,6 +1287,104 @@ export async function getProductLimitInfo(
     used,
     max,
     reached: max !== null && used >= max,
+  };
+}
+
+// Límite de socios de gimnasio. Free capea el padrón activo (no archivados);
+// el plan pago lo lee de benefits.max_gym_members (null = ilimitado). Mismo
+// patrón que getProductLimitInfo pero para el rubro gimnasio (siempre servicio).
+export async function getGymMemberLimitInfo(
+  shopId: string,
+  opts?: { usedCount?: number },
+) {
+  const supabase = await createClient();
+
+  const needsCount = opts?.usedCount === undefined;
+  const [countResult, activeSubscription, limitsData, shopResult] = await Promise.all([
+    needsCount
+      ? supabase
+          .from("gym_members")
+          .select("id", { count: "exact", head: true })
+          .eq("shop_id", shopId)
+          .eq("is_archived", false)
+      : Promise.resolve(null),
+    getMyActiveSubscription(shopId),
+    getPlanLimitsData(),
+    supabase.from("shops").select("category_id").eq("id", shopId).maybeSingle(),
+  ]);
+
+  if (countResult?.error) {
+    console.error("getGymMemberLimitInfo: fallo al contar socios", {
+      shopId,
+      error: countResult.error,
+    });
+  }
+  if (shopResult.error) {
+    console.error("getGymMemberLimitInfo: fallo al traer datos de la tienda", {
+      shopId,
+      error: shopResult.error,
+    });
+  }
+
+  const used = opts?.usedCount ?? countResult?.count ?? 0;
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    { max_gym_members?: number | null } | null | undefined;
+
+  const hasActivePlan = Boolean(activeSubscription);
+  const freeLimits = resolveFreeLimits(limitsData, true, shopResult.data?.category_id ?? null);
+  const freeMax = freeLimits?.max_gym_members ?? null;
+  const max = hasActivePlan ? (benefits?.max_gym_members ?? null) : freeMax;
+
+  return {
+    used,
+    max,
+    reached: max !== null && used >= max,
+  };
+}
+
+// Cupo de socios por plan (para mostrar en las tarjetas de suscripción de un
+// gimnasio). Sale de plan_limits.max_gym_members; null = ilimitado.
+export async function getPlanGymMemberCaps(
+  planIds: string[],
+): Promise<Record<string, number | null>> {
+  if (planIds.length === 0) return {};
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("plan_limits")
+    .select("plan_id, max_gym_members")
+    .in("plan_id", planIds);
+
+  if (error) {
+    console.error("getPlanGymMemberCaps: fallo al traer cupos de socios", { error });
+    return {};
+  }
+
+  const caps: Record<string, number | null> = {};
+  for (const row of data ?? []) {
+    if (row.plan_id) caps[row.plan_id] = row.max_gym_members;
+  }
+  return caps;
+}
+
+export interface GymBenefits {
+  freeze: boolean;
+  exportCsv: boolean;
+  stats: boolean;
+}
+
+// Features premium del Plan Gimnasio, leídas de la suscripción activa. Un gym
+// en Free no tiene suscripción activa → todo false.
+export async function getGymBenefits(shopId: string): Promise<GymBenefits> {
+  const activeSubscription = await getMyActiveSubscription(shopId);
+  const benefits = activeSubscription?.subscription_plans?.benefits as
+    | { gym_freeze?: boolean; gym_export?: boolean; gym_stats?: boolean }
+    | null
+    | undefined;
+  return {
+    freeze: Boolean(benefits?.gym_freeze),
+    exportCsv: Boolean(benefits?.gym_export),
+    stats: Boolean(benefits?.gym_stats),
   };
 }
 

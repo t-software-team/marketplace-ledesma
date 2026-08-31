@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   graphql_public: {
     Tables: {
@@ -378,10 +378,253 @@ export type Database = {
           },
         ]
       }
+      gym_check_ins: {
+        Row: {
+          attempted_ref: string | null
+          checked_in_at: string
+          created_by: string | null
+          id: string
+          member_id: string | null
+          outcome: string
+          shop_id: string
+          source: string
+        }
+        Insert: {
+          attempted_ref?: string | null
+          checked_in_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string | null
+          outcome?: string
+          shop_id: string
+          source?: string
+        }
+        Update: {
+          attempted_ref?: string | null
+          checked_in_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string | null
+          outcome?: string
+          shop_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_check_ins_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_check_ins_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_members: {
+        Row: {
+          created_at: string
+          document: string | null
+          email: string | null
+          full_name: string
+          id: string
+          is_archived: boolean
+          notes: string | null
+          phone: string | null
+          shop_id: string
+        }
+        Insert: {
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          phone?: string | null
+          shop_id: string
+        }
+        Update: {
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          phone?: string | null
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_members_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_memberships: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          member_id: string
+          plan_id: string | null
+          price: number
+          shop_id: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          member_id: string
+          plan_id?: string | null
+          price?: number
+          shop_id: string
+          start_date?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          member_id?: string
+          plan_id?: string | null
+          price?: number
+          shop_id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_memberships_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_memberships_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_memberships_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          membership_id: string
+          method: string
+          paid_at: string | null
+          shop_id: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          membership_id: string
+          method: string
+          paid_at?: string | null
+          shop_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          membership_id?: string
+          method?: string
+          paid_at?: string | null
+          shop_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_payments_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "gym_memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_payments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_plans: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          kind: string
+          name: string
+          price: number
+          shop_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name: string
+          price?: number
+          shop_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name?: string
+          price?: number
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_plans_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_limits: {
         Row: {
           created_at: string
           id: string
+          max_gym_members: number | null
           max_images: number
           max_products_product: number | null
           max_products_service: number | null
@@ -392,6 +635,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          max_gym_members?: number | null
           max_images: number
           max_products_product?: number | null
           max_products_service?: number | null
@@ -402,6 +646,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          max_gym_members?: number | null
           max_images?: number
           max_products_product?: number | null
           max_products_service?: number | null
@@ -941,6 +1186,7 @@ export type Database = {
           description: string | null
           email: string | null
           facebook_url: string | null
+          gym_self_checkin_token: string | null
           id: string
           instagram_url: string | null
           is_active: boolean
@@ -949,6 +1195,7 @@ export type Database = {
           landing_banner: Json | null
           landing_gallery: Json | null
           landing_services: Json | null
+          landing_template: string | null
           landing_video_url: string | null
           location: unknown
           logo_url: string | null
@@ -981,6 +1228,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          gym_self_checkin_token?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -989,6 +1237,7 @@ export type Database = {
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
+          landing_template?: string | null
           landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
@@ -1021,6 +1270,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          gym_self_checkin_token?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -1029,6 +1279,7 @@ export type Database = {
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
+          landing_template?: string | null
           landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
@@ -1101,6 +1352,7 @@ export type Database = {
         Row: {
           applies_to: string
           benefits: Json | null
+          category_id: string | null
           created_at: string
           description: string | null
           duration_days: number
@@ -1112,6 +1364,7 @@ export type Database = {
         Insert: {
           applies_to?: string
           benefits?: Json | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_days: number
@@ -1123,6 +1376,7 @@ export type Database = {
         Update: {
           applies_to?: string
           benefits?: Json | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_days?: number
@@ -1131,7 +1385,15 @@ export type Database = {
           name?: string
           price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -1649,7 +1911,7 @@ export type Database = {
         }[]
       }
       get_featured_shops: {
-        Args: { p_limit?: number; p_offset?: number }
+        Args: { p_category_id?: string; p_limit?: number; p_offset?: number }
         Returns: {
           avg_rating: number
           category_id: string
@@ -1663,6 +1925,7 @@ export type Database = {
           verification_status: Database["public"]["Enums"]["verification_status"]
         }[]
       }
+      get_gym_dashboard_stats: { Args: { p_shop_id: string }; Returns: Json }
       get_products_feed: {
         Args: {
           p_attribute_value?: string
