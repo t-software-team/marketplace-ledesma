@@ -60,7 +60,9 @@ export const subscriptionPlanSchema = z.object({
   applies_to: z.enum(['all', 'product', 'service']).default('all'),
   // Vacío = plan genérico (usa applies_to). Con valor = plan exclusivo de esa
   // categoría (ej. Gimnasio), no se muestra a otros rubros.
-  category_id: z.string().uuid().optional().or(z.literal('')),
+  // uuidLike (no z.uuid()): los ids de seed no cumplen los bits de versión
+  // RFC 4122 que Zod 4 valida estricto, y acá solo importa la forma.
+  category_id: uuidLike('Elegí un rubro válido').optional().or(z.literal('')),
   // Límites (tabla plan_limits), opcionales: vacío = sin fila propia, el
   // plan cae al fallback (fila "por defecto" para imágenes/variantes; para
   // productos, a benefits.max_products si lo trae, o sin límite).

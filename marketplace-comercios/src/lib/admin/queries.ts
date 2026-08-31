@@ -200,13 +200,18 @@ export async function getSubscriptionPlans() {
 
   const { data: plans, error } = await supabase
     .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active, applies_to, created_at')
+    .select(
+      'id, name, description, price, duration_days, benefits, is_active, applies_to, category_id, categories ( name ), created_at'
+    )
     .order('created_at', { ascending: true })
     .limit(200)
 
   if (error) console.error('getSubscriptionPlans: fallo al traer subscription_plans', error)
 
-  return plans ?? []
+  return (plans ?? []).map((plan) => {
+    const { categories, ...rest } = plan
+    return { ...rest, category_name: (categories as { name: string } | null)?.name ?? null }
+  })
 }
 
 export async function getSubscriptionPlanById(planId: string) {
