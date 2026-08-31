@@ -68,14 +68,24 @@ export default async function MiTiendaLayout({
   const isService = isServiceRubro(rubroSlug)
   const isGym = isGymRubro(rubroSlug)
 
-  // Gyms swap the whole catalog nav for gym-management sections.
+  // Gyms swap the catalog-first nav for gym-management sections, but still
+  // get to sell services (visible in the feed like any product) and
+  // personalize their public page — both features are shop-generic, only the
+  // nav previously left them out.
   const navItems: DashboardNavItem[] = isGym
     ? [
         { href: '/mi-tienda', label: 'Resumen', icon: 'dashboard' },
         { href: '/mi-tienda/socios', label: 'Socios', icon: 'users' },
         { href: '/mi-tienda/ingresos', label: 'Ingresos', icon: 'login' },
         { href: '/mi-tienda/planes', label: 'Planes', icon: 'tag' },
+        { href: '/mi-tienda/productos', label: 'Servicios', icon: 'package' },
         { href: '/mi-tienda/caja', label: 'Caja', icon: 'wallet' },
+        {
+          href: '/mi-tienda/personalizar',
+          label: 'Personalizar',
+          icon: 'sparkles',
+          badge: hasCustomBranding ? undefined : 'PRO',
+        },
         { href: '/mi-tienda/suscripcion', label: 'Suscripción', icon: 'credit-card', badge: planName },
         { href: '/mi-tienda/configuracion', label: 'Configuración', icon: 'settings' },
       ]
