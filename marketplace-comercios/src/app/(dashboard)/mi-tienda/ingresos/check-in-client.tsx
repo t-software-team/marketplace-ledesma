@@ -54,17 +54,14 @@ export function CheckInClient() {
     },
   } as const
 
-  // Debounced server-side search
+  // Debounced server-side search. Empty query is handled in the input's
+  // onChange (not here) to avoid calling setState synchronously in the effect
+  // body for that case.
   useEffect(() => {
     const q = search.trim()
-    if (!q) {
-      setMatches([])
-      setSearching(false)
-      return
-    }
+    if (!q) return
 
     let ignore = false
-    setSearching(true)
     const handle = setTimeout(async () => {
       try {
         const res = await searchGymMembers(q)
@@ -83,6 +80,13 @@ export function CheckInClient() {
     }
   }, [search])
 
+  const resetToForm = () => {
+    setView('form')
+    setLastResult(null)
+    setSearch('')
+    setMatches([])
+  }
+
   // Auto-reset after success/warning/error
   useEffect(() => {
     if (view === 'form') {
@@ -99,12 +103,34 @@ export function CheckInClient() {
     }
   }, [view])
 
-  const resetToForm = () => {
-    setView('form')
-    setLastResult(null)
-    setSearch('')
-    setMatches([])
-  }
+  // Sonido corto de éxito con Web Audio API
+  useEffect(() => {
+    if (view !== 'success') return
+
+    try {
+      const AudioContextCtor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (!AudioContextCtor) return
+
+      const ctx = new AudioContextCtor()
+      const oscillator = ctx.createOscillator()
+      const gainNode = ctx.createGain()
+
+      oscillator.connect(gainNode)
+      gainNode.connect(ctx.destination)
+
+      oscillator.frequency.value = 800
+      oscillator.type = 'sine'
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3)
+
+      oscillator.start(ctx.currentTime)
+      oscillator.stop(ctx.currentTime + 0.3)
+    } catch (err) {
+      console.error('CheckInClient: fallo al reproducir sonido de éxito', err)
+    }
+  }, [view])
 
   const register = (member: GymMemberSearchResult) => {
     startTransition(async () => {
@@ -161,7 +187,16 @@ export function CheckInClient() {
             />
             <Input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value
+                setSearch(value)
+                if (value.trim()) {
+                  setSearching(true)
+                } else {
+                  setMatches([])
+                  setSearching(false)
+                }
+              }}
               onKeyDown={handleKeyDown}
               placeholder="Buscar socio por nombre o DNI…"
               aria-label="Buscar socio por nombre o DNI"
