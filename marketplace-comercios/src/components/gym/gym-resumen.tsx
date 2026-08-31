@@ -9,6 +9,7 @@ import {
   Dumbbell,
   LogIn,
   Smartphone,
+  UserMinus,
   UserPlus,
   Users,
 } from 'lucide-react'
@@ -182,21 +183,43 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
       )}
 
       {/* Secundario: menor frecuencia de consulta, un solo bloque en vez de
-          una card por número. */}
+          una card por número. Altas/bajas se leen como movimiento (con signo
+          y un neto derivado), no como dos conteos sueltos sin relación. */}
       <Card>
-        <CardContent className="grid grid-cols-3 gap-3 pt-5 text-center">
+        <CardContent className="space-y-3 pt-5">
           <div>
-            <p className="text-xs text-muted-foreground">Altas del mes</p>
-            <p className="font-heading text-lg">{stats.new_members_month}</p>
+            <p className="text-xs text-muted-foreground">Movimiento de socios (mes)</p>
+            <div className="mt-1.5 flex items-center gap-4">
+              <div className="flex items-center gap-1.5">
+                <UserPlus className="size-4 text-muted-foreground" aria-hidden />
+                <span className="font-heading text-lg">+{stats.new_members_month}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <UserMinus className="size-4 text-muted-foreground" aria-hidden />
+                <span className="font-heading text-lg">-{stats.archived_members}</span>
+              </div>
+              <div className="ml-auto text-right">
+                <p className="text-xs text-muted-foreground">Neto</p>
+                <p
+                  className={`font-heading text-lg ${
+                    stats.new_members_month - stats.archived_members > 0
+                      ? 'text-success-foreground'
+                      : stats.new_members_month - stats.archived_members < 0
+                        ? 'text-destructive'
+                        : ''
+                  }`}
+                >
+                  {stats.new_members_month - stats.archived_members > 0 ? '+' : ''}
+                  {stats.new_members_month - stats.archived_members}
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Bajas</p>
-            <p className="font-heading text-lg">{stats.archived_members}</p>
-          </div>
+
           {memberLimit.max !== null && (
-            <div>
+            <div className="flex items-center justify-between border-t border-border/50 pt-3">
               <p className="text-xs text-muted-foreground">Cupo del plan</p>
-              <p className={`font-heading text-lg ${memberLimit.reached ? 'text-warning-foreground' : ''}`}>
+              <p className={`font-heading text-sm ${memberLimit.reached ? 'text-warning-foreground' : ''}`}>
                 {memberLimit.used}/{memberLimit.max}
               </p>
             </div>
