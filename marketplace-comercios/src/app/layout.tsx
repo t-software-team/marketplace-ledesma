@@ -9,7 +9,6 @@ import { Toaster } from '@/components/ui/toast'
 import { AuthListener } from '@/components/shared/auth-listener'
 import { CookieNotice } from '@/components/shared/cookie-notice'
 import { ScrollToTopOnNavigate } from '@/components/shared/scroll-to-top-on-navigate'
-import { SplashScreen } from '@/components/shared/splash-screen'
 import { getBaseUrl } from '@/lib/site-url'
 import { THEME_INIT_SCRIPT } from '@/lib/theme-init-script'
 
@@ -73,7 +72,10 @@ export default function RootLayout({
           <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} crossOrigin="anonymous" />
         )}
       </head>
-      <body className="flex min-h-dvh flex-col">
+      {/* suppressHydrationWarning: browser extensions (ColorZilla, Grammarly,
+          etc.) inject attributes like cz-shortcut-listen into <body> before
+          React hydrates — a false-positive mismatch, not an app bug. */}
+      <body className="flex min-h-dvh flex-col" suppressHydrationWarning>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
@@ -91,7 +93,6 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: SPLASH_HIDE_SCRIPT }}
         />
         <ThemeProvider>
-         {/*/ <SplashScreen />*/} 
           <Toaster>
             <ScrollToTopOnNavigate />
             <QueryProvider>
