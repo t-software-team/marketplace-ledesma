@@ -175,6 +175,7 @@ export async function createGymMember(
       email: parsed.data.email || null,
       document: parsed.data.document || null,
       notes: parsed.data.notes || null,
+      created_by: user.id,
     })
     .select('id')
     .single()
@@ -248,13 +249,17 @@ export async function setGymMemberArchived(
   memberId: string,
   archived: boolean
 ): Promise<ActionState> {
-  const { supabase, shopId, role } = await requireShop()
+  const { supabase, user, shopId, role } = await requireShop()
   if (!shopId) return { error: 'No tenés un comercio creado' }
   if (role !== 'owner') return { error: OWNER_ONLY_ERROR }
 
   const { error } = await supabase
     .from('gym_members')
-    .update({ is_archived: archived })
+    .update(
+      archived
+        ? { is_archived: true, archived_by: user.id, archived_at: new Date().toISOString() }
+        : { is_archived: false, archived_by: null, archived_at: null }
+    )
     .eq('id', memberId)
     .eq('shop_id', shopId)
 
@@ -477,6 +482,7 @@ async function settleMembership(
     .from('gym_memberships')
     .select('expires_at')
     .eq('member_id', memberId)
+    .eq('shop_id', shopId)
     .order('expires_at', { ascending: false })
     .limit(1)
     .maybeSingle()

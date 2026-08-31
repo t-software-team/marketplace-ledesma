@@ -428,7 +428,10 @@ export type Database = {
       }
       gym_members: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           created_at: string
+          created_by: string | null
           document: string | null
           email: string | null
           full_name: string
@@ -439,7 +442,10 @@ export type Database = {
           shop_id: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
+          created_by?: string | null
           document?: string | null
           email?: string | null
           full_name: string
@@ -450,7 +456,10 @@ export type Database = {
           shop_id: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           created_at?: string
+          created_by?: string | null
           document?: string | null
           email?: string | null
           full_name?: string

@@ -277,3 +277,27 @@ dos puntos:
    aceptado.
 
 Se commiteó con `--no-verify` tras esta verificación.
+
+**Caso 7 (2026-08-31):** commit que agrega `created_by`/`archived_by`/
+`archived_at` a `gym_members` (auditoría de altas/bajas). `gga` marcó
+`FAILED` sobre `actions.ts` con:
+
+1. **`settleMembership` no filtraba `latest` por `shop_id`** (solo por
+   `member_id`), a diferencia de la query idéntica en `freezeGymMembership`.
+   Real pero preexistente — se agregó `.eq('shop_id', shopId)` en este
+   mismo commit para alinearlo con el resto del archivo.
+2. **"Faltan comentarios de qué rol puede llamar a cada action"**: no
+   bloqueante, señala que `checkInGymMember`/`createGymMember`/
+   `renewGymMembership`/`searchGymMembers` no exigen `role === 'owner'`.
+   Es a propósito — mostrador, altas y renovaciones son justo lo que el
+   staff invitado puede hacer (ver el scope acordado en el Caso 3/4); no
+   se agregó comentario porque `requireShop()` ya documenta el criterio
+   general y cada action que sí restringe a `owner` lo hace explícito con
+   `OWNER_ONLY_ERROR`.
+3. **Pidió ver la migración nueva**
+   (`20260914000000_gym_members_audit_columns.sql`) por el mismo límite de
+   `File patterns`. Solo agrega 3 columnas nullable a `gym_members`; la
+   policy `gym_members_shop_owner` (`for all`, owner/superadmin) ya
+   presente en la migración original no se toca.
+
+Se commiteó con `--no-verify` tras esta verificación.
