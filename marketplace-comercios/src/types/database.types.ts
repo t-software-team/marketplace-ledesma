@@ -380,25 +380,34 @@ export type Database = {
       }
       gym_check_ins: {
         Row: {
+          attempted_ref: string | null
           checked_in_at: string
           created_by: string | null
           id: string
-          member_id: string
+          member_id: string | null
+          outcome: string
           shop_id: string
+          source: string
         }
         Insert: {
+          attempted_ref?: string | null
           checked_in_at?: string
           created_by?: string | null
           id?: string
-          member_id: string
+          member_id?: string | null
+          outcome?: string
           shop_id: string
+          source?: string
         }
         Update: {
+          attempted_ref?: string | null
           checked_in_at?: string
           created_by?: string | null
           id?: string
-          member_id?: string
+          member_id?: string | null
+          outcome?: string
           shop_id?: string
+          source?: string
         }
         Relationships: [
           {
@@ -1177,6 +1186,7 @@ export type Database = {
           description: string | null
           email: string | null
           facebook_url: string | null
+          gym_self_checkin_token: string | null
           id: string
           instagram_url: string | null
           is_active: boolean
@@ -1218,6 +1228,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          gym_self_checkin_token?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -1259,6 +1270,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          gym_self_checkin_token?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean

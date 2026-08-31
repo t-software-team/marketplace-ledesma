@@ -261,9 +261,22 @@ export interface GymMembershipHistoryRow {
 
 export interface GymCheckInRow {
   id: string
-  member_id: string
+  member_id: string | null
   checked_in_at: string
   member_name?: string | null
+}
+
+export type GymAccessOutcome = 'allowed' | 'denied_expired' | 'denied_not_found'
+export type GymAccessSource = 'desk' | 'self'
+
+export interface GymAccessLogRow {
+  id: string
+  checked_in_at: string
+  outcome: GymAccessOutcome
+  source: GymAccessSource
+  member_name: string | null
+  /** Digits typed at the self check-in when no member matched. */
+  attempted_ref: string | null
 }
 
 export interface GymMemberDetail extends GymMemberWithStatus {
@@ -446,6 +459,7 @@ export async function getTodayCheckIns(shopId: string, limit = 100): Promise<Gym
     .from('gym_check_ins')
     .select('id, member_id, checked_in_at, gym_members(full_name)')
     .eq('shop_id', shopId)
+    .eq('outcome', 'allowed')
     .gte('checked_in_at', startOfDay.toISOString())
     .order('checked_in_at', { ascending: false })
     .limit(limit)
@@ -462,6 +476,40 @@ export async function getTodayCheckIns(shopId: string, limit = 100): Promise<Gym
       member_id: row.member_id,
       checked_in_at: row.checked_in_at,
       member_name: member?.full_name ?? null,
+    }
+  })
+}
+
+/**
+ * Full access log for today — allowed entries plus denied attempts (expired
+ * membership, unknown member) — for the owner's audit view.
+ */
+export async function getTodayAccessLog(shopId: string, limit = 200): Promise<GymAccessLogRow[]> {
+  const supabase = await createClient()
+  const startOfDay = argentinaStartOfTodayUTC()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('id, checked_in_at, outcome, source, attempted_ref, gym_members(full_name)')
+    .eq('shop_id', shopId)
+    .gte('checked_in_at', startOfDay.toISOString())
+    .order('checked_in_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('getTodayAccessLog: fallo al traer el log de accesos', { shopId, error })
+    return []
+  }
+
+  return (data ?? []).map((row) => {
+    const member = row.gym_members as { full_name: string } | null
+    return {
+      id: row.id,
+      checked_in_at: row.checked_in_at,
+      outcome: row.outcome as GymAccessOutcome,
+      source: row.source as GymAccessSource,
+      member_name: member?.full_name ?? null,
+      attempted_ref: row.attempted_ref,
     }
   })
 }
