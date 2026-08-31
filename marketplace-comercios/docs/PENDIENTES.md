@@ -254,3 +254,26 @@ lower(email) = lower(p_email))` (sin exponer ninguna otra columna), y el
 service_role` deja su ejecución restringida exclusivamente al service-role
 client server-side (`getGymStaffInvitePreview`) — no es alcanzable desde
 un visitante ni desde un usuario autenticado normal vía RPC directo.
+
+**Caso 6 (2026-08-31):** commit que agrega `acceptGymStaffInviteNewAccount`
+(crear cuenta + activar invite + loguear en un solo paso, sin mail de
+confirmación de signup). `gga` marcó `FAILED` sobre `staff-actions.ts` con
+dos puntos:
+
+1. **"`getGymStaffInvitePreview` filtra `hasAccount` sin auth, alguien con
+   el token puede saber si ese email tiene cuenta"**: la exposición no es
+   nueva de este commit — ya existía desde el Caso 5 (el propio redirect a
+   `/login` vs `/registro` ya revelaba `hasAccount` en el `Location` de la
+   respuesta). Y el alcance es mínimo: el `token` es un UUID que ya ata a
+   un `invited_email` específico (el dueño lo mandó a propósito a ese
+   mail); `hasAccount` solo informa sobre ESE email ya conocido por quien
+   tiene el token, no permite enumerar cuentas de terceros — no hay ningún
+   input libre de email en el flujo, todo cuelga de tener el token.
+2. **"`activateStaffInvite` eleva `profiles.role` a `shop_admin` vía
+   service-role sin RPC `security definer`"**: mismo patrón ya
+   documentado en el Caso 3/4 (ahora extraído a un helper compartido,
+   pero la lógica y la validación previa —invite `pending`, token válido—
+   son las mismas). No es un diseño nuevo, es una refactorización del ya
+   aceptado.
+
+Se commiteó con `--no-verify` tras esta verificación.

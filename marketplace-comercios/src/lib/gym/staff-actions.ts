@@ -2,14 +2,56 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { getMyGymAccess } from '@/lib/gym/queries'
 import { sendEmail } from '@/lib/email/client'
 import { gymStaffInviteEmail } from '@/lib/email/templates'
+import { acceptInviteSchema } from '@/lib/validations/auth'
 import type { ActionState } from './actions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/** Shared by both accept paths: flips the invite row to active and lifts a
+ * fresh 'client' (or role-less) profile to 'shop_admin' — never downgrades
+ * an existing superadmin/shop_admin. */
+async function activateStaffInvite(
+  service: SupabaseClient,
+  invite: { id: string; shops: unknown },
+  userId: string
+) {
+  const { error: staffError } = await service
+    .from('shop_staff')
+    .update({ user_id: userId, status: 'active', accepted_at: new Date().toISOString() })
+    .eq('id', invite.id)
+
+  if (staffError) {
+    console.error('activateStaffInvite: fallo al activar el acceso', { inviteId: invite.id, error: staffError })
+    return { error: 'No pudimos activar tu acceso. Probá de nuevo.' }
+  }
+
+  const { data: profile } = await service
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (!profile?.role || profile.role === 'client') {
+    const { error: profileError } = await service
+      .from('profiles')
+      .update({ role: 'shop_admin' })
+      .eq('id', userId)
+
+    if (profileError) {
+      console.error('activateStaffInvite: fallo al actualizar el rol', { userId, error: profileError })
+    }
+  }
+
+  const shop = invite.shops as { name: string } | null
+  revalidatePath('/mi-tienda')
+  return { error: null, shopName: shop?.name }
+}
 
 /**
  * Owner-only: invites someone to work at the gym by email. They get their
@@ -138,42 +180,86 @@ export async function acceptGymStaffInvite(token: string): Promise<AcceptInviteR
     }
   }
 
-  const { error: staffError } = await service
-    .from('shop_staff')
-    .update({ user_id: user.id, status: 'active', accepted_at: new Date().toISOString() })
-    .eq('id', invite.id)
-
-  if (staffError) {
-    console.error('acceptGymStaffInvite: fallo al activar el acceso', { inviteId: invite.id, error: staffError })
-    return { error: 'No pudimos activar tu acceso. Probá de nuevo.' }
-  }
-
-  // Never downgrade an existing superadmin/shop_admin; only lift a fresh
-  // 'client' (or no role yet) so they can reach /mi-tienda.
-  const { data: profile } = await service
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile?.role || profile.role === 'client') {
-    const { error: profileError } = await service
-      .from('profiles')
-      .update({ role: 'shop_admin' })
-      .eq('id', user.id)
-
-    if (profileError) {
-      console.error('acceptGymStaffInvite: fallo al actualizar el rol', { userId: user.id, error: profileError })
-    }
-  }
-
-  const shop = invite.shops as { name: string } | null
-  revalidatePath('/mi-tienda')
-  return { error: null, shopName: shop?.name }
+  return activateStaffInvite(service, invite, user.id)
 }
 
 export async function acceptGymStaffInviteAndRedirect(token: string) {
   const result = await acceptGymStaffInvite(token)
+  if (result.error) return result
+  redirect('/mi-tienda/ingresos?bienvenida=1')
+}
+
+/**
+ * For an invited email with no account yet: creates the account, activates
+ * the invite and logs the person in, all in one step — no separate signup
+ * confirmation email. Clicking the invite link (sent by us to invited_email)
+ * already proves ownership of that inbox, so a second "confirm your email"
+ * round-trip is redundant friction, not extra security.
+ */
+export async function acceptGymStaffInviteNewAccount(
+  token: string,
+  formData: FormData
+): Promise<AcceptInviteResult> {
+  const parsed = acceptInviteSchema.safeParse({
+    fullName: formData.get('fullName'),
+    password: formData.get('password'),
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+  const { fullName, password } = parsed.data
+
+  const service = createServiceRoleClient()
+  const { data: invite } = await service
+    .from('shop_staff')
+    .select('id, invited_email, status, shops ( name )')
+    .eq('invite_token', token)
+    .maybeSingle()
+
+  if (!invite || invite.status !== 'pending') {
+    return { error: 'Esta invitación no es válida o ya fue usada' }
+  }
+
+  const { data: created, error: createError } = await service.auth.admin.createUser({
+    email: invite.invited_email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  })
+
+  if (createError || !created.user) {
+    // Most likely: the email got an account in the meantime (another tab,
+    // or they'd actually already signed up) — send them to the normal
+    // login path instead of failing outright.
+    console.error('acceptGymStaffInviteNewAccount: fallo al crear la cuenta', {
+      inviteId: invite.id,
+      error: createError,
+    })
+    return { error: 'Ya existe una cuenta con ese email. Iniciá sesión con tu contraseña.' }
+  }
+
+  const activation = await activateStaffInvite(service, invite, created.user.id)
+  if (activation.error) return activation
+
+  const supabase = await createClient()
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: invite.invited_email,
+    password,
+  })
+
+  if (signInError) {
+    console.error('acceptGymStaffInviteNewAccount: cuenta creada pero falló el login', {
+      inviteId: invite.id,
+      error: signInError,
+    })
+    return { error: 'Tu cuenta se creó. Iniciá sesión con tu contraseña.' }
+  }
+
+  return activation
+}
+
+export async function acceptGymStaffInviteNewAccountAndRedirect(token: string, formData: FormData) {
+  const result = await acceptGymStaffInviteNewAccount(token, formData)
   if (result.error) return result
   redirect('/mi-tienda/ingresos?bienvenida=1')
 }

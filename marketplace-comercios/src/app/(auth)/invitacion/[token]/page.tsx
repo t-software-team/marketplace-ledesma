@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getAuthUser } from '@/lib/supabase/server'
 import { getGymStaffInvitePreview } from '@/lib/gym/staff-actions'
 import { AcceptInviteButton } from './accept-invite-button'
+import { CreateAccountAcceptForm } from './create-account-accept-form'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,13 +28,26 @@ export default async function InvitacionPage({ params }: PageProps) {
 
   const user = await getAuthUser()
   if (!user) {
+    if (!preview.hasAccount) {
+      // No separate signup-confirmation email: clicking this invite link
+      // (sent by us to invitedEmail) already proves ownership of the inbox.
+      return (
+        <div className="space-y-6 text-center">
+          <div className="space-y-1.5">
+            <h1 className="font-heading text-2xl">Invitación de {preview.shopName}</h1>
+            <p className="text-sm text-muted-foreground">
+              Creá tu cuenta para sumarte y empezar a registrar ingresos, dar de alta socios y renovar
+              membresías en <strong>{preview.shopName}</strong>.
+            </p>
+          </div>
+          <CreateAccountAcceptForm token={token} email={preview.invitedEmail} />
+        </div>
+      )
+    }
+
     const next = encodeURIComponent(`/invitacion/${token}`)
     const email = encodeURIComponent(preview.invitedEmail)
-    // Sending someone with no account yet to /login just leaves them stuck
-    // (their browser's autofill happily suggests a password for an account
-    // that doesn't exist, and login fails with "incorrect credentials").
-    const destination = preview.hasAccount ? '/login' : '/registro'
-    redirect(`${destination}?next=${next}&email=${email}`)
+    redirect(`/login?next=${next}&email=${email}`)
   }
 
   const emailMatches = user.email?.toLowerCase() === preview.invitedEmail.toLowerCase()
