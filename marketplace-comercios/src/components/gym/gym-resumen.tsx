@@ -44,6 +44,49 @@ interface GymResumenProps {
   recentCheckIns: GymRecentCheckInRow[]
 }
 
+function ProgressRing({
+  value,
+  max,
+  size = 48,
+  strokeWidth = 5,
+}: {
+  value: number
+  max: number
+  size?: number
+  strokeWidth?: number
+}) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const progress = max > 0 ? Math.min(value / max, 1) : 0
+  const reached = progress >= 1
+
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={strokeWidth}
+          className="stroke-border"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - progress)}
+          className={reached ? 'stroke-warning' : 'stroke-primary'}
+        />
+      </svg>
+    </div>
+  )
+}
+
 /** A card that links elsewhere. Chevron is a persistent affordance — hover
  * alone means nothing on the touch devices this app is built for. */
 function LinkCard({
@@ -127,13 +170,16 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
             <p className="font-heading text-3xl">{stats.active_members}</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="space-y-1 px-4 pt-5">
-            <Clock className="size-4 text-muted-foreground" aria-hidden />
-            <p className="text-xs text-muted-foreground">Ingresos hoy</p>
-            <p className="font-heading text-3xl">{stats.checkins_today}</p>
-          </CardContent>
-        </Card>
+        {/* Mismo tratamiento oscuro que ve el socio en la pantalla de
+            autoingreso — un hilo visual entre "lo que pasa en la puerta" y
+            "lo que ve el dueño acá", que ningún otro rubro de Proxi tiene. */}
+        <div className="dark rounded-xl border border-border bg-background px-4 pt-5 pb-4">
+          <Clock className="size-4 text-muted-foreground" aria-hidden />
+          <p className="mt-1 text-xs text-muted-foreground">Ingresos hoy</p>
+          <p className="font-mono text-3xl font-semibold tabular-nums text-primary">
+            {String(stats.checkins_today).padStart(2, '0')}
+          </p>
+        </div>
       </div>
 
       {/* Riesgo: agrupa lo que necesita acción, con el mismo tratamiento
@@ -185,9 +231,12 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
         <Card>
           <CardContent className="flex items-center justify-between pt-5">
             <p className="text-xs text-muted-foreground">Cupo del plan</p>
-            <p className={`font-heading text-lg ${memberLimit.reached ? 'text-warning-foreground' : ''}`}>
-              {memberLimit.used}/{memberLimit.max}
-            </p>
+            <div className="flex items-center gap-3">
+              <p className={`font-heading text-lg ${memberLimit.reached ? 'text-warning-foreground' : ''}`}>
+                {memberLimit.used}/{memberLimit.max}
+              </p>
+              <ProgressRing value={memberLimit.used} max={memberLimit.max} />
+            </div>
           </CardContent>
         </Card>
       )}
@@ -198,7 +247,7 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
         <CardContent className="space-y-3 pt-5">
           <div>
             <p className="text-xs text-muted-foreground">Ingresos del mes</p>
-            <p className="font-heading text-2xl text-primary">{formatARS(monthRevenue)}</p>
+            <p className="font-heading text-2xl">{formatARS(monthRevenue)}</p>
           </div>
           <div className="flex gap-4 border-t border-border/50 pt-3 text-sm">
             <p className="text-muted-foreground">

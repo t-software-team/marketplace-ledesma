@@ -173,7 +173,13 @@ export default async function ReportesPage({
               Ingresos por día — {formatDateLabel(range.from)} a {formatDateLabel(range.to)}
             </p>
           </div>
-          <TrendAreaChart data={chartData} dataKey="ingresos" label="Ingresos" gradientId="gymReport" />
+          <TrendAreaChart
+            data={chartData}
+            dataKey="ingresos"
+            label="Ingresos"
+            gradientId="gymReport"
+            variant="pulse"
+          />
         </CardContent>
       </Card>
     </div>
