@@ -59,6 +59,8 @@ export interface GymDashboardStats {
   expiring_soon: number
   revenue_month_cash: number
   revenue_month_transfer: number
+  checkins_today: number
+  members_without_phone: number
 }
 
 /** Resolves the current user's shop id, or null if they have none. */
@@ -217,6 +219,8 @@ export async function getGymDashboardStats(shopId: string): Promise<GymDashboard
       expiring_soon: 0,
       revenue_month_cash: 0,
       revenue_month_transfer: 0,
+      checkins_today: 0,
+      members_without_phone: 0,
     }
   }
 
@@ -348,6 +352,12 @@ export interface GymCheckInRow {
 
 export type GymAccessOutcome = 'allowed' | 'denied_expired' | 'denied_not_found'
 export type GymAccessSource = 'desk' | 'self' | 'self_offline'
+
+export const GYM_ACCESS_SOURCE_LABEL: Record<GymAccessSource, string> = {
+  desk: 'Mostrador',
+  self: 'Autoingreso',
+  self_offline: 'Autoingreso (offline)',
+}
 
 export interface GymAccessLogRow {
   id: string
@@ -701,6 +711,41 @@ export async function getGymAccessLogForRange(
       source: row.source as GymAccessSource,
       member_name: member?.full_name ?? null,
       attempted_ref: row.attempted_ref,
+    }
+  })
+}
+
+export interface GymRecentCheckInRow {
+  id: string
+  member_name: string | null
+  checked_in_at: string
+  source: GymAccessSource
+}
+
+/** Resumen: last few successful entries, for a quick operational glance. */
+export async function getRecentGymCheckIns(shopId: string, limit = 5): Promise<GymRecentCheckInRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('id, checked_in_at, source, gym_members(full_name)')
+    .eq('shop_id', shopId)
+    .eq('outcome', 'allowed')
+    .order('checked_in_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('getRecentGymCheckIns: fallo al traer los últimos ingresos', { shopId, error })
+    return []
+  }
+
+  return (data ?? []).map((row) => {
+    const member = row.gym_members as { full_name: string } | null
+    return {
+      id: row.id,
+      member_name: member?.full_name ?? null,
+      checked_in_at: row.checked_in_at,
+      source: row.source as GymAccessSource,
     }
   })
 }

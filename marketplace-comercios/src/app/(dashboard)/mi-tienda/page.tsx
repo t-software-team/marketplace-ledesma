@@ -14,13 +14,14 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
-import { getGymDashboardStats } from '@/lib/gym/queries'
+import { getGymDashboardStats, getRecentGymCheckIns } from '@/lib/gym/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
   getActiveCategories,
   getActiveSubscriptionPlans,
   getFreeProductMax,
+  getGymMemberLimitInfo,
   getMyActiveSubscription,
   getMyShop,
   getMyShopProducts,
@@ -84,8 +85,20 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
 
   // Gyms get a dedicated management dashboard instead of the catalog resumen.
   if (isGymRubro(shop.categories?.slug)) {
-    const stats = await getGymDashboardStats(shop.id)
-    return <GymResumen shopName={shop.name} logoUrl={shop.logo_url} stats={stats} />
+    const [stats, memberLimit, recentCheckIns] = await Promise.all([
+      getGymDashboardStats(shop.id),
+      getGymMemberLimitInfo(shop.id),
+      getRecentGymCheckIns(shop.id),
+    ])
+    return (
+      <GymResumen
+        shopName={shop.name}
+        logoUrl={shop.logo_url}
+        stats={stats}
+        memberLimit={memberLimit}
+        recentCheckIns={recentCheckIns}
+      />
+    )
   }
 
   const isService = isServiceRubro(shop.categories?.slug)

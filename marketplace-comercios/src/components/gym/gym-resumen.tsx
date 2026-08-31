@@ -6,6 +6,7 @@ import {
   CalendarClock,
   Dumbbell,
   LogIn,
+  Smartphone,
   TrendingUp,
   UserPlus,
   Users,
@@ -13,7 +14,11 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import type { GymDashboardStats } from '@/lib/gym/queries'
+import {
+  GYM_ACCESS_SOURCE_LABEL,
+  type GymDashboardStats,
+  type GymRecentCheckInRow,
+} from '@/lib/gym/queries'
 
 function formatARS(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -23,16 +28,27 @@ function formatARS(value: number) {
   }).format(value)
 }
 
+function formatTime(value: string) {
+  return new Date(value).toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  })
+}
+
 interface GymResumenProps {
   shopName: string
   logoUrl?: string | null
   stats: GymDashboardStats
+  memberLimit: { used: number; max: number | null; reached: boolean }
+  recentCheckIns: GymRecentCheckInRow[]
 }
 
-export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
+export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckIns }: GymResumenProps) {
   const monthRevenue = stats.revenue_month_cash + stats.revenue_month_transfer
 
   const kpis = [
+    { icon: LogIn, label: 'Ingresos hoy', value: stats.checkins_today },
     { icon: Users, label: 'Socios activos', value: stats.active_members },
     {
       icon: CalendarClock,
@@ -44,6 +60,16 @@ export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
     { icon: AlertTriangle, label: 'Vencidos', value: stats.expired_members },
     { icon: UserPlus, label: 'Altas del mes', value: stats.new_members_month },
     { icon: UserX, label: 'Bajas', value: stats.archived_members },
+    ...(memberLimit.max !== null
+      ? [
+          {
+            icon: Users,
+            label: 'Cupo del plan',
+            value: `${memberLimit.used}/${memberLimit.max}`,
+            highlight: memberLimit.reached,
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -120,6 +146,23 @@ export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
         })}
       </div>
 
+      {stats.members_without_phone > 0 && (
+        <Link href="/mi-tienda/socios" className="block">
+          <Card className="border-warning transition-colors hover:border-primary">
+            <CardContent className="flex flex-wrap items-center gap-3 pt-6">
+              <Smartphone className="size-5 shrink-0 text-warning-foreground" aria-hidden />
+              <p className="text-sm">
+                <strong>{stats.members_without_phone}</strong>{' '}
+                {stats.members_without_phone === 1
+                  ? 'socio no tiene celular cargado'
+                  : 'socios no tienen celular cargado'}{' '}
+                y no pueden usar el autoingreso.
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-3">
         <Card>
           <CardContent className="space-y-1 px-4 pt-5">
@@ -158,6 +201,28 @@ export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
           </CardContent>
         </Card>
       </Link>
+
+      {recentCheckIns.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 pt-6">
+            <p className="text-sm font-medium">Últimos ingresos</p>
+            <div className="space-y-1">
+              {recentCheckIns.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm last:border-0"
+                >
+                  <span className="truncate">{c.member_name ?? 'Socio'}</span>
+                  <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                    <span>{GYM_ACCESS_SOURCE_LABEL[c.source].toLowerCase()}</span>
+                    <span className="font-mono">{formatTime(c.checked_in_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Button render={<Link href="/mi-tienda/socios" />} nativeButton={false} variant="outline">

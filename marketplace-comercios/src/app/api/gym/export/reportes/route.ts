@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getGymAccessLogForRange, getMyShopId } from '@/lib/gym/queries'
+import { getGymAccessLogForRange, getMyShopId, GYM_ACCESS_SOURCE_LABEL } from '@/lib/gym/queries'
 import { getGymBenefits } from '@/lib/shops/queries'
 import { resolveGymReportRange } from '@/lib/gym/report-range'
 import { toCsv } from '@/lib/csv'
@@ -8,12 +8,6 @@ const OUTCOME_LABEL: Record<string, string> = {
   allowed: 'Ingresó',
   denied_expired: 'Denegado (vencida)',
   denied_not_found: 'Denegado (sin socio)',
-}
-
-const SOURCE_LABEL: Record<string, string> = {
-  desk: 'Mostrador',
-  self: 'Autoingreso',
-  self_offline: 'Autoingreso (offline)',
 }
 
 function formatDateTime(value: string) {
@@ -39,7 +33,7 @@ export async function GET(request: Request) {
     ...log.map((row) => [
       formatDateTime(row.checked_in_at),
       OUTCOME_LABEL[row.outcome] ?? row.outcome,
-      SOURCE_LABEL[row.source] ?? row.source,
+      GYM_ACCESS_SOURCE_LABEL[row.source] ?? row.source,
       row.member_name ?? (row.attempted_ref ? `Nº ${row.attempted_ref}` : ''),
     ]),
   ]

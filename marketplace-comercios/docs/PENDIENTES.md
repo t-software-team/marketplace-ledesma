@@ -174,3 +174,13 @@ evidencia (policy leída, uso de `toCsv` confirmado por grep), no por
 descartar el hallazgo sin mirar. Si el gate vuelve a marcar lo mismo en un
 commit futuro que sí toque estos archivos, repetir esta misma verificación
 en vez de asumir que ya está resuelto para siempre.
+
+**Caso 2 (2026-09-10):** mismo patrón con
+`supabase/migrations/20260910000000_gym_dashboard_stats_extra.sql`, que
+hace `create or replace function get_gym_dashboard_stats` agregando dos
+campos (`checkins_today`, `members_without_phone`) al `jsonb_build_object`
+que ya devolvía. Verificado a mano: el `security definer` y el chequeo de
+rol (`owner_id = auth.uid() OR is_superadmin()`, con `raise exception` si
+no matchea) son **idénticos, carácter por carácter**, a los de la función
+original ya en producción — no se tocó la autorización, solo se sumaron dos
+subconsultas de solo lectura dentro del mismo bloque ya autorizado.
