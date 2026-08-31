@@ -461,6 +461,9 @@ export interface GymAccessLogRow {
 }
 
 export interface GymMemberDetail extends GymMemberWithStatus {
+  created_by_name: string | null
+  archived_by_name: string | null
+  archived_at: string | null
   memberships: GymMembershipHistoryRow[]
   payments: GymPaymentRow[]
   check_ins: GymCheckInRow[]
@@ -474,7 +477,9 @@ export async function getGymMember(
 
   const { data: member, error } = await supabase
     .from('gym_members')
-    .select('id, shop_id, full_name, phone, email, document, is_archived, notes, created_at')
+    .select(
+      'id, shop_id, full_name, phone, email, document, is_archived, notes, created_at, created_by, archived_by, archived_at'
+    )
     .eq('shop_id', shopId)
     .eq('id', memberId)
     .maybeSingle()
@@ -482,6 +487,20 @@ export async function getGymMember(
   if (error || !member) {
     if (error) console.error('getGymMember: fallo al traer socio', { memberId, error })
     return null
+  }
+
+  // created_by/archived_by apuntan a auth.users, no a profiles (no hay FK
+  // directa para hacer embed) — se resuelven los nombres aparte.
+  const staffIds = [member.created_by, member.archived_by].filter((id): id is string => !!id)
+  const staffNames = new Map<string, string>()
+  if (staffIds.length > 0) {
+    const { data: staffProfiles } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', staffIds)
+    for (const p of staffProfiles ?? []) {
+      if (p.full_name) staffNames.set(p.id, p.full_name)
+    }
   }
 
   const [membershipsRes, paymentsRes, checkInsRes] = await Promise.all([
@@ -532,7 +551,18 @@ export async function getGymMember(
       : 'expired'
 
   return {
-    ...member,
+    id: member.id,
+    shop_id: member.shop_id,
+    full_name: member.full_name,
+    phone: member.phone,
+    email: member.email,
+    document: member.document,
+    is_archived: member.is_archived,
+    notes: member.notes,
+    created_at: member.created_at,
+    created_by_name: member.created_by ? (staffNames.get(member.created_by) ?? 'Ex-empleado') : null,
+    archived_by_name: member.archived_by ? (staffNames.get(member.archived_by) ?? 'Ex-empleado') : null,
+    archived_at: member.archived_at,
     expires_at: latestExpiry,
     status,
     memberships,

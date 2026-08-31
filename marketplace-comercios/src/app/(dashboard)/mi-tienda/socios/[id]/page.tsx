@@ -92,6 +92,19 @@ export default async function MemberDetailPage({
           <p className="text-xs text-muted-foreground">
             {member.expires_at ? `Vence ${formatDate(member.expires_at)}` : 'Sin membresía'}
           </p>
+          <p className="text-xs text-muted-foreground">
+            {member.created_by_name
+              ? `Alta por ${member.created_by_name} el ${formatDate(member.created_at.slice(0, 10))}`
+              : `Alta el ${formatDate(member.created_at.slice(0, 10))}`}
+            {member.is_archived && member.archived_at && (
+              <>
+                {' · '}
+                {member.archived_by_name
+                  ? `Baja por ${member.archived_by_name} el ${formatDate(member.archived_at.slice(0, 10))}`
+                  : `Baja el ${formatDate(member.archived_at.slice(0, 10))}`}
+              </>
+            )}
+          </p>
         </CardHeader>
         <CardContent>
           <MemberEditForm member={member} />
