@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   ShieldX,
   Star,
+  User,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -287,6 +288,11 @@ export function DashboardHeader({
                 <span className="font-medium text-foreground">{userFullName ?? 'Usuario'}</span>
                 <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/perfil" />}>
+                <User className="size-4" aria-hidden />
+                Mi perfil
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
