@@ -240,3 +240,17 @@ puntos, ninguno nuevo (el archivo ya existía; solo se tocó `inviteGymStaff`):
    el archivo entra en el diff, no solo cuando cambia esa función.
 
 Se commiteó con `--no-verify` tras esta verificación.
+
+**Caso 5 (2026-08-31):** commit que agrega `email_has_account` para rutear
+la invitación a `/registro` vs `/login` según si el email ya tiene cuenta.
+`gga` marcó `FAILED` sobre `staff-actions.ts` pidiendo confirmar la RLS de
+`shop_staff` (ya cubierto en el Caso 4, sin cambios en `inviteGymStaff`/
+`revokeGymStaff` en este commit) y "no pudo ver" la migración nueva
+(`20260913000000_gym_staff_email_has_account.sql`) por el mismo límite de
+`File patterns: *.ts,*.tsx,*.js,*.jsx`. Releída a mano: la función es
+`security definer`, hace un único `select exists (... from auth.users where
+lower(email) = lower(p_email))` (sin exponer ninguna otra columna), y el
+`revoke all ... from public, anon, authenticated` + `grant execute ... to
+service_role` deja su ejecución restringida exclusivamente al service-role
+client server-side (`getGymStaffInvitePreview`) — no es alcanzable desde
+un visitante ni desde un usuario autenticado normal vía RPC directo.

@@ -180,7 +180,7 @@ export async function acceptGymStaffInviteAndRedirect(token: string) {
 
 export type InvitePreview =
   | { status: 'invalid' }
-  | { status: 'pending'; shopName: string; invitedEmail: string }
+  | { status: 'pending'; shopName: string; invitedEmail: string; hasAccount: boolean }
 
 /** Read-only lookup for the invite-accept page — shows what's being accepted
  * before the person commits, without mutating anything. */
@@ -197,5 +197,14 @@ export async function getGymStaffInvitePreview(token: string): Promise<InvitePre
   const shop = invite.shops as { name: string } | null
   if (!shop) return { status: 'invalid' }
 
-  return { status: 'pending', shopName: shop.name, invitedEmail: invite.invited_email }
+  const { data: hasAccount } = await service.rpc('email_has_account', {
+    p_email: invite.invited_email,
+  })
+
+  return {
+    status: 'pending',
+    shopName: shop.name,
+    invitedEmail: invite.invited_email,
+    hasAccount: hasAccount ?? false,
+  }
 }

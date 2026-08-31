@@ -1810,6 +1810,7 @@ export type Database = {
           }
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
+      email_has_account: { Args: { p_email: string }; Returns: boolean }
       enablelongtransactions: { Args: never; Returns: string }
       enqueue_appointment_reminders: {
         Args: never

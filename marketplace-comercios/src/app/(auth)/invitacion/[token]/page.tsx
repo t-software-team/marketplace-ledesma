@@ -29,7 +29,11 @@ export default async function InvitacionPage({ params }: PageProps) {
   if (!user) {
     const next = encodeURIComponent(`/invitacion/${token}`)
     const email = encodeURIComponent(preview.invitedEmail)
-    redirect(`/login?next=${next}&email=${email}`)
+    // Sending someone with no account yet to /login just leaves them stuck
+    // (their browser's autofill happily suggests a password for an account
+    // that doesn't exist, and login fails with "incorrect credentials").
+    const destination = preview.hasAccount ? '/login' : '/registro'
+    redirect(`${destination}?next=${next}&email=${email}`)
   }
 
   const emailMatches = user.email?.toLowerCase() === preview.invitedEmail.toLowerCase()
