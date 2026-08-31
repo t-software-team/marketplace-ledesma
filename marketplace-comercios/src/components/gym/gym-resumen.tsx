@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   AlertTriangle,
+  BarChart3,
   CalendarClock,
   Dumbbell,
   LogIn,
@@ -12,8 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { TrendAreaChart } from '@/components/shared/trend-area-chart'
-import type { GymAttendancePoint, GymDashboardStats } from '@/lib/gym/queries'
+import type { GymDashboardStats } from '@/lib/gym/queries'
 
 function formatARS(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -27,11 +27,9 @@ interface GymResumenProps {
   shopName: string
   logoUrl?: string | null
   stats: GymDashboardStats
-  attendance: GymAttendancePoint[]
-  canSeeStats: boolean
 }
 
-export function GymResumen({ shopName, logoUrl, stats, attendance, canSeeStats }: GymResumenProps) {
+export function GymResumen({ shopName, logoUrl, stats }: GymResumenProps) {
   const monthRevenue = stats.revenue_month_cash + stats.revenue_month_transfer
 
   const kpis = [
@@ -144,41 +142,22 @@ export function GymResumen({ shopName, logoUrl, stats, attendance, canSeeStats }
         </Card>
       </div>
 
-      {canSeeStats ? (
-        <Card>
-          <CardContent className="space-y-3 pt-6">
-            <div>
-              <p className="text-sm font-medium">Asistencia</p>
-              <p className="text-xs text-muted-foreground">Ingresos por día — últimos 14 días</p>
-            </div>
-            <TrendAreaChart
-              data={attendance}
-              dataKey="ingresos"
-              label="Ingresos"
-              gradientId="gymAttendance"
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-dashed">
+      <Link href="/mi-tienda/reportes" className="block">
+        <Card className="transition-colors hover:border-primary">
           <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
-            <div>
-              <p className="text-sm font-medium">Estadísticas de asistencia</p>
-              <p className="text-xs text-muted-foreground">
-                Mirá los ingresos por día con el Plan Gimnasio.
-              </p>
+            <div className="flex items-center gap-3">
+              <BarChart3 className="size-5 text-muted-foreground" aria-hidden />
+              <div>
+                <p className="text-sm font-medium">Reportes</p>
+                <p className="text-xs text-muted-foreground">
+                  Asistencia e ingresos por rango de fecha, con export CSV.
+                </p>
+              </div>
             </div>
-            <Button
-              render={<Link href="/mi-tienda/suscripcion" />}
-              nativeButton={false}
-              variant="outline"
-              size="sm"
-            >
-              Ver Plan Gimnasio
-            </Button>
+            <TrendingUp className="size-4 text-primary" aria-hidden />
           </CardContent>
         </Card>
-      )}
+      </Link>
 
       <div className="flex flex-wrap gap-2">
         <Button render={<Link href="/mi-tienda/socios" />} nativeButton={false} variant="outline">
