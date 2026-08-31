@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+  BarChart3,
   CreditCard,
   Flag,
   History,
@@ -37,6 +38,7 @@ const ICONS = {
   users: Users,
   wallet: Wallet,
   login: LogIn,
+  'bar-chart': BarChart3,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

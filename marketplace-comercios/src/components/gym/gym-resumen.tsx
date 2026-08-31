@@ -2,18 +2,23 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   AlertTriangle,
+  BarChart3,
   CalendarClock,
+  ChevronRight,
+  Clock,
   Dumbbell,
   LogIn,
-  TrendingUp,
+  Smartphone,
   UserPlus,
   Users,
-  UserX,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { TrendAreaChart } from '@/components/shared/trend-area-chart'
-import type { GymAttendancePoint, GymDashboardStats } from '@/lib/gym/queries'
+import {
+  GYM_ACCESS_SOURCE_LABEL,
+  type GymDashboardStats,
+  type GymRecentCheckInRow,
+} from '@/lib/gym/queries'
 
 function formatARS(value: number) {
   return new Intl.NumberFormat('es-AR', {
@@ -23,33 +28,97 @@ function formatARS(value: number) {
   }).format(value)
 }
 
+function formatTime(value: string) {
+  return new Date(value).toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'America/Argentina/Buenos_Aires',
+  })
+}
+
 interface GymResumenProps {
   shopName: string
   logoUrl?: string | null
   stats: GymDashboardStats
-  attendance: GymAttendancePoint[]
-  canSeeStats: boolean
+  memberLimit: { used: number; max: number | null; reached: boolean }
+  recentCheckIns: GymRecentCheckInRow[]
 }
 
-export function GymResumen({ shopName, logoUrl, stats, attendance, canSeeStats }: GymResumenProps) {
-  const monthRevenue = stats.revenue_month_cash + stats.revenue_month_transfer
-
-  const kpis = [
-    { icon: Users, label: 'Socios activos', value: stats.active_members },
-    {
-      icon: CalendarClock,
-      label: 'Vencen en 7 días',
-      value: stats.expiring_soon,
-      highlight: stats.expiring_soon > 0,
-      href: '/mi-tienda/vencimientos',
-    },
-    { icon: AlertTriangle, label: 'Vencidos', value: stats.expired_members },
-    { icon: UserPlus, label: 'Altas del mes', value: stats.new_members_month },
-    { icon: UserX, label: 'Bajas', value: stats.archived_members },
-  ]
+function ProgressRing({
+  value,
+  max,
+  size = 48,
+  strokeWidth = 5,
+}: {
+  value: number
+  max: number
+  size?: number
+  strokeWidth?: number
+}) {
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const progress = max > 0 ? Math.min(value / max, 1) : 0
+  const reached = progress >= 1
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 pb-8">
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={strokeWidth}
+          className="stroke-border"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - progress)}
+          className={reached ? 'stroke-warning' : 'stroke-primary'}
+        />
+      </svg>
+    </div>
+  )
+}
+
+/** A card that links elsewhere. Chevron is a persistent affordance — hover
+ * alone means nothing on the touch devices this app is built for. */
+function LinkCard({
+  href,
+  alert,
+  children,
+}: {
+  href: string
+  alert?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 rounded-xl p-4 transition-colors ${
+        alert
+          ? 'border border-warning bg-warning/10 text-warning-foreground hover:bg-warning/15'
+          : 'border border-border bg-card hover:border-primary'
+      }`}
+    >
+      <div className="min-w-0 flex-1">{children}</div>
+      <ChevronRight className="size-4 shrink-0 opacity-60" aria-hidden />
+    </Link>
+  )
+}
+
+export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckIns }: GymResumenProps) {
+  const monthRevenue = stats.revenue_month_cash + stats.revenue_month_transfer
+  const hasRisk = stats.expired_members > 0 || stats.expiring_soon > 0
+
+  return (
+    <div className="space-y-6 pb-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
@@ -66,17 +135,12 @@ export function GymResumen({ shopName, logoUrl, stats, attendance, canSeeStats }
             <p className="text-sm text-muted-foreground">Panel de tu gimnasio</p>
           </div>
         </div>
-        <Button
-          render={<Link href="/mi-tienda/socios/nuevo" />}
-          nativeButton={false}
-          className="hidden sm:inline-flex"
-        >
-          Nuevo socio
-        </Button>
       </div>
 
-      {/* Accesos rápidos de mostrador — solo mobile */}
-      <div className="grid grid-cols-2 gap-2 sm:hidden">
+      {/* Un solo lugar para las dos acciones más frecuentes, en todos los
+          tamaños de pantalla — antes vivían duplicadas entre el header
+          desktop y una grilla aparte solo para mobile. */}
+      <div className="grid grid-cols-2 gap-2">
         <Button
           render={<Link href="/mi-tienda/ingresos" />}
           nativeButton={false}
@@ -96,89 +160,141 @@ export function GymResumen({ shopName, logoUrl, stats, attendance, canSeeStats }
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {kpis.map(({ icon: Icon, label, value, highlight, href }) => {
-          const card = (
-            <Card
-              className={`h-full ${highlight ? 'border-warning' : ''} ${href ? 'transition-colors hover:border-primary' : ''}`}
-            >
-              <CardContent className="space-y-1 px-3 pt-4 sm:px-4 sm:pt-5">
-                <Icon
-                  className={`size-4 ${highlight ? 'text-warning-foreground' : 'text-muted-foreground'}`}
-                  aria-hidden
-                />
-                <p className="truncate text-xs text-muted-foreground">{label}</p>
-                <p className="font-heading text-xl sm:text-2xl">{value}</p>
-              </CardContent>
-            </Card>
-          )
-          return href ? (
-            <Link key={label} href={href} className="block">
-              {card}
-            </Link>
-          ) : (
-            <div key={label}>{card}</div>
-          )
-        })}
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* Hero: los dos números que el dueño busca primero, con más peso
+          visual que el resto de la pantalla. */}
+      <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardContent className="space-y-1 px-4 pt-5">
-            <p className="text-xs text-muted-foreground">Efectivo (mes)</p>
-            <p className="font-heading text-lg">{formatARS(stats.revenue_month_cash)}</p>
+            <Users className="size-4 text-muted-foreground" aria-hidden />
+            <p className="text-xs text-muted-foreground">Socios activos</p>
+            <p className="font-heading text-3xl">{stats.active_members}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="space-y-1 px-4 pt-5">
-            <p className="text-xs text-muted-foreground">Transferencia (mes)</p>
-            <p className="font-heading text-lg">{formatARS(stats.revenue_month_transfer)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="space-y-1 px-4 pt-5">
-            <TrendingUp className="size-4 text-muted-foreground" aria-hidden />
-            <p className="text-xs text-muted-foreground">Ingresos del mes</p>
-            <p className="font-heading text-lg text-primary">{formatARS(monthRevenue)}</p>
+            <Clock className="size-4 text-muted-foreground" aria-hidden />
+            <p className="text-xs text-muted-foreground">Ingresos hoy</p>
+            <p className="font-heading text-3xl">{stats.checkins_today}</p>
           </CardContent>
         </Card>
       </div>
 
-      {canSeeStats ? (
+      {/* Riesgo: agrupa lo que necesita acción, con el mismo tratamiento
+          visual (fondo con tinte, no solo un borde) que ya usa el resto de
+          la app para avisos de suscripción. */}
+      {hasRisk && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {stats.expired_members > 0 && (
+            <LinkCard href="/mi-tienda/socios" alert>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 shrink-0" aria-hidden />
+                <p className="text-sm">
+                  <strong>{stats.expired_members}</strong>{' '}
+                  {stats.expired_members === 1 ? 'socio vencido' : 'socios vencidos'}
+                </p>
+              </div>
+            </LinkCard>
+          )}
+          {stats.expiring_soon > 0 && (
+            <LinkCard href="/mi-tienda/vencimientos" alert>
+              <div className="flex items-center gap-2">
+                <CalendarClock className="size-4 shrink-0" aria-hidden />
+                <p className="text-sm">
+                  <strong>{stats.expiring_soon}</strong> {stats.expiring_soon === 1 ? 'vence' : 'vencen'} en
+                  7 días
+                </p>
+              </div>
+            </LinkCard>
+          )}
+        </div>
+      )}
+
+      {stats.members_without_phone > 0 && (
+        <LinkCard href="/mi-tienda/socios" alert>
+          <div className="flex items-center gap-2">
+            <Smartphone className="size-4 shrink-0" aria-hidden />
+            <p className="text-sm">
+              <strong>{stats.members_without_phone}</strong>{' '}
+              {stats.members_without_phone === 1
+                ? 'socio no tiene celular cargado'
+                : 'socios no tienen celular cargado'}{' '}
+              y no pueden usar el autoingreso.
+            </p>
+          </div>
+        </LinkCard>
+      )}
+
+      {memberLimit.max !== null && (
         <Card>
-          <CardContent className="space-y-3 pt-6">
-            <div>
-              <p className="text-sm font-medium">Asistencia</p>
-              <p className="text-xs text-muted-foreground">Ingresos por día — últimos 14 días</p>
-            </div>
-            <TrendAreaChart
-              data={attendance}
-              dataKey="ingresos"
-              label="Ingresos"
-              gradientId="gymAttendance"
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
-            <div>
-              <p className="text-sm font-medium">Estadísticas de asistencia</p>
-              <p className="text-xs text-muted-foreground">
-                Mirá los ingresos por día con el Plan Gimnasio.
+          <CardContent className="flex items-center justify-between pt-5">
+            <p className="text-xs text-muted-foreground">Cupo del plan</p>
+            <div className="flex items-center gap-3">
+              <p className={`font-heading text-lg ${memberLimit.reached ? 'text-warning-foreground' : ''}`}>
+                {memberLimit.used}/{memberLimit.max}
               </p>
+              <ProgressRing value={memberLimit.used} max={memberLimit.max} />
             </div>
-            <Button
-              render={<Link href="/mi-tienda/suscripcion" />}
-              nativeButton={false}
-              variant="outline"
-              size="sm"
-            >
-              Ver Plan Gimnasio
-            </Button>
           </CardContent>
         </Card>
       )}
+
+      {/* Ingresos del mes: un total como número principal, efectivo y
+          transferencia como desglose secundario dentro de la misma card. */}
+      <Card>
+        <CardContent className="space-y-3 pt-5">
+          <div>
+            <p className="text-xs text-muted-foreground">Ingresos del mes</p>
+            <p className="font-heading text-2xl text-primary">{formatARS(monthRevenue)}</p>
+          </div>
+          <div className="flex gap-4 border-t border-border/50 pt-3 text-sm">
+            <p className="text-muted-foreground">
+              Efectivo <span className="font-medium text-foreground">{formatARS(stats.revenue_month_cash)}</span>
+            </p>
+            <p className="text-muted-foreground">
+              Transferencia{' '}
+              <span className="font-medium text-foreground">{formatARS(stats.revenue_month_transfer)}</span>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <LinkCard href="/mi-tienda/reportes">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <div>
+            <p className="text-sm font-medium">Reportes</p>
+            <p className="text-xs text-muted-foreground">
+              Asistencia e ingresos por rango de fecha, con export CSV.
+            </p>
+          </div>
+        </div>
+      </LinkCard>
+
+      <Card>
+        <CardContent className="space-y-2 pt-6">
+          <p className="text-sm font-medium">Últimos ingresos</p>
+          {recentCheckIns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Todavía no hay ingresos registrados. Van a aparecer acá apenas un socio haga check-in.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {recentCheckIns.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm last:border-0"
+                >
+                  <span className="truncate">{c.member_name ?? 'Socio'}</span>
+                  <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                    <span>{GYM_ACCESS_SOURCE_LABEL[c.source].toLowerCase()}</span>
+                    <span className="font-mono">{formatTime(c.checked_in_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         <Button render={<Link href="/mi-tienda/socios" />} nativeButton={false} variant="outline">

@@ -3,6 +3,7 @@ import { createPublicClient } from '@/lib/supabase/public'
 import {
   addDaysToDate,
   argentinaDateString,
+  argentinaStartOfDayUTC,
   argentinaStartOfTodayUTC,
   argentinaToday,
   daysFromArgentinaToday,
@@ -46,6 +47,8 @@ export interface GymPaymentRow {
   paid_at: string | null
   created_at: string
   member_name: string | null
+  void_reason: string | null
+  voided_at: string | null
 }
 
 export interface GymDashboardStats {
@@ -56,6 +59,8 @@ export interface GymDashboardStats {
   expiring_soon: number
   revenue_month_cash: number
   revenue_month_transfer: number
+  checkins_today: number
+  members_without_phone: number
 }
 
 /** Resolves the current user's shop id, or null if they have none. */
@@ -214,40 +219,119 @@ export async function getGymDashboardStats(shopId: string): Promise<GymDashboard
       expiring_soon: 0,
       revenue_month_cash: 0,
       revenue_month_transfer: 0,
+      checkins_today: 0,
+      members_without_phone: 0,
     }
   }
 
   return data as unknown as GymDashboardStats
 }
 
-export async function getGymPayments(shopId: string, limit = 50): Promise<GymPaymentRow[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
+export interface GymPaymentsFilters {
+  from?: string
+  to?: string
+  search?: string
+  page?: number
+}
+
+const GYM_PAYMENTS_PAGE_SIZE = 25
+const GYM_PAYMENTS_SELECT =
+  'id, amount, method, status, paid_at, created_at, void_reason, voided_at, gym_memberships!inner(gym_members!inner(full_name))'
+
+/** Shared filter-building for the paginated view and the CSV export, so the two never drift. */
+function applyGymPaymentsFilters(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  shopId: string,
+  filters: GymPaymentsFilters,
+  withCount: boolean
+) {
+  let query = supabase
     .from('gym_payments')
-    .select(
-      'id, amount, method, status, paid_at, created_at, gym_memberships(gym_members(full_name))'
-    )
+    .select(GYM_PAYMENTS_SELECT, withCount ? { count: 'exact' } : undefined)
     .eq('shop_id', shopId)
+
+  if (filters.from) {
+    query = query.gte('paid_at', argentinaStartOfDayUTC(filters.from).toISOString())
+  }
+  if (filters.to) {
+    query = query.lt('paid_at', argentinaStartOfDayUTC(addDaysToDate(filters.to, 1)).toISOString())
+  }
+  if (filters.search?.trim()) {
+    // Strip ilike wildcards/PostgREST-or metacharacters so a stray %, _ or
+    // comma in the search box can't widen the match or break the filter.
+    const q = filters.search.trim().replace(/[%_,()]/g, ' ')
+    query = query.filter('gym_memberships.gym_members.full_name', 'ilike', `%${q}%`)
+  }
+  return query
+}
+
+function mapGymPaymentRow(row: {
+  id: string
+  amount: number
+  method: string
+  status: string
+  paid_at: string | null
+  created_at: string
+  void_reason: string | null
+  voided_at: string | null
+  gym_memberships: unknown
+}): GymPaymentRow {
+  const membership = row.gym_memberships as { gym_members?: { full_name: string } | null } | null
+  return {
+    id: row.id,
+    amount: row.amount,
+    method: row.method as GymPaymentMethod,
+    status: row.status,
+    paid_at: row.paid_at,
+    created_at: row.created_at,
+    member_name: membership?.gym_members?.full_name ?? null,
+    void_reason: row.void_reason,
+    voided_at: row.voided_at,
+  }
+}
+
+/** Caja: paginated payments, optionally filtered by date range and member name. */
+export async function getGymPaymentsPage(
+  shopId: string,
+  filters: GymPaymentsFilters = {}
+): Promise<{ payments: GymPaymentRow[]; total: number; page: number; totalPages: number }> {
+  const supabase = await createClient()
+  const page = Math.max(1, filters.page ?? 1)
+  const start = (page - 1) * GYM_PAYMENTS_PAGE_SIZE
+  const end = start + GYM_PAYMENTS_PAGE_SIZE - 1
+
+  const { data, error, count } = await applyGymPaymentsFilters(supabase, shopId, filters, true)
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .range(start, end)
 
   if (error) {
-    console.error('getGymPayments: fallo al traer pagos', { shopId, error })
+    console.error('getGymPaymentsPage: fallo al traer pagos', { shopId, filters, error })
+    return { payments: [], total: 0, page: 1, totalPages: 1 }
+  }
+
+  const total = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / GYM_PAYMENTS_PAGE_SIZE))
+
+  return { payments: (data ?? []).map(mapGymPaymentRow), total, page, totalPages }
+}
+
+/** Same filters as getGymPaymentsPage, unpaginated — for the CSV export. */
+export async function getGymPaymentsForExport(
+  shopId: string,
+  filters: Omit<GymPaymentsFilters, 'page'> = {}
+): Promise<GymPaymentRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await applyGymPaymentsFilters(supabase, shopId, filters, false)
+    .order('created_at', { ascending: false })
+    .limit(20000)
+
+  if (error) {
+    console.error('getGymPaymentsForExport: fallo al traer pagos', { shopId, filters, error })
     return []
   }
 
-  return (data ?? []).map((row) => {
-    const membership = row.gym_memberships as { gym_members?: { full_name: string } | null } | null
-    return {
-      id: row.id,
-      amount: row.amount,
-      method: row.method as GymPaymentMethod,
-      status: row.status,
-      paid_at: row.paid_at,
-      created_at: row.created_at,
-      member_name: membership?.gym_members?.full_name ?? null,
-    }
-  })
+  return (data ?? []).map(mapGymPaymentRow)
 }
 
 export interface GymMembershipHistoryRow {
@@ -267,7 +351,13 @@ export interface GymCheckInRow {
 }
 
 export type GymAccessOutcome = 'allowed' | 'denied_expired' | 'denied_not_found'
-export type GymAccessSource = 'desk' | 'self'
+export type GymAccessSource = 'desk' | 'self' | 'self_offline'
+
+export const GYM_ACCESS_SOURCE_LABEL: Record<GymAccessSource, string> = {
+  desk: 'Mostrador',
+  self: 'Autoingreso',
+  self_offline: 'Autoingreso (offline)',
+}
 
 export interface GymAccessLogRow {
   id: string
@@ -312,7 +402,9 @@ export async function getGymMember(
       .limit(100),
     supabase
       .from('gym_payments')
-      .select('id, amount, method, status, paid_at, created_at, gym_memberships!inner(member_id)')
+      .select(
+        'id, amount, method, status, paid_at, created_at, void_reason, voided_at, gym_memberships!inner(member_id)'
+      )
       .eq('shop_id', shopId)
       .eq('gym_memberships.member_id', memberId)
       .order('created_at', { ascending: false })
@@ -361,6 +453,8 @@ export async function getGymMember(
       paid_at: row.paid_at,
       created_at: row.created_at,
       member_name: member.full_name,
+      void_reason: row.void_reason,
+      voided_at: row.voided_at,
     })),
     check_ins: (checkInsRes.data ?? []).map((row) => ({
       id: row.id,
@@ -411,44 +505,114 @@ export async function getExpiringMembers(
   return result.sort((a, b) => a.days_left - b.days_left)
 }
 
-export type GymAttendancePoint = {
+/** Widest range a report can span — bounds the check-ins/payments scan below. */
+export const GYM_REPORT_MAX_DAYS = 92
+
+export interface GymReportRow {
   date: string
-  ingresos: number
+  allowed: number
+  denied_expired: number
+  denied_not_found: number
 }
 
-/** Ingresos (check-ins) por día de los últimos `days`, agrupados en hora AR. */
-export async function getGymCheckInsSeries(
-  shopId: string,
-  days = 14
-): Promise<GymAttendancePoint[]> {
+export interface GymReportData {
+  daily: GymReportRow[]
+  totals: {
+    allowed: number
+    denied_expired: number
+    denied_not_found: number
+    by_source: { desk: number; self: number; self_offline: number }
+    revenue_cash: number
+    revenue_transfer: number
+    revenue_mercadopago: number
+  }
+}
+
+/**
+ * Access + revenue report for an arbitrary date range (capped at
+ * GYM_REPORT_MAX_DAYS). Aggregated in JS from raw rows — same approach as
+ * getGymCheckInsSeries — which is fine at the bounded range this caps to, but
+ * would need a SQL aggregate (RPC) if the range cap ever grows much further.
+ */
+export async function getGymReport(shopId: string, from: string, to: string): Promise<GymReportData> {
   const supabase = await createClient()
-  const since = argentinaStartOfTodayUTC()
-  since.setUTCDate(since.getUTCDate() - (days - 1))
+  const rangeStart = argentinaStartOfDayUTC(from).toISOString()
+  const rangeEnd = argentinaStartOfDayUTC(addDaysToDate(to, 1)).toISOString()
 
-  const { data, error } = await supabase
-    .from('gym_check_ins')
-    .select('checked_in_at')
-    .eq('shop_id', shopId)
-    .gte('checked_in_at', since.toISOString())
+  const [checkIns, payments] = await Promise.all([
+    supabase
+      .from('gym_check_ins')
+      .select('checked_in_at, outcome, source')
+      .eq('shop_id', shopId)
+      .gte('checked_in_at', rangeStart)
+      .lt('checked_in_at', rangeEnd)
+      .limit(20000),
+    supabase
+      .from('gym_payments')
+      .select('amount, method, paid_at')
+      .eq('shop_id', shopId)
+      .eq('status', 'paid')
+      .gte('paid_at', rangeStart)
+      .lt('paid_at', rangeEnd)
+      .limit(20000),
+  ])
 
-  if (error) {
-    console.error('getGymCheckInsSeries: fallo al traer asistencia', { shopId, days, error })
-    return []
+  if (checkIns.error) {
+    console.error('getGymReport: fallo al traer ingresos', { shopId, from, to, error: checkIns.error })
+  }
+  if (payments.error) {
+    console.error('getGymReport: fallo al traer pagos', { shopId, from, to, error: payments.error })
   }
 
-  const counts = new Map<string, number>()
-  for (let i = 0; i < days; i++) {
-    counts.set(addDaysToDate(argentinaToday(), i - (days - 1)), 0)
+  const byDay = new Map<string, GymReportRow>()
+  for (let d = from; d <= to; d = addDaysToDate(d, 1)) {
+    byDay.set(d, { date: d, allowed: 0, denied_expired: 0, denied_not_found: 0 })
   }
-  for (const row of data ?? []) {
+
+  const bySource = { desk: 0, self: 0, self_offline: 0 }
+  let allowed = 0
+  let deniedExpired = 0
+  let deniedNotFound = 0
+
+  for (const row of checkIns.data ?? []) {
     const day = argentinaDateString(new Date(row.checked_in_at))
-    if (counts.has(day)) counts.set(day, (counts.get(day) ?? 0) + 1)
+    const bucket = byDay.get(day)
+    if (row.outcome === 'allowed') {
+      allowed++
+      if (bucket) bucket.allowed++
+      if (row.source === 'desk' || row.source === 'self' || row.source === 'self_offline') {
+        bySource[row.source]++
+      }
+    } else if (row.outcome === 'denied_expired') {
+      deniedExpired++
+      if (bucket) bucket.denied_expired++
+    } else if (row.outcome === 'denied_not_found') {
+      deniedNotFound++
+      if (bucket) bucket.denied_not_found++
+    }
   }
 
-  return Array.from(counts.entries()).map(([date, ingresos]) => {
-    const [, mm, dd] = date.split('-')
-    return { date: `${dd}/${mm}`, ingresos }
-  })
+  let revenueCash = 0
+  let revenueTransfer = 0
+  let revenueMercadopago = 0
+  for (const row of payments.data ?? []) {
+    if (row.method === 'cash') revenueCash += row.amount
+    else if (row.method === 'transfer') revenueTransfer += row.amount
+    else if (row.method === 'mercadopago') revenueMercadopago += row.amount
+  }
+
+  return {
+    daily: Array.from(byDay.values()),
+    totals: {
+      allowed,
+      denied_expired: deniedExpired,
+      denied_not_found: deniedNotFound,
+      by_source: bySource,
+      revenue_cash: revenueCash,
+      revenue_transfer: revenueTransfer,
+      revenue_mercadopago: revenueMercadopago,
+    },
+  }
 }
 
 export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {
@@ -510,6 +674,78 @@ export async function getTodayAccessLog(shopId: string, limit = 200): Promise<Gy
       source: row.source as GymAccessSource,
       member_name: member?.full_name ?? null,
       attempted_ref: row.attempted_ref,
+    }
+  })
+}
+
+/** Same shape as getTodayAccessLog, for an arbitrary date range (report export). */
+export async function getGymAccessLogForRange(
+  shopId: string,
+  from: string,
+  to: string
+): Promise<GymAccessLogRow[]> {
+  const supabase = await createClient()
+  const rangeStart = argentinaStartOfDayUTC(from).toISOString()
+  const rangeEnd = argentinaStartOfDayUTC(addDaysToDate(to, 1)).toISOString()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('id, checked_in_at, outcome, source, attempted_ref, gym_members(full_name)')
+    .eq('shop_id', shopId)
+    .gte('checked_in_at', rangeStart)
+    .lt('checked_in_at', rangeEnd)
+    .order('checked_in_at', { ascending: false })
+    .limit(20000)
+
+  if (error) {
+    console.error('getGymAccessLogForRange: fallo al traer el log de accesos', { shopId, from, to, error })
+    return []
+  }
+
+  return (data ?? []).map((row) => {
+    const member = row.gym_members as { full_name: string } | null
+    return {
+      id: row.id,
+      checked_in_at: row.checked_in_at,
+      outcome: row.outcome as GymAccessOutcome,
+      source: row.source as GymAccessSource,
+      member_name: member?.full_name ?? null,
+      attempted_ref: row.attempted_ref,
+    }
+  })
+}
+
+export interface GymRecentCheckInRow {
+  id: string
+  member_name: string | null
+  checked_in_at: string
+  source: GymAccessSource
+}
+
+/** Resumen: last few successful entries, for a quick operational glance. */
+export async function getRecentGymCheckIns(shopId: string, limit = 5): Promise<GymRecentCheckInRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('id, checked_in_at, source, gym_members(full_name)')
+    .eq('shop_id', shopId)
+    .eq('outcome', 'allowed')
+    .order('checked_in_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('getRecentGymCheckIns: fallo al traer los últimos ingresos', { shopId, error })
+    return []
+  }
+
+  return (data ?? []).map((row) => {
+    const member = row.gym_members as { full_name: string } | null
+    return {
+      id: row.id,
+      member_name: member?.full_name ?? null,
+      checked_in_at: row.checked_in_at,
+      source: row.source as GymAccessSource,
     }
   })
 }

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   getMyShopId,
   getTodayAccessLog,
+  GYM_ACCESS_SOURCE_LABEL,
   type GymAccessOutcome,
 } from '@/lib/gym/queries'
 import { CheckInClient } from './check-in-client'
@@ -81,7 +82,7 @@ export default async function IngresosPage() {
                       <span className="truncate">{label}</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span>{row.source === 'self' ? 'autoingreso' : 'mostrador'}</span>
+                      <span>{GYM_ACCESS_SOURCE_LABEL[row.source].toLowerCase()}</span>
                       <span className="font-mono">{formatTime(row.checked_in_at)}</span>
                     </div>
                   </div>

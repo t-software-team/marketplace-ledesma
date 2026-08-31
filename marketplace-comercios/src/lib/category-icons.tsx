@@ -69,6 +69,7 @@ const SERVICE_RUBROS = new Set([
   'bandas-musicales',
   'detailing',
   'estetica',
+  'gimnasio',
 ])
 
 export function isServiceRubro(slug: string | null | undefined): boolean {

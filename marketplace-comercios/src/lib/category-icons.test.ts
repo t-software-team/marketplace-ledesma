@@ -10,6 +10,10 @@ describe('isServiceRubro', () => {
     expect(isServiceRubro('talleres')).toBe(true)
   })
 
+  it('clasifica gimnasio como servicio', () => {
+    expect(isServiceRubro('gimnasio')).toBe(true)
+  })
+
   it('clasifica farmacias como producto (no servicio)', () => {
     expect(isServiceRubro('farmacias')).toBe(false)
   })

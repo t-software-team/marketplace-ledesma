@@ -539,6 +539,9 @@ export type Database = {
           paid_at: string | null
           shop_id: string
           status: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
         }
         Insert: {
           amount?: number
@@ -550,6 +553,9 @@ export type Database = {
           paid_at?: string | null
           shop_id: string
           status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Update: {
           amount?: number
@@ -561,6 +567,9 @@ export type Database = {
           paid_at?: string | null
           shop_id?: string
           status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
         }
         Relationships: [
           {

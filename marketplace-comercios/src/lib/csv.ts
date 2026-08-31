@@ -23,3 +23,12 @@ export function downloadCsv(csv: string, filename: string) {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Server-side CSV building for API routes that stream a download directly
+ * (no Blob/DOM available): same escaping as escapeCsvValue, plus a BOM so
+ * Excel opens accented characters correctly.
+ */
+export function toCsv(rows: string[][]): string {
+  return '﻿' + rows.map((r) => r.map(escapeCsvValue).join(',')).join('\n')
+}

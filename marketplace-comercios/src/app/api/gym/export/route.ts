@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getGymMembers, getMyShopId } from '@/lib/gym/queries'
 import { getGymBenefits } from '@/lib/shops/queries'
+import { toCsv } from '@/lib/csv'
 
 const STATUS_LABEL: Record<string, string> = {
   active: 'Vigente',
   expired: 'Vencido',
   archived: 'Baja',
-}
-
-function csvCell(value: string): string {
-  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value
 }
 
 export async function GET() {
@@ -35,8 +32,7 @@ export async function GET() {
     ]),
   ]
 
-  // BOM para que Excel abra los acentos bien.
-  const csv = '﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\n')
+  const csv = toCsv(rows)
 
   return new NextResponse(csv, {
     headers: {
