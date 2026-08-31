@@ -5,6 +5,7 @@ import {
   getMyShopId,
   getTodayAccessLog,
   type GymAccessOutcome,
+  type GymAccessSource,
 } from '@/lib/gym/queries'
 import { CheckInClient } from './check-in-client'
 import { SelfCheckinLaunch } from './self-checkin-launch'
@@ -24,6 +25,12 @@ const OUTCOME: Record<
   allowed: { label: 'Ingresó', variant: 'success' },
   denied_expired: { label: 'Vencida', variant: 'warning' },
   denied_not_found: { label: 'No encontrado', variant: 'outline' },
+}
+
+const SOURCE_LABEL: Record<GymAccessSource, string> = {
+  desk: 'mostrador',
+  self: 'autoingreso',
+  self_offline: 'autoingreso (offline)',
 }
 
 export default async function IngresosPage() {
@@ -81,7 +88,7 @@ export default async function IngresosPage() {
                       <span className="truncate">{label}</span>
                     </div>
                     <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span>{row.source === 'self' ? 'autoingreso' : 'mostrador'}</span>
+                      <span>{SOURCE_LABEL[row.source]}</span>
                       <span className="font-mono">{formatTime(row.checked_in_at)}</span>
                     </div>
                   </div>

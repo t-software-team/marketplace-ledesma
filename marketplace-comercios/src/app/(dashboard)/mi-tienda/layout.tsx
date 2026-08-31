@@ -80,6 +80,7 @@ export default async function MiTiendaLayout({
         { href: '/mi-tienda/planes', label: 'Planes', icon: 'tag' },
         { href: '/mi-tienda/productos', label: 'Servicios', icon: 'package' },
         { href: '/mi-tienda/caja', label: 'Caja', icon: 'wallet' },
+        { href: '/mi-tienda/reportes', label: 'Reportes', icon: 'bar-chart' },
         {
           href: '/mi-tienda/personalizar',
           label: 'Personalizar',

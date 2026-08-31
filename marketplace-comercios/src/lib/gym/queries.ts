@@ -3,6 +3,7 @@ import { createPublicClient } from '@/lib/supabase/public'
 import {
   addDaysToDate,
   argentinaDateString,
+  argentinaStartOfDayUTC,
   argentinaStartOfTodayUTC,
   argentinaToday,
   daysFromArgentinaToday,
@@ -267,7 +268,7 @@ export interface GymCheckInRow {
 }
 
 export type GymAccessOutcome = 'allowed' | 'denied_expired' | 'denied_not_found'
-export type GymAccessSource = 'desk' | 'self'
+export type GymAccessSource = 'desk' | 'self' | 'self_offline'
 
 export interface GymAccessLogRow {
   id: string
@@ -451,6 +452,116 @@ export async function getGymCheckInsSeries(
   })
 }
 
+/** Widest range a report can span — bounds the check-ins/payments scan below. */
+export const GYM_REPORT_MAX_DAYS = 92
+
+export interface GymReportRow {
+  date: string
+  allowed: number
+  denied_expired: number
+  denied_not_found: number
+}
+
+export interface GymReportData {
+  daily: GymReportRow[]
+  totals: {
+    allowed: number
+    denied_expired: number
+    denied_not_found: number
+    by_source: { desk: number; self: number; self_offline: number }
+    revenue_cash: number
+    revenue_transfer: number
+    revenue_mercadopago: number
+  }
+}
+
+/**
+ * Access + revenue report for an arbitrary date range (capped at
+ * GYM_REPORT_MAX_DAYS). Aggregated in JS from raw rows — same approach as
+ * getGymCheckInsSeries — which is fine at the bounded range this caps to, but
+ * would need a SQL aggregate (RPC) if the range cap ever grows much further.
+ */
+export async function getGymReport(shopId: string, from: string, to: string): Promise<GymReportData> {
+  const supabase = await createClient()
+  const rangeStart = argentinaStartOfDayUTC(from).toISOString()
+  const rangeEnd = argentinaStartOfDayUTC(addDaysToDate(to, 1)).toISOString()
+
+  const [checkIns, payments] = await Promise.all([
+    supabase
+      .from('gym_check_ins')
+      .select('checked_in_at, outcome, source')
+      .eq('shop_id', shopId)
+      .gte('checked_in_at', rangeStart)
+      .lt('checked_in_at', rangeEnd)
+      .limit(20000),
+    supabase
+      .from('gym_payments')
+      .select('amount, method, paid_at')
+      .eq('shop_id', shopId)
+      .eq('status', 'paid')
+      .gte('paid_at', rangeStart)
+      .lt('paid_at', rangeEnd)
+      .limit(20000),
+  ])
+
+  if (checkIns.error) {
+    console.error('getGymReport: fallo al traer ingresos', { shopId, from, to, error: checkIns.error })
+  }
+  if (payments.error) {
+    console.error('getGymReport: fallo al traer pagos', { shopId, from, to, error: payments.error })
+  }
+
+  const byDay = new Map<string, GymReportRow>()
+  for (let d = from; d <= to; d = addDaysToDate(d, 1)) {
+    byDay.set(d, { date: d, allowed: 0, denied_expired: 0, denied_not_found: 0 })
+  }
+
+  const bySource = { desk: 0, self: 0, self_offline: 0 }
+  let allowed = 0
+  let deniedExpired = 0
+  let deniedNotFound = 0
+
+  for (const row of checkIns.data ?? []) {
+    const day = argentinaDateString(new Date(row.checked_in_at))
+    const bucket = byDay.get(day)
+    if (row.outcome === 'allowed') {
+      allowed++
+      if (bucket) bucket.allowed++
+      if (row.source === 'desk' || row.source === 'self' || row.source === 'self_offline') {
+        bySource[row.source]++
+      }
+    } else if (row.outcome === 'denied_expired') {
+      deniedExpired++
+      if (bucket) bucket.denied_expired++
+    } else if (row.outcome === 'denied_not_found') {
+      deniedNotFound++
+      if (bucket) bucket.denied_not_found++
+    }
+  }
+
+  let revenueCash = 0
+  let revenueTransfer = 0
+  let revenueMercadopago = 0
+  for (const row of payments.data ?? []) {
+    if (row.method === 'cash') revenueCash += row.amount
+    else if (row.method === 'transfer') revenueTransfer += row.amount
+    else if (row.method === 'mercadopago') revenueMercadopago += row.amount
+  }
+
+  return {
+    daily: Array.from(byDay.values()),
+    totals: {
+      allowed,
+      denied_expired: deniedExpired,
+      denied_not_found: deniedNotFound,
+      by_source: bySource,
+      revenue_cash: revenueCash,
+      revenue_transfer: revenueTransfer,
+      revenue_mercadopago: revenueMercadopago,
+    },
+  }
+}
+
 export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {
   const supabase = await createClient()
   const startOfDay = argentinaStartOfTodayUTC()
@@ -498,6 +609,43 @@ export async function getTodayAccessLog(shopId: string, limit = 200): Promise<Gy
 
   if (error) {
     console.error('getTodayAccessLog: fallo al traer el log de accesos', { shopId, error })
+    return []
+  }
+
+  return (data ?? []).map((row) => {
+    const member = row.gym_members as { full_name: string } | null
+    return {
+      id: row.id,
+      checked_in_at: row.checked_in_at,
+      outcome: row.outcome as GymAccessOutcome,
+      source: row.source as GymAccessSource,
+      member_name: member?.full_name ?? null,
+      attempted_ref: row.attempted_ref,
+    }
+  })
+}
+
+/** Same shape as getTodayAccessLog, for an arbitrary date range (report export). */
+export async function getGymAccessLogForRange(
+  shopId: string,
+  from: string,
+  to: string
+): Promise<GymAccessLogRow[]> {
+  const supabase = await createClient()
+  const rangeStart = argentinaStartOfDayUTC(from).toISOString()
+  const rangeEnd = argentinaStartOfDayUTC(addDaysToDate(to, 1)).toISOString()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('id, checked_in_at, outcome, source, attempted_ref, gym_members(full_name)')
+    .eq('shop_id', shopId)
+    .gte('checked_in_at', rangeStart)
+    .lt('checked_in_at', rangeEnd)
+    .order('checked_in_at', { ascending: false })
+    .limit(20000)
+
+  if (error) {
+    console.error('getGymAccessLogForRange: fallo al traer el log de accesos', { shopId, from, to, error })
     return []
   }
 
