@@ -47,6 +47,8 @@ export interface GymPaymentRow {
   paid_at: string | null
   created_at: string
   member_name: string | null
+  void_reason: string | null
+  voided_at: string | null
 }
 
 export interface GymDashboardStats {
@@ -221,34 +223,111 @@ export async function getGymDashboardStats(shopId: string): Promise<GymDashboard
   return data as unknown as GymDashboardStats
 }
 
-export async function getGymPayments(shopId: string, limit = 50): Promise<GymPaymentRow[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
+export interface GymPaymentsFilters {
+  from?: string
+  to?: string
+  search?: string
+  page?: number
+}
+
+const GYM_PAYMENTS_PAGE_SIZE = 25
+const GYM_PAYMENTS_SELECT =
+  'id, amount, method, status, paid_at, created_at, void_reason, voided_at, gym_memberships!inner(gym_members!inner(full_name))'
+
+/** Shared filter-building for the paginated view and the CSV export, so the two never drift. */
+function applyGymPaymentsFilters(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  shopId: string,
+  filters: GymPaymentsFilters,
+  withCount: boolean
+) {
+  let query = supabase
     .from('gym_payments')
-    .select(
-      'id, amount, method, status, paid_at, created_at, gym_memberships(gym_members(full_name))'
-    )
+    .select(GYM_PAYMENTS_SELECT, withCount ? { count: 'exact' } : undefined)
     .eq('shop_id', shopId)
+
+  if (filters.from) {
+    query = query.gte('paid_at', argentinaStartOfDayUTC(filters.from).toISOString())
+  }
+  if (filters.to) {
+    query = query.lt('paid_at', argentinaStartOfDayUTC(addDaysToDate(filters.to, 1)).toISOString())
+  }
+  if (filters.search?.trim()) {
+    // Strip ilike wildcards/PostgREST-or metacharacters so a stray %, _ or
+    // comma in the search box can't widen the match or break the filter.
+    const q = filters.search.trim().replace(/[%_,()]/g, ' ')
+    query = query.filter('gym_memberships.gym_members.full_name', 'ilike', `%${q}%`)
+  }
+  return query
+}
+
+function mapGymPaymentRow(row: {
+  id: string
+  amount: number
+  method: string
+  status: string
+  paid_at: string | null
+  created_at: string
+  void_reason: string | null
+  voided_at: string | null
+  gym_memberships: unknown
+}): GymPaymentRow {
+  const membership = row.gym_memberships as { gym_members?: { full_name: string } | null } | null
+  return {
+    id: row.id,
+    amount: row.amount,
+    method: row.method as GymPaymentMethod,
+    status: row.status,
+    paid_at: row.paid_at,
+    created_at: row.created_at,
+    member_name: membership?.gym_members?.full_name ?? null,
+    void_reason: row.void_reason,
+    voided_at: row.voided_at,
+  }
+}
+
+/** Caja: paginated payments, optionally filtered by date range and member name. */
+export async function getGymPaymentsPage(
+  shopId: string,
+  filters: GymPaymentsFilters = {}
+): Promise<{ payments: GymPaymentRow[]; total: number; page: number; totalPages: number }> {
+  const supabase = await createClient()
+  const page = Math.max(1, filters.page ?? 1)
+  const start = (page - 1) * GYM_PAYMENTS_PAGE_SIZE
+  const end = start + GYM_PAYMENTS_PAGE_SIZE - 1
+
+  const { data, error, count } = await applyGymPaymentsFilters(supabase, shopId, filters, true)
     .order('created_at', { ascending: false })
-    .limit(limit)
+    .range(start, end)
 
   if (error) {
-    console.error('getGymPayments: fallo al traer pagos', { shopId, error })
+    console.error('getGymPaymentsPage: fallo al traer pagos', { shopId, filters, error })
+    return { payments: [], total: 0, page: 1, totalPages: 1 }
+  }
+
+  const total = count ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / GYM_PAYMENTS_PAGE_SIZE))
+
+  return { payments: (data ?? []).map(mapGymPaymentRow), total, page, totalPages }
+}
+
+/** Same filters as getGymPaymentsPage, unpaginated — for the CSV export. */
+export async function getGymPaymentsForExport(
+  shopId: string,
+  filters: Omit<GymPaymentsFilters, 'page'> = {}
+): Promise<GymPaymentRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await applyGymPaymentsFilters(supabase, shopId, filters, false)
+    .order('created_at', { ascending: false })
+    .limit(20000)
+
+  if (error) {
+    console.error('getGymPaymentsForExport: fallo al traer pagos', { shopId, filters, error })
     return []
   }
 
-  return (data ?? []).map((row) => {
-    const membership = row.gym_memberships as { gym_members?: { full_name: string } | null } | null
-    return {
-      id: row.id,
-      amount: row.amount,
-      method: row.method as GymPaymentMethod,
-      status: row.status,
-      paid_at: row.paid_at,
-      created_at: row.created_at,
-      member_name: membership?.gym_members?.full_name ?? null,
-    }
-  })
+  return (data ?? []).map(mapGymPaymentRow)
 }
 
 export interface GymMembershipHistoryRow {
@@ -313,7 +392,9 @@ export async function getGymMember(
       .limit(100),
     supabase
       .from('gym_payments')
-      .select('id, amount, method, status, paid_at, created_at, gym_memberships!inner(member_id)')
+      .select(
+        'id, amount, method, status, paid_at, created_at, void_reason, voided_at, gym_memberships!inner(member_id)'
+      )
       .eq('shop_id', shopId)
       .eq('gym_memberships.member_id', memberId)
       .order('created_at', { ascending: false })
@@ -362,6 +443,8 @@ export async function getGymMember(
       paid_at: row.paid_at,
       created_at: row.created_at,
       member_name: member.full_name,
+      void_reason: row.void_reason,
+      voided_at: row.voided_at,
     })),
     check_ins: (checkInsRes.data ?? []).map((row) => ({
       id: row.id,

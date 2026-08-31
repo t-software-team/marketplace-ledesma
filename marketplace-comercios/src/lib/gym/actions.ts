@@ -510,3 +510,50 @@ async function settleMembership(
 
   return null
 }
+
+/**
+ * Corrects a mis-entered payment without deleting it: marks it 'voided' with
+ * a reason, so caja stays auditable and the amount stops counting toward
+ * revenue (get_gym_dashboard_stats already filters status='paid').
+ */
+export async function voidGymPayment(
+  paymentId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, user, shopId } = await requireShop()
+  if (!shopId) return { error: 'No tenés un comercio creado' }
+
+  const trimmedReason = String(formData.get('reason') ?? '').trim()
+  if (!trimmedReason) return { error: 'Ingresá un motivo para anular el pago' }
+
+  const { data: payment } = await supabase
+    .from('gym_payments')
+    .select('id, status')
+    .eq('id', paymentId)
+    .eq('shop_id', shopId)
+    .maybeSingle()
+
+  if (!payment) return { error: 'No encontramos el pago' }
+  if (payment.status === 'voided') return { error: 'Este pago ya está anulado' }
+
+  const { error } = await supabase
+    .from('gym_payments')
+    .update({
+      status: 'voided',
+      void_reason: trimmedReason,
+      voided_at: new Date().toISOString(),
+      voided_by: user.id,
+    })
+    .eq('id', paymentId)
+    .eq('shop_id', shopId)
+
+  if (error) {
+    console.error('voidGymPayment: fallo al anular el pago', { paymentId, error })
+    return { error: 'No pudimos anular el pago' }
+  }
+
+  revalidatePath('/mi-tienda/caja')
+  revalidatePath('/mi-tienda')
+  return { error: null }
+}
