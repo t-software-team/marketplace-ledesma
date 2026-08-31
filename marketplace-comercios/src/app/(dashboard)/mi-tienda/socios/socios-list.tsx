@@ -12,9 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { setGymMemberArchived, type ActionState } from '@/lib/gym/actions'
+import { toast } from '@/components/ui/toast'
+import { setGymMemberArchived } from '@/lib/gym/actions'
 import type { GymMemberStatus, GymMemberWithStatus } from '@/lib/gym/queries'
 import { RenewMemberDialog } from './renew-member-dialog'
+import { EditMemberDialog } from './edit-member-dialog'
 
 interface PlanOption {
   id: string
@@ -43,8 +45,16 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
   const toggleArchived = () => {
     const next = !member.is_archived
     if (next && !confirm(`¿Dar de baja a ${member.full_name}? Su historial se conserva.`)) return
-    startTransition(() => {
-      void (setGymMemberArchived(member.id, next) as Promise<ActionState>)
+    startTransition(async () => {
+      const res = await setGymMemberArchived(member.id, next)
+      if (res.error) {
+        console.error('SociosList: fallo al cambiar el estado del socio', {
+          memberId: member.id,
+          next,
+          error: res.error,
+        })
+        toast.add({ title: 'No pudimos actualizar al socio', description: res.error, type: 'error' })
+      }
     })
   }
 
@@ -58,6 +68,9 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
           {member.full_name}
         </Link>
       </TableCell>
+      <TableCell className="whitespace-nowrap text-muted-foreground">
+        {member.document || '—'}
+      </TableCell>
       <TableCell>
         <Badge variant={status.variant}>{status.label}</Badge>
       </TableCell>
@@ -70,7 +83,10 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
       <TableCell>
         <div className="flex items-center justify-end gap-2">
           {!member.is_archived && (
-            <RenewMemberDialog memberId={member.id} plans={plans} />
+            <>
+              <EditMemberDialog member={member} />
+              <RenewMemberDialog memberId={member.id} plans={plans} />
+            </>
           )}
           <Button variant="ghost" size="sm" disabled={isPending} onClick={toggleArchived}>
             {member.is_archived ? 'Reactivar' : 'Baja'}
@@ -93,6 +109,7 @@ export function SociosList({
       <TableHeader>
         <TableRow>
           <TableHead>Socio</TableHead>
+          <TableHead>DNI</TableHead>
           <TableHead>Estado</TableHead>
           <TableHead>Vence</TableHead>
           <TableHead>Teléfono</TableHead>
