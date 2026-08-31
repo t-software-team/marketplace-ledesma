@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import type { NotificationItem } from '@/components/shared/notification-bell'
+import { GYM_RUBRO_SLUG } from '@/lib/category-icons'
 
 export interface HeaderAuth {
   user: { email: string } | null
@@ -9,6 +10,7 @@ export interface HeaderAuth {
   profileAvatarUrl: string | null
   notifications: NotificationItem[]
   unreadCount: number
+  isGymStaff: boolean
 }
 
 export const HEADER_AUTH_QUERY_KEY = ['header-auth'] as const
@@ -20,6 +22,7 @@ const LOGGED_OUT: HeaderAuth = {
   profileAvatarUrl: null,
   notifications: [],
   unreadCount: 0,
+  isGymStaff: false,
 }
 
 /**
@@ -71,14 +74,44 @@ export function useHeaderAuth() {
         })
       }
 
+      const profileRole = profileRes.data?.role ?? null
+      const isGymStaff = profileRole === 'shop_admin' ? await checkIsGymStaff(supabase, user.id) : false
+
       return {
         user: { email: user.email ?? '' },
-        profileRole: profileRes.data?.role ?? null,
+        profileRole,
         profileFullName: profileRes.data?.full_name ?? null,
         profileAvatarUrl: profileRes.data?.avatar_url ?? null,
         notifications: notificationsRes.data ?? [],
         unreadCount: unreadRes.count ?? 0,
+        isGymStaff,
       }
     },
   })
+}
+
+/** Dueño o empleado de un gimnasio, para ocultar del header cosas que no
+ * aplican a ese tipo de comercio (ej. favoritos — el flujo de gym es
+ * mostrador, no descubrir/guardar productos). */
+async function checkIsGymStaff(supabase: ReturnType<typeof createClient>, userId: string) {
+  const { data: owned } = await supabase
+    .from('shops')
+    .select('categories ( slug )')
+    .eq('owner_id', userId)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (owned) {
+    return (owned.categories as { slug: string } | null)?.slug === GYM_RUBRO_SLUG
+  }
+
+  const { data: staffRow } = await supabase
+    .from('shop_staff')
+    .select('shops ( categories ( slug ) )')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  const shop = staffRow?.shops as { categories: { slug: string } | null } | null
+  return shop?.categories?.slug === GYM_RUBRO_SLUG
 }

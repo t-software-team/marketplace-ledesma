@@ -20,6 +20,7 @@ interface DashboardShellProps {
   notifications?: AdminNotification[]
   unreadNotificationsCount?: number
   showSiteLink?: boolean
+  showFavoritesLink?: boolean
   showInstallButton?: boolean
   installLabel?: string
   reviewInvite?: { shopName: string; shopUrl: string }
@@ -43,6 +44,7 @@ export function DashboardShell({
   notifications,
   unreadNotificationsCount,
   showSiteLink,
+  showFavoritesLink,
   showInstallButton,
   installLabel,
   reviewInvite,
@@ -73,6 +75,7 @@ export function DashboardShell({
           notifications={notifications}
           unreadNotificationsCount={unreadNotificationsCount}
           showSiteLink={showSiteLink}
+          showFavoritesLink={showFavoritesLink}
           showInstallButton={showInstallButton}
           installLabel={installLabel}
           reviewInvite={reviewInvite}

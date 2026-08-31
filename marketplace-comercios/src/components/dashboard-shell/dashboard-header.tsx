@@ -122,6 +122,7 @@ interface DashboardHeaderProps {
   notifications?: AdminNotification[]
   unreadNotificationsCount?: number
   showSiteLink?: boolean
+  showFavoritesLink?: boolean
   showInstallButton?: boolean
   installLabel?: string
   reviewInvite?: { shopName: string; shopUrl: string }
@@ -156,6 +157,7 @@ export function DashboardHeader({
   notifications,
   unreadNotificationsCount,
   showSiteLink = true,
+  showFavoritesLink = true,
   showInstallButton = true,
   installLabel,
   reviewInvite,
@@ -243,14 +245,16 @@ export function DashboardHeader({
               label="Invitar a reseñar"
             />
           )}
-          <Button
-            render={<Link href="/favoritos" aria-label="Favoritos" />}
-            nativeButton={false}
-            variant="ghost"
-            size="icon"
-          >
-            <Heart className="size-4" aria-hidden />
-          </Button>
+          {showFavoritesLink && (
+            <Button
+              render={<Link href="/favoritos" aria-label="Favoritos" />}
+              nativeButton={false}
+              variant="ghost"
+              size="icon"
+            >
+              <Heart className="size-4" aria-hidden />
+            </Button>
+          )}
           <ThemeToggle />
           <NotificationBell
             notifications={notifications}

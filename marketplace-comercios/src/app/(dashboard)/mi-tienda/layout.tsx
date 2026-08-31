@@ -137,6 +137,7 @@ export default async function MiTiendaLayout({
       rootHref={isStaff ? '/mi-tienda/ingresos' : '/mi-tienda'}
       showInstallButton={isGym}
       showSiteLink={!isGym && !isStaff}
+      showFavoritesLink={!isGym && !isStaff}
       installLabel={isGym ? 'Descargar app' : undefined}
       reviewInvite={reviewInvite ?? undefined}
       notifications={notifications}

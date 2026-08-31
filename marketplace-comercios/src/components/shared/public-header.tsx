@@ -67,6 +67,7 @@ export function PublicHeader() {
   const profileAvatarUrl = auth?.profileAvatarUrl ?? null
   const notifications = auth?.notifications ?? []
   const unreadNotificationsCount = auth?.unreadCount ?? 0
+  const isGymStaff = auth?.isGymStaff ?? false
   const setSearch = useFiltersStore((state) => state.setSearch)
   const [searchInput, setSearchInput] = useState('')
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -241,15 +242,17 @@ export function PublicHeader() {
                     realtimeTable="client_notifications"
                     detailHref="/notificaciones"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    render={<Link href="/favoritos" aria-label="Favoritos" />}
-                    nativeButton={false}
-                    className="hidden sm:inline-flex"
-                  >
-                    <Heart className="size-4" aria-hidden />
-                  </Button>
+                  {!isGymStaff && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      render={<Link href="/favoritos" aria-label="Favoritos" />}
+                      nativeButton={false}
+                      className="hidden sm:inline-flex"
+                    >
+                      <Heart className="size-4" aria-hidden />
+                    </Button>
+                  )}
                 </>
               )}
               {!profileRole && (
@@ -315,12 +318,13 @@ export function BottomNav() {
   const { data: auth } = useHeaderAuth()
   const isLoggedIn = Boolean(auth?.user)
   const profileRole = auth?.profileRole ?? null
+  const isGymStaff = auth?.isGymStaff ?? false
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (isMinimal) return null
 
   const items = [
-    ...NAV_ITEMS,
+    ...NAV_ITEMS.filter((item) => item.href !== '/favoritos' || !isGymStaff),
     profileRole === 'shop_admin' ? LAST_ITEM_SHOP_ADMIN : LAST_ITEM_DEFAULT,
   ]
 
