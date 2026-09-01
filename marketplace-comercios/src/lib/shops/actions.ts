@@ -513,7 +513,7 @@ export async function createProduct(
 
   const { data: shop } = await supabase
     .from('shops')
-    .select('id, category_id')
+    .select('id, category_id, slug')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -642,6 +642,7 @@ export async function createProduct(
   }
 
   revalidatePath('/mi-tienda/productos')
+  revalidatePath(`/tienda/${shop.slug}`)
   redirect('/mi-tienda/productos?saved=created')
 }
 
@@ -1080,6 +1081,12 @@ export async function duplicateProduct(productId: string) {
 export async function toggleProductActive(productId: string, isActive: boolean) {
   const { supabase } = await requireUser()
 
+  const { data: product } = await supabase
+    .from('products')
+    .select('shops ( slug )')
+    .eq('id', productId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('products')
     .update({ is_active: isActive })
@@ -1091,10 +1098,17 @@ export async function toggleProductActive(productId: string, isActive: boolean) 
   }
 
   revalidatePath('/mi-tienda/productos')
+  const slug = (product?.shops as { slug: string } | null)?.slug
+  if (slug) revalidatePath(`/tienda/${slug}`)
 }
 
 export async function bulkToggleProductActive(productIds: string[], isActive: boolean) {
   const { supabase } = await requireUser()
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('shops ( slug )')
+    .in('id', productIds)
 
   const { error } = await supabase
     .from('products')
@@ -1107,6 +1121,12 @@ export async function bulkToggleProductActive(productIds: string[], isActive: bo
   }
 
   revalidatePath('/mi-tienda/productos')
+  const slugs = new Set(
+    (products ?? [])
+      .map((p) => (p.shops as { slug: string } | null)?.slug)
+      .filter((slug): slug is string => Boolean(slug))
+  )
+  for (const slug of slugs) revalidatePath(`/tienda/${slug}`)
 }
 
 export async function bulkToggleProductFeatured(productIds: string[], isFeatured: boolean) {
