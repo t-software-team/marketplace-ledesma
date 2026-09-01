@@ -44,16 +44,25 @@ export function GalleryCarousel({ items }: { items: GalleryCard[] }) {
     checkScrollability()
   }, [items])
 
+  // Mide la primera card en vez de asumir un ancho fijo: el carrusel se
+  // reutiliza tanto para fotos cuadradas chicas como para capturas grandes
+  // con "peek" (~82% del contenedor), y ambas conviven con el mismo cálculo.
+  function getStep(el: HTMLDivElement) {
+    const firstCard = el.firstElementChild as HTMLElement | null
+    const gap = 16
+    return (firstCard?.getBoundingClientRect().width ?? 260) + gap
+  }
+
   function scrollByCard(direction: 1 | -1) {
-    carouselRef.current?.scrollBy({ left: direction * 260, behavior: 'smooth' })
+    const el = carouselRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * getStep(el), behavior: 'smooth' })
   }
 
   function handleCardClose(index: number) {
     const el = carouselRef.current
     if (!el) return
-    const cardWidth = window.innerWidth < 768 ? 208 : 288
-    const gap = 16
-    el.scrollTo({ left: (cardWidth + gap) * (index + 1), behavior: 'smooth' })
+    el.scrollTo({ left: getStep(el) * (index + 1), behavior: 'smooth' })
   }
 
   return (
@@ -162,7 +171,7 @@ function GalleryCard({ card, index }: { card: GalleryCard; index: number }) {
         onClick={() => setOpen(true)}
         className={cn(
           'relative z-0 shrink-0 overflow-hidden rounded-2xl bg-muted',
-          card.width && card.height ? 'h-64 w-auto sm:h-72' : 'h-52 w-52 sm:h-64 sm:w-64'
+          card.width && card.height ? 'w-[82%] sm:w-[380px]' : 'h-52 w-52 sm:h-64 sm:w-64'
         )}
       >
         <div
@@ -177,8 +186,8 @@ function GalleryCard({ card, index }: { card: GalleryCard; index: number }) {
             alt={card.title}
             width={card.width}
             height={card.height}
-            className="h-full w-auto"
-            sizes="230px"
+            className="w-full"
+            sizes="(max-width: 640px) 82vw, 380px"
           />
         ) : (
           <Image

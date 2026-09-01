@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Check, MessageCircle } from 'lucide-react'
+import { Briefcase, Check, MessageCircle, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GalleryCarousel } from '@/components/shop/landing/apple-cards-carousel'
 
@@ -19,8 +19,9 @@ export default function LandingPage() {
         <Hero />
         <SocialProof />
         <Features />
-        <GymSection />
+        <ForWhom />
         <HowItWorks />
+        <GymSection />
         <FinalCta />
       </main>
       <SiteFooter />
@@ -160,14 +161,13 @@ function Features() {
       <div className="mx-auto max-w-6xl space-y-20 px-5 py-16 sm:space-y-28 sm:px-8 sm:py-24">
         <FeatureRow
           title="No sos un resultado más en una lista."
-          body="Proxi cura y verifica cada comercio antes de mostrarlo. La gente encuentra lo que busca por categoría y cercanía, no un mapa genérico lleno de ruido."
+          body="Proxi verifica cada comercio antes de mostrarlo. La gente encuentra lo que busca por categoría y cercanía, no un mapa genérico lleno de ruido."
           align="left"
         >
           <div className="w-full max-w-xs space-y-2 rounded-2xl border border-border bg-surface p-3">
             {[
               { src: '/landing/logo-kioto.webp', name: 'Kioto' },
               { src: '/landing/logo-coketas.webp', name: 'Coketas Novedades' },
-              { src: '/landing/logo-inefable.webp', name: 'Inefable' },
             ].map((shop) => (
               <Image
                 key={shop.name}
@@ -295,6 +295,80 @@ function WhatsappCallout() {
   )
 }
 
+const COMERCIO_CATEGORIES = [
+  'Indumentaria',
+  'Gastronomía',
+  'Tecnología',
+  'Decoración',
+  'Almacenes',
+  'Regalería',
+] as const
+
+const SERVICIO_CATEGORIES = [
+  'Peluquería y estética',
+  'Reparaciones y oficios',
+  'Clases y profesores',
+  'Profesionales',
+  'Eventos',
+  'Gimnasios',
+] as const
+
+function ForWhom() {
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-balance font-heading text-2xl text-foreground sm:text-3xl">
+            Para vidrieras y para servicios.
+          </h2>
+          <p className="mx-auto mt-3 max-w-md text-foreground/70">
+            No hace falta vender productos para estar en Proxi. Si atendés gente cerca tuyo,
+            tenés lugar.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+          <div className="rounded-2xl border border-border bg-surface p-6">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Store className="size-5" aria-hidden />
+            </div>
+            <p className="mt-4 font-heading text-lg text-foreground">Comercios</p>
+            <p className="mt-1 text-sm text-foreground/70">Un catálogo de productos con precio y foto.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {COMERCIO_CATEGORIES.map((category) => (
+                <span
+                  key={category}
+                  className="rounded-full bg-muted px-3 py-1 text-xs text-foreground/80"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface p-6">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Briefcase className="size-5" aria-hidden />
+            </div>
+            <p className="mt-4 font-heading text-lg text-foreground">Prestadores de servicios</p>
+            <p className="mt-1 text-sm text-foreground/70">Un listado de lo que hacés, sin stock ni precio fijo.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {SERVICIO_CATEGORIES.map((category) => (
+                <span
+                  key={category}
+                  className="rounded-full bg-muted px-3 py-1 text-xs text-foreground/80"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 const GYM_CAPABILITIES = [
   'Socios con sus membresías y estado de pago, todo en un lugar',
   'Cobrá cuotas y llevá tu caja del día',
@@ -302,6 +376,7 @@ const GYM_CAPABILITIES = [
   'Autoingreso en una tablet o celular en la entrada, de uso exclusivo para tus socios',
   'Cada ingreso queda registrado automáticamente, sin que nadie tenga que anotarlo',
   'Sumá a tu equipo con roles y permisos propios',
+  'Reportes de ingresos y asistencia para ver cómo viene el mes',
 ] as const
 
 function GymSection() {
