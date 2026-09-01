@@ -60,7 +60,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params
   const product = await getProductDetail(id)
 
-  if (!product || !product.isActive || !product.shop) {
+  if (!product || !product.is_active || !product.shop) {
     notFound()
   }
 
@@ -100,7 +100,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery
             images={product.images}
             productName={product.name}
-            videoUrl={product.videoUrl}
+            videoUrl={product.video_url}
             imageOverlay={
               <FavoriteButton
                 productId={product.id}
@@ -113,9 +113,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="space-y-4">
           {product.category && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              {product.parentCategoryName && (
+              {product.parent_category_name && (
                 <>
-                  <span>{product.parentCategoryName}</span>
+                  <span>{product.parent_category_name}</span>
                   <ChevronRight className="size-3" />
                 </>
               )}
@@ -221,7 +221,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             productName={product.name}
             phoneNumber={shop.whatsapp_number}
             rubroSlug={
-              product.parentCategorySlug ??
+              product.parent_category_slug ??
               (product.category && !product.category.parent_id ? product.category.slug : null)
             }
             variants={product.variants}

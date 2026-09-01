@@ -200,7 +200,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">/{category.slug}</TableCell>
                 <TableCell className="font-mono text-muted-foreground tabular-nums">
-                  {category.productCount}
+                  {category.product_count}
                 </TableCell>
                 <TableCell>
                   <StatusBadge

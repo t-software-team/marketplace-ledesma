@@ -48,9 +48,9 @@ function buildCsv(shops: Shop[]) {
     shop.city ?? 'Sin ciudad',
     shop.whatsapp_number,
     formatDate(shop.created_at),
-    shop.activePlanName ?? 'Free',
-    String(shop.productCount),
-    String(shop.openReportsCount),
+    shop.active_plan_name ?? 'Free',
+    String(shop.product_count),
+    String(shop.open_reports_count),
     shop.is_active ? shop.verification_status : `${shop.verification_status} / suspendido`,
   ])
 
@@ -235,14 +235,14 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
                 {shop.whatsapp_number}
               </TableCell>
               <TableCell className="whitespace-nowrap font-mono text-muted-foreground tabular-nums">
-                {shop.productCount}
+                {shop.product_count}
               </TableCell>
               <TableCell className="whitespace-nowrap">
                 <p className="text-xs">{formatRelativeTime(shop.updated_at)}</p>
                 <p className="text-[11px] text-muted-foreground">desde {formatDate(shop.created_at)}</p>
               </TableCell>
               <TableCell className="whitespace-nowrap">
-                {shop.activePlanName ?? (
+                {shop.active_plan_name ?? (
                   <span className="text-muted-foreground">Free</span>
                 )}
               </TableCell>
@@ -250,10 +250,10 @@ export function ShopsTable({ shops, plans }: { shops: Shop[]; plans: Plan[] }) {
                 <div className="flex flex-wrap items-center gap-1.5">
                   {!shop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
                   <StatusBadge status={shop.verification_status} />
-                  {shop.openReportsCount > 0 && (
+                  {shop.open_reports_count > 0 && (
                     <Badge variant="destructive" className="gap-1">
                       <AlertTriangle className="size-3" aria-hidden />
-                      {shop.openReportsCount}
+                      {shop.open_reports_count}
                     </Badge>
                   )}
                 </div>

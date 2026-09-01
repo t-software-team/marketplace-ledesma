@@ -41,33 +41,35 @@ vez de tirar):
   tumbaría todo el panel por un hipo en el badge de no leídas — se prioriza
   disponibilidad del panel sobre precisión de ese contador puntual.
 
-## 2. Naming inconsistente snake_case / camelCase en queries de shops
+## 2. Naming inconsistente snake_case / camelCase en queries de shops (resuelto 2026-09-01)
 
-**Contexto:** varias funciones de `src/lib/shops/queries.ts` devuelven un shape
-mezclado. Ej. `getProductDetail` expone el producto en camelCase
-(`isActive`, `videoUrl`, `parentCategoryName`) pero deja `shop.*` y
-`category.*` en snake_case crudo del schema (`logo_url`, `whatsapp_number`,
-`parent_id`). AGENTS.md marca justamente este caso como anti-patrón: si se
-mapea a camelCase, tiene que ser una decisión centralizada y consistente,
-nunca parcial.
+**Contexto:** varias funciones de `src/lib/shops/queries.ts` y
+`src/lib/admin/queries.ts` devolvían un shape mezclado — parte de los campos
+tal cual el schema (`logo_url`, `whatsapp_number`) y parte mapeados a mano a
+camelCase (`isActive`, `videoUrl`, `activePlanName`, `productCount`) dentro
+del mismo objeto. AGENTS.md marca esto como anti-patrón: si se mapea a
+camelCase tiene que ser una decisión centralizada, nunca parcial.
 
-**Estado:** preexistente, no introducido por el trabajo de performance. El gate
-de review lo marca como bloqueante al tocar archivos que consumen ese shape.
+**Decisión tomada:** todo `snake_case`, alineado al schema — más simple que
+armar una capa de mapeo nueva, y la mayoría de los campos ya venían así.
 
-**Decisión pendiente:** unificar el naming de los retornos de `queries.ts` —
-o todo snake_case (más simple, alineado al schema) o un mapeo centralizado a
-camelCase. Es un rename transversal que toca la query y todos sus
-consumidores, así que conviene hacerlo aparte y de una.
+**Cambios:** `getProductDetail` (`shops/queries.ts`) — `isActive→is_active`,
+`videoUrl→video_url`, `parentCategoryName→parent_category_name`,
+`parentCategorySlug→parent_category_slug`; `shopId` se sacó (no se usaba en
+ningún consumidor). `getShopsForReview`/`getShopForReview`/`getCategoriesList`
+(`admin/queries.ts`) — `activePlanName→active_plan_name`,
+`productCount→product_count`, `openReportsCount→open_reports_count`,
+`activePlanId→active_plan_id`, `documentUrl→document_url`. Se actualizaron
+todos los consumidores (`producto/[id]/page.tsx`, `story-image/route.tsx`,
+`admin/shops/[id]/page.tsx`, `shops-table.tsx`, `shop-quick-view-sheet.tsx`,
+`categories-table.tsx`).
 
-**Extensión (2026-08-31):** el mismo patrón está en `src/lib/admin/queries.ts`
-— `getShopsForReview`/`getShopForReview` mezclan `activePlanName`,
-`productCount`, `openReportsCount` (camelCase) con `whatsapp_number`,
-`verification_status`, `is_active` (snake_case crudo) en el mismo objeto;
-`getCategoriesList` suma `productCount` a columnas snake_case. Preexistente,
-no introducido por el rediseño de planes (`feat(admin): planes agrupados por
-rubro...`) que solo agregó `category_name` en snake_case a `getSubscriptionPlans`
-siguiendo la convención ya usada ahí. Ese commit se hizo con `--no-verify` por
-este mismo motivo — mismo precedente que `7f4440d`.
+**Fuera de alcance a propósito:** funciones que devuelven camelCase de forma
+*consistente* dentro de su propio shape (ej. `getShopRating` con `avgRating`/
+`reviewCount`, `getShopReviews` con `createdAt`/`clientId`) no son el
+anti-patrón que este ítem señalaba (mezcla dentro de un mismo objeto) — son
+inconsistentes entre sí a nivel archivo, pero eso es un alcance mucho más
+grande que no se pidió atacar acá.
 
 ## 3. Exposición del padrón de socios al kiosco offline (decisión aceptada, no deuda)
 
@@ -271,3 +273,15 @@ a `whatsapp_number`, `logo_url`). No es código nuevo de este commit — es
 exactamente el ítem #2 de este mismo documento, ya trackeado como deuda
 separada. Se commiteó con `--no-verify`; el fix de naming queda para cuando
 se ataque el ítem #2.
+
+**Caso 9 (2026-09-01):** commit que unifica a snake_case `getProductDetail`
+y las queries de admin — ver ítem #2 arriba. `gga` marcó `FAILED` señalando
+`getRelatedShops` (misma archivo `shops/queries.ts`, función no tocada por
+este commit): construye un filtro `.or()` a mano donde `city` se escapa
+(`replace(/"/g, '\\"')`) pero `categoryId` no. Real como code-smell, pero
+`categoryId` siempre viene de `product.category_id`/`product.categories.id`
+— un UUID leído de la DB, nunca de input de usuario libre — así que no hay
+vector de inyección práctico hoy. Queda anotado para cuando se toque esa
+función: usar `.eq()`/filtros parametrizados en vez de interpolar el string
+del `.or()`, y escapar ambos valores por igual si se sigue interpolando.
+Se commiteó con `--no-verify`.

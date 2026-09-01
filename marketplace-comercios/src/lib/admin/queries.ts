@@ -16,9 +16,9 @@ export async function getShopsForReview() {
     updated_at: shop.updated_at,
     is_active: shop.is_active,
     logo_url: shop.logo_url,
-    activePlanName: shop.active_plan_name,
-    productCount: shop.product_count ?? 0,
-    openReportsCount: shop.open_reports_count ?? 0,
+    active_plan_name: shop.active_plan_name,
+    product_count: shop.product_count ?? 0,
+    open_reports_count: shop.open_reports_count ?? 0,
   }))
 }
 
@@ -99,11 +99,11 @@ export async function getShopForReview(shopId: string) {
 
   return {
     ...rest,
-    documentUrl,
-    activePlanId: activeSubscription?.plan_id ?? null,
-    activePlanName: activeSubscription?.subscription_plans?.name ?? null,
-    productCount: productCount ?? 0,
-    openReportsCount: openReportsCount ?? 0,
+    document_url: documentUrl,
+    active_plan_id: activeSubscription?.plan_id ?? null,
+    active_plan_name: activeSubscription?.subscription_plans?.name ?? null,
+    product_count: productCount ?? 0,
+    open_reports_count: openReportsCount ?? 0,
   }
 }
 
@@ -137,7 +137,7 @@ export async function getCategoriesList() {
 
   return (categories ?? []).map((category) => {
     const { products, ...rest } = category
-    return { ...rest, productCount: products?.[0]?.count ?? 0 }
+    return { ...rest, product_count: products?.[0]?.count ?? 0 }
   })
 }
 

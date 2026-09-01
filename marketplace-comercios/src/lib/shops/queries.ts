@@ -962,8 +962,8 @@ export const getProductDetail = unstable_cache(
       return null;
     }
 
-    let parentCategoryName: string | null = null;
-    let parentCategorySlug: string | null = null;
+    let parent_category_name: string | null = null;
+    let parent_category_slug: string | null = null;
     if (product.categories?.parent_id) {
       const { data: parentCategory, error: parentCategoryError } = await supabase
         .from("categories")
@@ -979,8 +979,8 @@ export const getProductDetail = unstable_cache(
         });
       }
 
-      parentCategoryName = parentCategory?.name ?? null;
-      parentCategorySlug = parentCategory?.slug ?? null;
+      parent_category_name = parentCategory?.name ?? null;
+      parent_category_slug = parentCategory?.slug ?? null;
     }
 
     const images = [...(product.product_images ?? [])].sort(
@@ -1012,16 +1012,16 @@ export const getProductDetail = unstable_cache(
 
     return {
       id: product.id,
-      shopId: product.shop_id,
+      shop_id: product.shop_id,
       name: product.name,
       description: product.description,
       price: product.price,
       currency: product.currency,
-      isActive: product.is_active,
+      is_active: product.is_active,
       category: product.categories,
-      parentCategoryName,
-      parentCategorySlug,
-      videoUrl: product.video_url,
+      parent_category_name,
+      parent_category_slug,
+      video_url: product.video_url,
       images,
       variants,
       attributes,

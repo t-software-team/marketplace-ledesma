@@ -131,12 +131,12 @@ export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label="Productos" value={shop.productCount} />
+        <StatTile label="Productos" value={shop.product_count} />
         <StatTile label="Vistas de perfil" value={shop.profile_views} />
         <StatTile label="Clicks WhatsApp" value={shop.whatsapp_clicks} />
         <StatTile
           label="Reportes abiertos"
-          value={shop.openReportsCount}
+          value={shop.open_reports_count}
           tone="destructive"
           href="/admin/reportes"
         />
@@ -177,9 +177,9 @@ export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
               <CardTitle className="text-sm font-medium text-muted-foreground">Documento de verificación</CardTitle>
             </CardHeader>
             <CardContent className="pb-4">
-              {shop.documentUrl ? (
+              {shop.document_url ? (
                 <a
-                  href={shop.documentUrl}
+                  href={shop.document_url}
                   target="_blank"
                   rel="noreferrer"
                   className="text-sm text-primary underline"
@@ -196,7 +196,7 @@ export default async function ShopDetailPage({ params }: ShopDetailPageProps) {
         <div className="space-y-4">
           <ShopPlanCard
             shopId={shop.id}
-            activePlanId={shop.activePlanId}
+            activePlanId={shop.active_plan_id}
             plans={plans.filter((plan) => plan.is_active).map((plan) => ({ id: plan.id, name: plan.name, price: plan.price }))}
           />
 

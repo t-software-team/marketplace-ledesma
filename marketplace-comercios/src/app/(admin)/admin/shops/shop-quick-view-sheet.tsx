@@ -54,21 +54,21 @@ export function ShopQuickViewSheet({
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-muted-foreground">Productos</span>
-                <span className="font-mono">{shop.productCount}</span>
+                <span className="font-mono">{shop.product_count}</span>
               </div>
               <div className="flex justify-between gap-3">
                 <span className="text-muted-foreground">Plan</span>
-                <span>{shop.activePlanName ?? 'Free'}</span>
+                <span>{shop.active_plan_name ?? 'Free'}</span>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Estado</span>
                 <div className="flex items-center gap-1.5">
                   {!shop.is_active && <StatusBadge status="rejected" label="Suspendido" />}
                   <StatusBadge status={shop.verification_status} />
-                  {shop.openReportsCount > 0 && (
+                  {shop.open_reports_count > 0 && (
                     <Badge variant="destructive" className="gap-1">
                       <AlertTriangle className="size-3" aria-hidden />
-                      {shop.openReportsCount}
+                      {shop.open_reports_count}
                     </Badge>
                   )}
                 </div>

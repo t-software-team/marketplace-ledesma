@@ -21,7 +21,7 @@ interface StoryImageRouteProps {
 async function loadStoryData(id: string) {
   const product = await getProductDetail(id)
 
-  if (!product || !product.isActive || !product.shop) {
+  if (!product || !product.is_active || !product.shop) {
     return null
   }
 
