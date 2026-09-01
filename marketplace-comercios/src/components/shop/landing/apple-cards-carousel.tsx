@@ -15,6 +15,13 @@ export interface GalleryCard {
   src: string
   title: string
   category: string
+  // Dimensiones reales de la imagen: cuando se pasan, la card respeta el
+  // alto natural de la imagen (ancho fijo, alto auto) en vez de recortarla
+  // en un cuadrado. Sin ellas, cae al comportamiento anterior (cuadrado +
+  // object-cover), necesario para fotos de galería subidas por el usuario
+  // cuyo tamaño no rastreamos.
+  width?: number
+  height?: number
 }
 
 const CarouselContext = createContext<{ onCardClose: (index: number) => void }>({
@@ -153,7 +160,10 @@ function GalleryCard({ card, index }: { card: GalleryCard; index: number }) {
         layoutId={`gallery-card-${card.src}`}
         type="button"
         onClick={() => setOpen(true)}
-        className="relative z-0 h-52 w-52 shrink-0 overflow-hidden rounded-2xl bg-muted sm:h-64 sm:w-64"
+        className={cn(
+          'relative z-0 shrink-0 overflow-hidden rounded-2xl bg-muted',
+          card.width && card.height ? 'h-64 w-auto sm:h-72' : 'h-52 w-52 sm:h-64 sm:w-64'
+        )}
       >
         <div
           className={cn(
@@ -161,13 +171,24 @@ function GalleryCard({ card, index }: { card: GalleryCard; index: number }) {
           )}
         />
         <span className="absolute bottom-2 left-3 z-20 text-xs font-medium text-white">{card.title}</span>
-        <Image
-          src={card.src}
-          alt={card.title}
-          fill
-          className="object-cover"
-          sizes="(max-width: 640px) 208px, 256px"
-        />
+        {card.width && card.height ? (
+          <Image
+            src={card.src}
+            alt={card.title}
+            width={card.width}
+            height={card.height}
+            className="h-full w-auto"
+            sizes="230px"
+          />
+        ) : (
+          <Image
+            src={card.src}
+            alt={card.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 208px, 256px"
+          />
+        )}
       </motion.button>
     </>
   )
