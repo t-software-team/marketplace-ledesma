@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 
 interface PriceInputProps {
@@ -32,15 +32,10 @@ export function PriceInput({
   const isControlled = value !== undefined
   const [internalRaw, setInternalRaw] = useState(() => String(defaultValue ?? ''))
   const raw = isControlled ? (value ?? '') : internalRaw
-  const [displayValue, setDisplayValue] = useState(() => formatThousands(raw))
-
-  useEffect(() => {
-    if (isControlled) setDisplayValue(formatThousands(value ?? ''))
-  }, [value, isControlled])
+  const displayValue = formatThousands(raw)
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const digitsOnly = event.target.value.replace(/\D/g, '')
-    setDisplayValue(formatThousands(digitsOnly))
     if (!isControlled) setInternalRaw(digitsOnly)
     onChange?.(digitsOnly)
   }

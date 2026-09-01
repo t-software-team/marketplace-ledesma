@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -16,10 +16,26 @@ function isIosSafari() {
   return isIos && isSafari
 }
 
+// UA no cambia durante la sesión, así que no hace falta suscribirse a nada.
+function subscribeNever() {
+  return () => {}
+}
+
+function getServerSnapshotFalse() {
+  return false
+}
+
 function isStandalone() {
   if (typeof window === 'undefined') return false
   const nav = navigator as Navigator & { standalone?: boolean }
   return window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true
+}
+
+function subscribeStandalone(onChange: () => void) {
+  if (typeof window === 'undefined') return () => {}
+  const mql = window.matchMedia('(display-mode: standalone)')
+  mql.addEventListener('change', onChange)
+  return () => mql.removeEventListener('change', onChange)
 }
 
 /**
@@ -29,8 +45,10 @@ function isStandalone() {
  */
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isIos, setIsIos] = useState(false)
-  const [installed, setInstalled] = useState(false)
+  const [installedByEvent, setInstalledByEvent] = useState(false)
+  const isIos = useSyncExternalStore(subscribeNever, isIosSafari, getServerSnapshotFalse)
+  const standalone = useSyncExternalStore(subscribeStandalone, isStandalone, getServerSnapshotFalse)
+  const installed = standalone || installedByEvent
 
   useEffect(() => {
     // Nunca registrar el SW en desarrollo: su cache de navegaciones
@@ -43,16 +61,13 @@ export function useInstallPrompt() {
       })
     }
 
-    setInstalled(isStandalone())
-    setIsIos(isIosSafari())
-
     function handleBeforeInstallPrompt(event: Event) {
       event.preventDefault()
       setDeferredPrompt(event as BeforeInstallPromptEvent)
     }
 
     function handleAppInstalled() {
-      setInstalled(true)
+      setInstalledByEvent(true)
       setDeferredPrompt(null)
     }
 

@@ -31,6 +31,10 @@ type StepKey = (typeof STEPS)[number]['key']
 export function PersonalizationForm({ shop }: { shop: Shop }) {
   const [state, formAction, isPending] = useActionState(updateShopPersonalization, initialState)
   const isFirstRender = useRef(true)
+  // Contador en vez de Date.now(): sigue dando una key única por aplicación de
+  // template (fuerza el remount de LandingSectionsEditor) sin usar una fuente
+  // impura dentro del cuerpo del componente.
+  const templateApplyCount = useRef(0)
   const [accentColor, setAccentColor] = useState(shop.accent_color ?? DEFAULT_ACCENT_COLOR)
   const [activeStep, setActiveStep] = useState<StepKey>('color')
   const [template, setTemplate] = useState<{ key: string; banner?: { title: string; subtitle: string } } | null>(
@@ -54,7 +58,8 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
     const found = PERSONALIZATION_TEMPLATES.find((item) => item.key === templateKey)
     if (!found) return
     setAccentColor(found.accentColor)
-    setTemplate({ key: `${found.key}-${Date.now()}`, banner: found.banner })
+    templateApplyCount.current += 1
+    setTemplate({ key: `${found.key}-${templateApplyCount.current}`, banner: found.banner })
   }
 
   const selectedAccent = getAccentColor(accentColor)

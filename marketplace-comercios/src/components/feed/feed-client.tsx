@@ -19,6 +19,7 @@ import { useScrolled } from '@/hooks/use-scrolled'
 import { useHideOnScrollDown } from '@/hooks/use-hide-on-scroll-down'
 import { useHeaderAuth } from '@/hooks/use-header-auth'
 import { useMyFavoriteIds } from '@/hooks/use-my-favorite-ids'
+import { useLocalStorageFlag } from '@/hooks/use-local-storage-flag'
 import { useFiltersStore } from '@/stores/use-filters-store'
 import { cn } from '@/lib/utils'
 
@@ -62,7 +63,9 @@ export function FeedClient({
 }: FeedClientProps) {
   const scrolled = useScrolled()
   const hideOnScrollDown = useHideOnScrollDown()
-  const [sellBannerDismissed, setSellBannerDismissed] = useState(true)
+  const storedSellBannerDismissed = useLocalStorageFlag(SELL_BANNER_DISMISSED_KEY)
+  const [sellBannerDismissedByUser, setSellBannerDismissedByUser] = useState(false)
+  const sellBannerDismissed = storedSellBannerDismissed || sellBannerDismissedByUser
   // Login y favoritos se resuelven en el cliente para que el feed pueda ser
   // estático/ISR (la página ya no lee la sesión en el servidor).
   const { data: auth, isPending: authPending } = useHeaderAuth()
@@ -137,13 +140,9 @@ export function FeedClient({
     searchDebounceRef.current = setTimeout(() => setSearch(value), 350)
   }
 
-  useEffect(() => {
-    setSellBannerDismissed(window.localStorage.getItem(SELL_BANNER_DISMISSED_KEY) === '1')
-  }, [])
-
   function handleDismissSellBanner() {
     window.localStorage.setItem(SELL_BANNER_DISMISSED_KEY, '1')
-    setSellBannerDismissed(true)
+    setSellBannerDismissedByUser(true)
   }
 
   useEffect(() => {

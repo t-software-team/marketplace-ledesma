@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff } from 'lucide-react'
@@ -11,6 +12,7 @@ import { createClient } from '@/lib/supabase/client'
 import { updatePasswordSchema, type UpdatePasswordFormValues } from '@/lib/validations/auth'
 
 export default function UpdatePasswordForm() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const supabase = createClient()
@@ -34,7 +36,7 @@ export default function UpdatePasswordForm() {
     }
 
     toast.add({ title: 'Contraseña actualizada', type: 'success' })
-    window.location.href = '/login'
+    router.push('/login')
   }
 
   return (

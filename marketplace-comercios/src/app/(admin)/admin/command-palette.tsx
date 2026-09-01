@@ -75,28 +75,24 @@ export function CommandPalette() {
     return () => window.removeEventListener(COMMAND_PALETTE_OPEN_EVENT, handleOpenEvent)
   }, [])
 
+  const trimmedQuery = query.trim()
+
   useEffect(() => {
-    if (!open) return
-
-    const trimmed = query.trim()
-
-    if (trimmed.length < 2) {
-      setShopResults([])
-      setIsSearching(false)
-      return
-    }
-
-    setIsSearching(true)
+    if (!open || trimmedQuery.length < 2) return
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
 
     debounceRef.current = setTimeout(() => {
       const requestId = ++requestIdRef.current
+      setIsSearching(true)
 
-      searchShopsByName(trimmed)
+      searchShopsByName(trimmedQuery)
         .then((results) => {
           if (requestIdRef.current !== requestId) return
           setShopResults(results)
+        })
+        .catch((error) => {
+          console.error('CommandPalette: fallo al buscar comercios', { query: trimmedQuery, error })
         })
         .finally(() => {
           if (requestIdRef.current !== requestId) return
@@ -107,13 +103,15 @@ export function CommandPalette() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
-  }, [query, open])
+  }, [trimmedQuery, open])
+
+  const searching = isSearching && trimmedQuery.length >= 2
 
   const filteredStaticTargets = useMemo(() => {
-    const trimmed = query.trim().toLowerCase()
+    const trimmed = trimmedQuery.toLowerCase()
     if (!trimmed) return STATIC_TARGETS
     return STATIC_TARGETS.filter((target) => target.label.toLowerCase().includes(trimmed))
-  }, [query])
+  }, [trimmedQuery])
 
   const results: ResultItem[] = useMemo(() => {
     const staticItems: ResultItem[] = filteredStaticTargets.map((target) => ({
@@ -123,19 +121,27 @@ export function CommandPalette() {
       icon: target.icon,
     }))
 
-    const shopItems: ResultItem[] = shopResults.map((shop) => ({
-      key: `shop-${shop.id}`,
-      label: shop.name,
-      href: `/admin/shops/${shop.id}`,
-      icon: Store,
-    }))
+    const shopItems: ResultItem[] =
+      trimmedQuery.length >= 2
+        ? shopResults.map((shop) => ({
+            key: `shop-${shop.id}`,
+            label: shop.name,
+            href: `/admin/shops/${shop.id}`,
+            icon: Store,
+          }))
+        : []
 
     return [...staticItems, ...shopItems]
-  }, [filteredStaticTargets, shopResults])
+  }, [filteredStaticTargets, shopResults, trimmedQuery])
 
-  useEffect(() => {
+  // Reinicia la selección cuando cambia la lista de resultados, directo en
+  // el body del render (patrón documentado de React) en vez de un efecto.
+  const [selectionResetKey, setSelectionResetKey] = useState<string>('')
+  const currentResetKey = `${results.length}:${trimmedQuery}`
+  if (currentResetKey !== selectionResetKey) {
+    setSelectionResetKey(currentResetKey)
     setSelectedIndex(0)
-  }, [results.length, query])
+  }
 
   const handleSelect = useCallback(
     (item: ResultItem) => {
@@ -193,7 +199,7 @@ export function CommandPalette() {
         <div className="max-h-80 overflow-y-auto px-2 pb-2">
           {results.length === 0 ? (
             <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-              {isSearching ? 'Buscando...' : 'Sin resultados'}
+              {searching ? 'Buscando...' : 'Sin resultados'}
             </p>
           ) : (
             <ul className="flex flex-col gap-0.5">
@@ -219,7 +225,7 @@ export function CommandPalette() {
               })}
             </ul>
           )}
-          {isSearching && shopResults.length === 0 && query.trim().length >= 2 && (
+          {searching && shopResults.length === 0 && (
             <p className="px-2 pt-1 text-xs text-muted-foreground">Buscando comercios...</p>
           )}
         </div>

@@ -16,9 +16,9 @@ export default function TerminosPage() {
         <section className="space-y-1.5">
           <h2 className="font-heading text-lg">1. Qué es Proxi Marketplace</h2>
           <p className="text-sm text-foreground">
-            Proxi Marketplace ("Proxi", "la Plataforma") es un directorio y feed de comercios locales que
-            permite a comerciantes ("Comercios") publicar su perfil, catálogo de productos/servicios y
-            datos de contacto, para que los usuarios ("Usuarios" o "Compradores") puedan descubrirlos y
+            Proxi Marketplace (“Proxi”, “la Plataforma”) es un directorio y feed de comercios locales que
+            permite a comerciantes (“Comercios”) publicar su perfil, catálogo de productos/servicios y
+            datos de contacto, para que los usuarios (“Usuarios” o “Compradores”) puedan descubrirlos y
             contactarlos. Proxi no vende productos ni servicios propios, no procesa pagos entre Usuarios y
             Comercios, y no interviene en ninguna transacción de compraventa. El contacto entre Usuario y
             Comercio se realiza fuera de la Plataforma (WhatsApp, redes sociales u otros medios que el
@@ -42,7 +42,7 @@ export default function TerminosPage() {
             Los Comercios son responsables de la veracidad, legalidad y actualización de la información que
             publican (catálogo, precios, horarios, datos de contacto, imágenes). Proxi puede solicitar
             documentación para verificar la identidad de un Comercio y otorgar el distintivo de
-            "verificado", sin que esto constituya garantía alguna sobre la calidad de sus productos o
+            “verificado”, sin que esto constituya garantía alguna sobre la calidad de sus productos o
             servicios. Proxi se reserva el derecho de rechazar, suspender o eliminar la publicación de
             cualquier Comercio que infrinja estos Términos, publique contenido falso, ilegal o inapropiado,
             o sea reportado reiteradamente por Usuarios.

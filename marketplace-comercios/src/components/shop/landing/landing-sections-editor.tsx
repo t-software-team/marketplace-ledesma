@@ -52,12 +52,18 @@ export function LandingSectionsEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [banner, bannerEnabled, services, gallery, videoUrl])
 
-  useEffect(() => {
-    if (!applyTemplate?.banner) return
-    if (banner.title.trim()) return
-    setBanner((current) => ({ ...current, title: applyTemplate.banner!.title, subtitle: applyTemplate.banner!.subtitle }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applyTemplate?.key])
+  // Ajusta el banner cuando cambia el template aplicado, directo en el body
+  // del render (patrón documentado de React para "sync desde un prop que
+  // cambia") en vez de un efecto — evita el commit extra de un setState
+  // dentro de useEffect.
+  const [appliedTemplateKey, setAppliedTemplateKey] = useState(applyTemplate?.key)
+  if (applyTemplate?.key !== appliedTemplateKey) {
+    setAppliedTemplateKey(applyTemplate?.key)
+    if (applyTemplate?.banner && !banner.title.trim()) {
+      const template = applyTemplate.banner
+      setBanner((current) => ({ ...current, title: template.title, subtitle: template.subtitle }))
+    }
+  }
 
   const bannerJson = useMemo(() => {
     if (!banner.title.trim()) return ''

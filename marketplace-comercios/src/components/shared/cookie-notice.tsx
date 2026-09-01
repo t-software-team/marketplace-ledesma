@@ -1,22 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useLocalStorageFlag } from '@/hooks/use-local-storage-flag'
 
 const COOKIE_NOTICE_STORAGE_KEY = 'cookie-notice-dismissed'
 
 export function CookieNotice() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    if (!localStorage.getItem(COOKIE_NOTICE_STORAGE_KEY)) {
-      setVisible(true)
-    }
-  }, [])
+  const dismissed = useLocalStorageFlag(COOKIE_NOTICE_STORAGE_KEY)
+  const [manuallyDismissed, setManuallyDismissed] = useState(false)
+  const visible = !dismissed && !manuallyDismissed
 
   function handleDismiss() {
     localStorage.setItem(COOKIE_NOTICE_STORAGE_KEY, '1')
-    setVisible(false)
+    setManuallyDismissed(true)
   }
 
   if (!visible) return null

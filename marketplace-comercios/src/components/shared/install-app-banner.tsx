@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Download, Share, Smartphone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,23 +11,22 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
+import { useLocalStorageFlag } from '@/hooks/use-local-storage-flag'
 
 const DISMISSED_KEY = 'install-app-banner-dismissed'
 
 export function InstallAppBanner() {
   const { canInstall, isIos, promptInstall } = useInstallPrompt()
   const [showIosInstructions, setShowIosInstructions] = useState(false)
-  const [dismissed, setDismissed] = useState(true)
-
-  useEffect(() => {
-    setDismissed(window.localStorage.getItem(DISMISSED_KEY) === '1')
-  }, [])
+  const storedDismissed = useLocalStorageFlag(DISMISSED_KEY)
+  const [manuallyDismissed, setManuallyDismissed] = useState(false)
+  const dismissed = storedDismissed || manuallyDismissed
 
   if (!canInstall || dismissed) return null
 
   function handleDismiss() {
     window.localStorage.setItem(DISMISSED_KEY, '1')
-    setDismissed(true)
+    setManuallyDismissed(true)
   }
 
   async function handleInstall() {

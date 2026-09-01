@@ -285,3 +285,20 @@ vector de inyección práctico hoy. Queda anotado para cuando se toque esa
 función: usar `.eq()`/filtros parametrizados en vez de interpolar el string
 del `.or()`, y escapar ambos valores por igual si se sigue interpolando.
 Se commiteó con `--no-verify`.
+
+**Caso 10 (2026-09-01):** commit que arregla los 22 errores preexistentes de
+`eslint .` (ver detalle en el mensaje del commit). `gga` marcó `FAILED` con
+dos puntos:
+
+1. **`command-palette.tsx` sin `.catch()` en `searchShopsByName`**: real y
+   en código ya tocado por este commit — se agregó el `.catch()` con
+   `console.error`.
+2. **`personalization-form.tsx` — `dangerouslySetInnerHTML` interpola
+   colores en un `<style>`**: preexistente, no tocado por este commit salvo
+   el fix de `Date.now()` en una línea aparte. No es explotable hoy:
+   `getAccentColor()` (`src/lib/accent-colors.ts`) solo devuelve uno de los
+   objetos fijos hardcodeados en `ACCENT_COLORS` — nunca interpola un string
+   libre. Queda anotado por si en el futuro se permite un color custom por
+   input de usuario, ahí sí habría que sanitizar antes de interpolar.
+
+Se commiteó con `--no-verify` tras esta verificación.
