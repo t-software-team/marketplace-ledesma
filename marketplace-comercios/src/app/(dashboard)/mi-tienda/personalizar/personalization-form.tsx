@@ -1,10 +1,21 @@
 'use client'
 
 import { useActionState, useEffect, useRef, useState } from 'react'
-import { Check, GalleryHorizontal, ImageIcon, Palette, Play, Sparkles, Wand2 } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  GalleryHorizontal,
+  ImageIcon,
+  Palette,
+  Play,
+  Sparkles,
+  Wand2,
+} from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+import { useTheme } from '@/components/providers/theme-provider'
 import { cn } from '@/lib/utils'
 import { ACCENT_COLORS, DEFAULT_ACCENT_COLOR, getAccentColor } from '@/lib/accent-colors'
 import { LandingSectionsEditor, type LandingSectionsValues } from '@/components/shop/landing/landing-sections-editor'
@@ -19,16 +30,42 @@ type Shop = NonNullable<Awaited<ReturnType<typeof getMyShop>>>
 const initialState: ActionState = { error: null }
 
 const STEPS = [
-  { key: 'color', label: 'Color', icon: Palette },
-  { key: 'banner', label: 'Banner', icon: ImageIcon },
-  { key: 'services', label: 'Servicios', icon: Sparkles },
-  { key: 'gallery', label: 'Galería', icon: GalleryHorizontal },
-  { key: 'video', label: 'Video', icon: Play },
+  {
+    key: 'color',
+    label: 'Color',
+    icon: Palette,
+    help: 'Elegí el color que va a usarse en los botones y detalles de tu tienda pública.',
+  },
+  {
+    key: 'banner',
+    label: 'Banner',
+    icon: ImageIcon,
+    help: 'Un mensaje destacado arriba de todo, para avisar promociones o lo que más querés mostrar.',
+  },
+  {
+    key: 'services',
+    label: 'Servicios',
+    icon: Sparkles,
+    help: 'Los servicios que más ofrecés, para que la gente los vea apenas entra a tu tienda.',
+  },
+  {
+    key: 'gallery',
+    label: 'Galería',
+    icon: GalleryHorizontal,
+    help: 'Fotos de tu local, productos o trabajos, para generar confianza.',
+  },
+  {
+    key: 'video',
+    label: 'Video',
+    icon: Play,
+    help: 'Un video (por ejemplo de YouTube) que se muestre en tu tienda. Es opcional.',
+  },
 ] as const
 
 type StepKey = (typeof STEPS)[number]['key']
 
 export function PersonalizationForm({ shop }: { shop: Shop }) {
+  const { resolvedTheme } = useTheme()
   const [state, formAction, isPending] = useActionState(updateShopPersonalization, initialState)
   const isFirstRender = useRef(true)
   // Contador en vez de Date.now(): sigue dando una key única por aplicación de
@@ -63,6 +100,15 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
   }
 
   const selectedAccent = getAccentColor(accentColor)
+  const activeStepIndex = STEPS.findIndex((step) => step.key === activeStep)
+  const activeStepInfo = STEPS[activeStepIndex]
+  const isFirstStep = activeStepIndex === 0
+  const isLastStep = activeStepIndex === STEPS.length - 1
+
+  function goToStep(index: number) {
+    const step = STEPS[index]
+    if (step) setActiveStep(step.key)
+  }
 
   const bannerComplete = Boolean(landingValues?.bannerEnabled && landingValues.banner.title.trim())
   const servicesComplete = Boolean(landingValues?.services.some((service) => service.name.trim()))
@@ -75,7 +121,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
     landingValues?.bannerEnabled && landingValues.banner.title.trim() ? landingValues.banner : null
   const previewServicesData = landingValues?.services.filter((service) => service.name.trim()) ?? []
   const previewGalleryData = landingValues?.gallery ?? []
-  const previewThemeClass = `shop-theme-preview-${shop.id}`
+  const previewAccent = resolvedTheme === 'dark' ? selectedAccent.dark : selectedAccent.light
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_400px] lg:gap-8">
@@ -84,7 +130,7 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           <CardContent className="space-y-3 p-5 lg:p-6">
             <div className="flex items-center gap-1.5">
               <Wand2 className="size-4 text-muted-foreground" aria-hidden />
-              <h2 className="text-sm font-medium text-muted-foreground">Plantillas prearmadas</h2>
+              <h2 className="text-base font-semibold text-foreground">Plantillas prearmadas</h2>
             </div>
             <div className="grid gap-2 sm:grid-cols-3">
               {PERSONALIZATION_TEMPLATES.map((item) => {
@@ -126,9 +172,20 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
           </CardContent>
         </Card>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                style={{ width: `${(completedCount / STEPS.length) * 100}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-xs font-medium text-foreground/70">
+              {completedCount}/{STEPS.length} completo
+            </span>
+          </div>
           <div className="flex flex-wrap gap-2">
-            {STEPS.map((step) => {
+            {STEPS.map((step, index) => {
               const Icon = step.icon
               const isDone =
                 (step.key === 'color' && true) ||
@@ -142,34 +199,38 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
                   key={step.key}
                   type="button"
                   onClick={() => setActiveStep(step.key)}
+                  aria-current={isActive ? 'step' : undefined}
                   className={cn(
-                    'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all',
+                    'flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all',
                     isActive
                       ? 'border-transparent bg-foreground text-background shadow-sm'
-                      : 'border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground'
+                      : 'border-border text-foreground/70 hover:border-foreground/40 hover:text-foreground'
                   )}
                 >
+                  <span
+                    className={cn(
+                      'flex size-4 shrink-0 items-center justify-center rounded-full text-[0.65rem]',
+                      isActive ? 'bg-background/20 text-background' : 'bg-muted text-muted-foreground'
+                    )}
+                    aria-hidden
+                  >
+                    {index + 1}
+                  </span>
                   <Icon className="size-3.5" aria-hidden />
                   {step.label}
-                  {isDone && !isActive && <Check className="size-3 text-emerald-500" aria-hidden />}
+                  {isDone && !isActive && <Check className="size-3.5 text-emerald-500" aria-hidden />}
                 </button>
               )
             })}
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${(completedCount / 5) * 100}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-xs text-muted-foreground">{completedCount}/5 secciones</span>
-          </div>
+          <p className="text-sm text-foreground/70">
+            Paso {activeStepIndex + 1} de {STEPS.length}: {activeStepInfo.help}
+          </p>
         </div>
 
         <Card className={cn('transition-shadow', activeStep !== 'color' && 'hidden')}>
           <CardContent className="space-y-5 p-5 lg:p-6">
-            <h2 className="text-sm font-medium text-muted-foreground">Color de tu tienda</h2>
+            <h2 className="text-base font-semibold text-foreground">Color de tu tienda</h2>
             <input type="hidden" name="accent_color" value={accentColor} />
             <div className="flex flex-wrap gap-4">
               {ACCENT_COLORS.map((color) => (
@@ -198,16 +259,16 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
 
         <Card className={cn(activeStep === 'color' && 'hidden')}>
           <CardContent className="p-5 lg:p-6">
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'banner' && 'hidden')}>
+            <h2 className={cn('mb-4 text-base font-semibold text-foreground', activeStep !== 'banner' && 'hidden')}>
               Banner promocional
             </h2>
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'services' && 'hidden')}>
+            <h2 className={cn('mb-4 text-base font-semibold text-foreground', activeStep !== 'services' && 'hidden')}>
               Servicios destacados
             </h2>
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'gallery' && 'hidden')}>
+            <h2 className={cn('mb-4 text-base font-semibold text-foreground', activeStep !== 'gallery' && 'hidden')}>
               Galería de fotos
             </h2>
-            <h2 className={cn('mb-4 text-sm font-medium text-muted-foreground', activeStep !== 'video' && 'hidden')}>
+            <h2 className={cn('mb-4 text-base font-semibold text-foreground', activeStep !== 'video' && 'hidden')}>
               Video
             </h2>
             <div>
@@ -227,35 +288,62 @@ export function PersonalizationForm({ shop }: { shop: Shop }) {
 
         {state.error && <p className="text-sm text-destructive">{state.error}</p>}
 
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => goToStep(activeStepIndex - 1)}
+            disabled={isFirstStep}
+            className="min-h-10"
+          >
+            <ArrowLeft className="size-4" aria-hidden />
+            Atrás
+          </Button>
+          {!isLastStep ? (
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => goToStep(activeStepIndex + 1)}
+              className="min-h-10"
+              style={{ backgroundColor: previewAccent.primary, color: previewAccent.primaryForeground }}
+            >
+              Siguiente
+              <ArrowRight className="size-4" aria-hidden />
+            </Button>
+          ) : null}
+        </div>
+
         <Button
           type="submit"
           disabled={isPending}
-          className="shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          style={{ backgroundColor: selectedAccent.light.primary, color: selectedAccent.light.primaryForeground }}
+          size="lg"
+          className="min-h-10 w-full shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+          style={{ backgroundColor: previewAccent.primary, color: previewAccent.primaryForeground }}
         >
           {isPending ? 'Guardando...' : 'Guardar cambios'}
         </Button>
       </form>
 
       <div className="lg:sticky lg:top-4">
-        <Card className={cn('overflow-hidden border-dashed', previewThemeClass)}>
-          <style
-            dangerouslySetInnerHTML={{
-              __html: `
-                .${previewThemeClass} { --primary: ${selectedAccent.light.primary}; --primary-foreground: ${selectedAccent.light.primaryForeground}; }
-                .dark .${previewThemeClass} { --primary: ${selectedAccent.dark.primary}; --primary-foreground: ${selectedAccent.dark.primaryForeground}; }
-              `,
-            }}
-          />
+        <Card
+          className="overflow-hidden border-dashed"
+          style={
+            {
+              '--primary': previewAccent.primary,
+              '--primary-foreground': previewAccent.primaryForeground,
+            } as React.CSSProperties
+          }
+        >
           <div
             className="flex items-center gap-2 border-b border-dashed border-border px-5 py-4"
-            style={{ backgroundColor: `${selectedAccent.light.primary}12` }}
+            style={{ backgroundColor: `${previewAccent.primary}12` }}
           >
             <span className="flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
               <Sparkles className="size-3" aria-hidden />
               En vivo
             </span>
-            <h2 className="text-sm font-medium text-muted-foreground">Así se ve en tu tienda</h2>
+            <h2 className="text-base font-semibold text-foreground">Así se ve en tu tienda</h2>
           </div>
           <CardContent className="p-5">
             <div className="space-y-4 rounded-lg border border-border bg-background p-4">
