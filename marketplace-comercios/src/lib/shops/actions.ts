@@ -15,7 +15,7 @@ import {
   getProductVariantLimitInfo,
   getProductVideoLimitInfo,
 } from '@/lib/shops/queries'
-import { ACCENT_COLORS } from '@/lib/accent-colors'
+import { ACCENT_COLORS, isHexColor, normalizeHex } from '@/lib/accent-colors'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sanitizeRichText } from '@/lib/sanitize-html'
 import { containsProfanity } from '@/lib/profanity-filter'
@@ -389,8 +389,13 @@ export async function updateShopPersonalization(
 
   let accentColor: string | null = null
   if (parsed.data.accent_color) {
-    const isValidColor = ACCENT_COLORS.some((color) => color.key === parsed.data.accent_color)
-    accentColor = isValidColor ? parsed.data.accent_color : null
+    const isPresetColor = ACCENT_COLORS.some((color) => color.key === parsed.data.accent_color)
+    if (isPresetColor) {
+      accentColor = parsed.data.accent_color
+    } else if (isHexColor(parsed.data.accent_color)) {
+      // El constraint de la DB solo acepta hex de 6 dígitos.
+      accentColor = normalizeHex(parsed.data.accent_color)
+    }
   }
 
   let landingBanner: unknown = null

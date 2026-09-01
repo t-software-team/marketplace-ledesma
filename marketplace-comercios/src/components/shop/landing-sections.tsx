@@ -2,8 +2,9 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { GalleryCarousel } from './landing/apple-cards-carousel'
 
 interface LandingBannerData {
   title: string
@@ -103,6 +104,13 @@ function BannerCarousel({ banner }: { banner: LandingBannerData }) {
     setActiveIndex(index)
   }
 
+  function goToSlide(index: number) {
+    const container = containerRef.current
+    if (!container) return
+    const nextIndex = (index + slideCount) % slideCount
+    container.scrollTo({ left: nextIndex * container.clientWidth, behavior: 'smooth' })
+  }
+
   return (
     <div className="relative -mx-4 h-52 overflow-hidden rounded-xl sm:h-64 md:-mx-6">
       <div
@@ -125,14 +133,32 @@ function BannerCarousel({ banner }: { banner: LandingBannerData }) {
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       <BannerOverlay banner={banner} />
+      <button
+        type="button"
+        onClick={() => goToSlide(activeIndex - 1)}
+        aria-label="Foto anterior"
+        className="absolute left-2 top-1/2 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+      >
+        <ChevronLeft className="size-4" aria-hidden />
+      </button>
+      <button
+        type="button"
+        onClick={() => goToSlide(activeIndex + 1)}
+        aria-label="Foto siguiente"
+        className="absolute right-2 top-1/2 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+      >
+        <ChevronRight className="size-4" aria-hidden />
+      </button>
       <div className="absolute inset-x-0 top-3 z-10 flex items-center justify-center gap-1.5">
         {banner.images.map((_, index) => (
-          <span
+          <button
             key={index}
-            className={`size-1.5 rounded-full transition-all ${
-              index === activeIndex ? 'w-4 bg-white' : 'bg-white/50'
+            type="button"
+            onClick={() => goToSlide(index)}
+            aria-label={`Ir a la foto ${index + 1}`}
+            className={`h-1.5 rounded-full transition-all ${
+              index === activeIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
             }`}
-            aria-hidden
           />
         ))}
       </div>
@@ -216,28 +242,16 @@ export function LandingGallerySection({ data }: { data: unknown }) {
   const gallery = parseGallery(data)
   if (gallery.length === 0) return null
 
+  const cards = gallery.map((src, index) => ({
+    src,
+    title: `Foto ${index + 1}`,
+    category: 'Galería',
+  }))
+
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-heading">Galería</h2>
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {gallery.map((image, index) => (
-          <a
-            key={index}
-            href={image}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative size-28 shrink-0 overflow-hidden rounded-xl sm:size-32"
-          >
-            <Image
-              src={image}
-              alt="Foto de la galería"
-              fill
-              className="object-cover"
-              sizes="128px"
-            />
-          </a>
-        ))}
-      </div>
+      <GalleryCarousel items={cards} />
     </section>
   )
 }

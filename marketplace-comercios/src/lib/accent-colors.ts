@@ -60,6 +60,52 @@ export const ACCENT_COLORS: AccentColorOption[] = [
 
 export const DEFAULT_ACCENT_COLOR = 'violet'
 
+const HEX_COLOR_RE = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/
+
+export function isHexColor(value: string): boolean {
+  return HEX_COLOR_RE.test(value)
+}
+
+export function normalizeHex(hex: string): string {
+  if (hex.length === 4) {
+    const [, r, g, b] = hex
+    return `#${r}${r}${g}${g}${b}${b}`
+  }
+  return hex
+}
+
+// Luminancia relativa (WCAG) para decidir si el texto sobre el color va
+// blanco o casi negro — necesario porque con un picker libre no podemos
+// precalcular el par light/dark a mano como con la paleta fija.
+function getContrastForeground(hex: string): string {
+  const normalized = normalizeHex(hex)
+  const r = parseInt(normalized.slice(1, 3), 16)
+  const g = parseInt(normalized.slice(3, 5), 16)
+  const b = parseInt(normalized.slice(5, 7), 16)
+  const [rl, gl, bl] = [r, g, b].map((channel) => {
+    const s = channel / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  })
+  const luminance = 0.2126 * rl + 0.7152 * gl + 0.0722 * bl
+  return luminance > 0.55 ? '#1a1625' : '#ffffff'
+}
+
 export function getAccentColor(key: string | null | undefined): AccentColorOption {
-  return ACCENT_COLORS.find((color) => color.key === key) ?? ACCENT_COLORS[0]
+  if (!key) return ACCENT_COLORS[0]
+
+  const preset = ACCENT_COLORS.find((color) => color.key === key)
+  if (preset) return preset
+
+  if (isHexColor(key)) {
+    const primaryForeground = getContrastForeground(key)
+    return {
+      key,
+      label: 'Personalizado',
+      swatch: key,
+      light: { primary: key, primaryForeground },
+      dark: { primary: key, primaryForeground },
+    }
+  }
+
+  return ACCENT_COLORS[0]
 }
