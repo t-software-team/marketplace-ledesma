@@ -28,7 +28,10 @@ export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
     .order('created_at', { ascending: false })
     .limit(PROFILES_LIMIT)
 
-  if (error) console.error('getUsersDirectory: fallo al traer profiles', error)
+  if (error) {
+    console.error('getUsersDirectory: fallo al traer profiles', error)
+    throw error
+  }
 
   const rows = profiles ?? []
 

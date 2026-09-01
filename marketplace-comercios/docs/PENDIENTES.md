@@ -8,26 +8,38 @@ de thumbnails, límite en `getMyPromotions`, auth del header público movida a
 cliente) — verificados contra el código actual antes de borrarlos, no por
 antigüedad. Se renumeraron las secciones restantes.
 
-## 1. Política de manejo de errores en queries de admin
+## 1. Política de manejo de errores en queries de admin (resuelto 2026-08-31)
 
 **Contexto:** casi todas las funciones de `src/lib/admin/queries.ts` (y
-`src/server/admin-users-directory.ts`) capturan el error de Supabase, lo
-loguean con `console.error` y devuelven un fallback vacío (`[]`/`null`). Esto
-deja un fallo real (RLS, red, etc.) indistinguible de "no hay datos" para el
-admin: la UI muestra un empty state en ambos casos.
+`src/server/admin-users-directory.ts`) capturaban el error de Supabase, lo
+logueaban con `console.error` y devolvían un fallback vacío (`[]`/`null`).
+Un fallo real (RLS, red, etc.) quedaba indistinguible de "no hay datos" para
+el admin.
 
-**Estado:** ya se agregó el `console.error` con contexto en todas (antes ni
-siquiera se logueaba). Falta la decisión de arquitectura.
+**Solución aplicada:** las queries que son la data **primaria** de su propia
+página ahora relanzan el error (`throw`) después de loguearlo:
+`getShopsForReview` (ya lo hacía), `getShopForReview` (solo el fetch del
+shop en sí), `getCategoriesList`, `getCategorySuggestions`, `getCategoryById`,
+`getSubscriptionRequests`, `getSubscriptionPlans`, `getSubscriptionPlanById`,
+`getShopReports`, `getAuditLog`, `getAdminNotifications`, `getUsersDirectory`.
+Se agregó `src/app/(admin)/admin/error.tsx` (antes no existía ningún
+`error.tsx` bajo `(admin)`, solo el genérico de `src/app/error.tsx`) con un
+mensaje/CTA de admin ("Volver al panel") en vez del CTA de marketplace
+público del boundary raíz.
 
-**Decisión pendiente:** definir si las queries de admin deben **propagar** el
-error (`throw`, y que un error boundary / mensaje visible lo muestre al admin)
-en vez de degradar silenciosamente a lista vacía. Es una decisión transversal
-a todo el módulo admin, no de una función suelta. El gate de review (`gga`) lo
-marca como violación de la sección "Manejo de errores y logging" de AGENTS.md.
-
-**Nota:** el commit `7f4440d` se hizo con `--no-verify` justamente por este
-punto — el código quedó mejor que antes, pero el gate pide el cambio de
-comportamiento completo, que excede el alcance de ese commit.
+**Se dejaron resilientes a propósito** (siguen devolviendo `[]`/`null`/`0` en
+vez de tirar):
+- `searchShopsByName` — típeahead interactivo; un hipo de red mientras el
+  admin escribe no debería tirar abajo la página.
+- `getSignedPaymentProofUrl`, `getPlanLimitsByPlanId`, y los conteos
+  (`productCount`/`openReportsCount`) dentro de `getShopForReview` — datos
+  secundarios que acompañan al dato principal, no bloqueantes.
+- `getUnreadNotifications` y `getUnreadNotificationsCount` — se llaman desde
+  `admin/layout.tsx`, que envuelve **todas** las páginas del panel. Un
+  `error.tsx` en el mismo segmento que un layout no atrapa errores de ese
+  propio layout (solo el del segmento padre lo haría), así que tirar acá
+  tumbaría todo el panel por un hipo en el badge de no leídas — se prioriza
+  disponibilidad del panel sobre precisión de ese contador puntual.
 
 ## 2. Naming inconsistente snake_case / camelCase en queries de shops
 
@@ -250,3 +262,12 @@ Se commiteó con `--no-verify` tras esta verificación.
    presente en la migración original no se toca.
 
 Se commiteó con `--no-verify` tras esta verificación.
+
+**Caso 8 (2026-08-31):** commit que agrega `throw` a las queries primarias
+de admin (`getShopsForReview`, `getCategoriesList`, etc.) — ver ítem #1
+arriba. `gga` marcó `FAILED` por el naming mixto snake_case/camelCase que
+esas mismas funciones ya devolvían (`activePlanName`, `productCount` junto
+a `whatsapp_number`, `logo_url`). No es código nuevo de este commit — es
+exactamente el ítem #2 de este mismo documento, ya trackeado como deuda
+separada. Se commiteó con `--no-verify`; el fix de naming queda para cuando
+se ataque el ítem #2.

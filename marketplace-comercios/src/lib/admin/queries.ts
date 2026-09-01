@@ -70,7 +70,10 @@ export async function getShopForReview(shopId: string) {
       .eq('status', 'pending'),
   ])
 
-  if (shopError) console.error('getShopForReview: fallo al traer shop', { shopId, error: shopError })
+  if (shopError) {
+    console.error('getShopForReview: fallo al traer shop', { shopId, error: shopError })
+    throw shopError
+  }
   if (productCountError)
     console.error('getShopForReview: fallo al contar products', { shopId, error: productCountError })
   if (reportsCountError)
@@ -127,7 +130,10 @@ export async function getCategoriesList() {
     .order('name', { ascending: true })
     .limit(200)
 
-  if (error) console.error('getCategoriesList: fallo al traer categories', error)
+  if (error) {
+    console.error('getCategoriesList: fallo al traer categories', error)
+    throw error
+  }
 
   return (categories ?? []).map((category) => {
     const { products, ...rest } = category
@@ -146,7 +152,10 @@ export async function getCategorySuggestions() {
     .order('created_at', { ascending: false })
     .limit(200)
 
-  if (error) console.error('getCategorySuggestions: fallo al traer category_suggestions', error)
+  if (error) {
+    console.error('getCategorySuggestions: fallo al traer category_suggestions', error)
+    throw error
+  }
 
   return data ?? []
 }
@@ -160,7 +169,10 @@ export async function getCategoryById(categoryId: string) {
     .eq('id', categoryId)
     .maybeSingle()
 
-  if (error) console.error('getCategoryById: fallo al traer category', { categoryId, error })
+  if (error) {
+    console.error('getCategoryById: fallo al traer category', { categoryId, error })
+    throw error
+  }
 
   return category
 }
@@ -190,7 +202,10 @@ export async function getSubscriptionRequests() {
     .order('created_at', { ascending: false })
     .limit(200)
 
-  if (error) console.error('getSubscriptionRequests: fallo al traer subscriptions', error)
+  if (error) {
+    console.error('getSubscriptionRequests: fallo al traer subscriptions', error)
+    throw error
+  }
 
   return subscriptions ?? []
 }
@@ -206,7 +221,10 @@ export async function getSubscriptionPlans() {
     .order('created_at', { ascending: true })
     .limit(200)
 
-  if (error) console.error('getSubscriptionPlans: fallo al traer subscription_plans', error)
+  if (error) {
+    console.error('getSubscriptionPlans: fallo al traer subscription_plans', error)
+    throw error
+  }
 
   return (plans ?? []).map((plan) => {
     const { categories, ...rest } = plan
@@ -226,7 +244,10 @@ export async function getSubscriptionPlanById(planId: string) {
     getPlanLimitsByPlanId(planId),
   ])
 
-  if (error) console.error('getSubscriptionPlanById: fallo al traer subscription_plans', { planId, error })
+  if (error) {
+    console.error('getSubscriptionPlanById: fallo al traer subscription_plans', { planId, error })
+    throw error
+  }
 
   if (!plan) return null
 
@@ -272,7 +293,10 @@ export async function getShopReports() {
     .order('created_at', { ascending: false })
     .limit(200)
 
-  if (error) console.error('getShopReports: fallo al traer shop_reports', error)
+  if (error) {
+    console.error('getShopReports: fallo al traer shop_reports', error)
+    throw error
+  }
 
   return reports ?? []
 }
@@ -296,7 +320,10 @@ export async function getAuditLog() {
     .order('created_at', { ascending: false })
     .limit(100)
 
-  if (error) console.error('getAuditLog: fallo al traer audit_log', error)
+  if (error) {
+    console.error('getAuditLog: fallo al traer audit_log', error)
+    throw error
+  }
 
   return entries ?? []
 }
@@ -344,7 +371,10 @@ export async function getAdminNotifications(
     .order('created_at', { ascending: false })
     .range(from, to)
 
-  if (error) console.error('getAdminNotifications: fallo al paginar admin_notifications', { page, pageSize, error })
+  if (error) {
+    console.error('getAdminNotifications: fallo al paginar admin_notifications', { page, pageSize, error })
+    throw error
+  }
 
   const totalCount = count ?? 0
 
