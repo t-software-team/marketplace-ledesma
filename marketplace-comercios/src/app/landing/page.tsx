@@ -4,6 +4,12 @@ import Link from 'next/link'
 import { Briefcase, Check, MessageCircle, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { GalleryCarousel } from '@/components/shop/landing/apple-cards-carousel'
+import { LandingFaqSection } from '@/components/shop/landing/landing-faq-section'
+import { FadeIn } from '@/components/shop/landing/landing-fade-in'
+import { LandingSiteHeader } from '@/components/shop/landing/landing-site-header'
+import { ImageWithSkeleton } from '@/components/shop/landing/landing-image-skeleton'
+import { SocialCount } from '@/components/shop/landing/landing-social-count'
+import { BackToTop } from '@/components/shop/landing/landing-back-to-top'
 
 export const metadata: Metadata = {
   title: 'Sumá tu negocio a Proxi',
@@ -14,7 +20,7 @@ export const metadata: Metadata = {
 export default function LandingPage() {
   return (
     <div className="bg-background text-foreground">
-      <SiteHeader />
+      <LandingSiteHeader />
       <main>
         <Hero />
         <SocialProof />
@@ -22,35 +28,12 @@ export default function LandingPage() {
         <ForWhom />
         <HowItWorks />
         <GymSection />
+        <LandingFaqSection />
         <FinalCta />
       </main>
       <SiteFooter />
+      <BackToTop />
     </div>
-  )
-}
-
-function SiteHeader() {
-  return (
-    <header className="border-b border-border">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
-        <Link href="/landing" className="flex items-center gap-2">
-          <Image src="/brand/logo-mark.png" alt="" width={28} height={28} className="size-7" priority />
-          <span className="font-heading text-lg text-foreground">Proxi</span>
-        </Link>
-        <nav className="flex items-center gap-2 sm:gap-4">
-          <Link
-            href="/login"
-            className="hidden text-sm font-medium text-foreground/70 transition-colors hover:text-foreground sm:inline-block"
-          >
-            Iniciar sesión
-          </Link>
-          <Button size="sm" render={<Link href="/registro" />} nativeButton={false}>
-            <span className="sm:hidden">Sumarme</span>
-            <span className="hidden sm:inline">Sumar mi negocio</span>
-          </Button>
-        </nav>
-      </div>
-    </header>
   )
 }
 
@@ -77,7 +60,7 @@ function Hero() {
           </Button>
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center justify-center text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
+            className="inline-flex min-h-11 items-center justify-center rounded-md text-sm font-medium text-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             Ver el feed de comercios →
           </Link>
@@ -90,7 +73,7 @@ function Hero() {
           aria-hidden
         />
         <BrowserFrame>
-          <Image
+          <ImageWithSkeleton
             src="/landing/feed.webp"
             alt="Feed público de Proxi Marketplace, con comercios cercanos organizados por categoría"
             width={2000}
@@ -131,8 +114,8 @@ const SOCIAL_PROOF_LOGOS = [
 function SocialProof() {
   return (
     <section className="border-t border-border">
-      <div className="mx-auto max-w-6xl py-10">
-        <p className="px-5 text-center text-sm text-foreground/60 sm:px-8">Ya están en Proxi</p>
+      <FadeIn className="mx-auto max-w-6xl py-10">
+        <SocialCount value={50} label="comercios ya están en Proxi" />
         <div
           className="group mt-8 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
         >
@@ -150,7 +133,7 @@ function SocialProof() {
             ))}
           </div>
         </div>
-      </div>
+      </FadeIn>
     </section>
   )
 }
@@ -215,7 +198,21 @@ function Features() {
           />
         </FeatureRow>
 
-        <WhatsappCallout />
+        <FeatureRow
+          title="Cada producto, con su ficha completa."
+          body="Fotos, precio, talles y stock actualizado: la gente ve todo lo que necesita antes de escribirte, y con un toque arranca la conversación por WhatsApp."
+          align="left"
+        >
+          <ProductDetailCard />
+        </FeatureRow>
+
+        <FeatureRow
+          title="Hablás vos, sin intermediarios."
+          body="Sin chatbots ni pasos de más: el mensaje llega directo a tu WhatsApp y cerrás la venta como ya lo hacés hoy."
+          align="right"
+        >
+          <WhatsappChatCard />
+        </FeatureRow>
 
         <FeatureRow
           title="Empezás gratis, mejorás cuando te sirve."
@@ -255,7 +252,7 @@ function FeatureRow({
   children: React.ReactNode
 }) {
   return (
-    <div
+    <FadeIn
       className={`grid items-center gap-8 lg:grid-cols-2 lg:gap-16 ${
         align === 'right' ? 'lg:[&>*:first-child]:order-2' : ''
       }`}
@@ -265,32 +262,42 @@ function FeatureRow({
         <p className="mt-3 max-w-md text-foreground/70">{body}</p>
       </div>
       <div className={fullWidth ? 'w-full' : 'flex justify-center lg:justify-start'}>{children}</div>
+    </FadeIn>
+  )
+}
+
+function ProductDetailCard() {
+  return (
+    <div className="w-full max-w-xs overflow-hidden rounded-2xl border border-border bg-surface">
+      <Image
+        src="/landing/producto-detalle.webp"
+        alt="Ficha de producto en Proxi, con foto, precio, descripción y talles disponibles"
+        width={750}
+        height={1642}
+        className="w-full"
+        sizes="320px"
+      />
     </div>
   )
 }
 
-function WhatsappCallout() {
+function WhatsappChatCard() {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
-      <div className="w-full rounded-2xl border border-border bg-surface p-4">
-        <div className="flex items-center gap-2 border-b border-border pb-3">
-          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <MessageCircle className="size-4" aria-hidden />
-          </div>
-          <p className="text-sm font-medium">Kioto</p>
+    <div className="w-full max-w-xs rounded-2xl border border-border bg-surface p-4">
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <MessageCircle className="size-4" aria-hidden />
         </div>
-        <div className="mt-3 space-y-2 text-left">
-          <div className="ml-auto w-fit max-w-[85%] rounded-xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-primary-foreground">
-            Hola! ¿Tenés el corset urban en talle M?
-          </div>
-          <div className="w-fit max-w-[85%] rounded-xl rounded-tl-sm bg-muted px-3 py-2 text-sm">
-            Sí! Te lo separo 🙌
-          </div>
+        <p className="text-sm font-medium">Kioto</p>
+      </div>
+      <div className="mt-3 space-y-2 text-left">
+        <div className="ml-auto w-fit max-w-[85%] rounded-xl rounded-tr-sm bg-primary px-3 py-2 text-sm text-primary-foreground">
+          Hola! ¿Tenés el corset urban en talle M?
+        </div>
+        <div className="w-fit max-w-[85%] rounded-xl rounded-tl-sm bg-muted px-3 py-2 text-sm">
+          Sí! Te lo separo 🙌
         </div>
       </div>
-      <p className="text-sm text-foreground/70">
-        El contacto es directo: sin chatbots ni intermediarios, hablás vos con quien te escribe.
-      </p>
     </div>
   )
 }
@@ -317,7 +324,7 @@ function ForWhom() {
   return (
     <section className="border-t border-border">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-2xl text-center">
+        <FadeIn className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance font-heading text-2xl text-foreground sm:text-3xl">
             Para vidrieras y para servicios.
           </h2>
@@ -325,9 +332,9 @@ function ForWhom() {
             No hace falta vender productos para estar en Proxi. Si atendés gente cerca tuyo,
             tenés lugar.
           </p>
-        </div>
+        </FadeIn>
 
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        <FadeIn delay={0.1} className="mt-10 grid gap-6 sm:grid-cols-2">
           <div className="rounded-2xl border border-border bg-surface p-6">
             <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Store className="size-5" aria-hidden />
@@ -363,7 +370,7 @@ function ForWhom() {
               ))}
             </div>
           </div>
-        </div>
+        </FadeIn>
       </div>
     </section>
   )
@@ -383,7 +390,7 @@ function GymSection() {
   return (
     <section className="border-t border-border bg-primary/[0.04]">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-3xl text-center">
+        <FadeIn className="mx-auto max-w-3xl text-center">
           <h2 className="text-balance font-heading text-2xl text-foreground sm:text-3xl">
             ¿Tenés un gimnasio? Proxi también lleva tu día a día.
           </h2>
@@ -391,11 +398,11 @@ function GymSection() {
             Además de tu vidriera pública, sumás herramientas pensadas para gestionar un gimnasio
             real, no solo un catálogo de productos.
           </p>
-        </div>
+        </FadeIn>
 
-        <div className="mt-10">
+        <FadeIn delay={0.1} className="mt-10">
           <BrowserFrame>
-            <Image
+            <ImageWithSkeleton
               src="/landing/socios.webp"
               alt="Panel de Socios en Proxi: lista de socios del gimnasio con su estado (activo/vencido), vencimiento y acciones para renovar"
               width={2000}
@@ -404,9 +411,9 @@ function GymSection() {
               sizes="(max-width: 1024px) 100vw, 1152px"
             />
           </BrowserFrame>
-        </div>
+        </FadeIn>
 
-        <div className="mt-14 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+        <FadeIn className="mt-14 grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
           <div>
             <ul className="space-y-3">
               {GYM_CAPABILITIES.map((item) => (
@@ -456,7 +463,7 @@ function GymSection() {
               ingreso queda registrado solo.
             </p>
           </div>
-        </div>
+        </FadeIn>
       </div>
     </section>
   )
@@ -484,16 +491,18 @@ function HowItWorks() {
   return (
     <section className="border-t border-border bg-secondary/40">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
-        <h2 className="text-balance font-heading text-2xl text-foreground sm:text-3xl">
-          Cómo funciona
-        </h2>
+        <FadeIn>
+          <h2 className="text-balance font-heading text-2xl text-foreground sm:text-3xl">
+            Cómo funciona
+          </h2>
+        </FadeIn>
         <div className="mt-10 grid gap-10 sm:grid-cols-3 sm:gap-8">
-          {STEPS.map((step) => (
-            <div key={step.number}>
+          {STEPS.map((step, index) => (
+            <FadeIn key={step.number} delay={index * 0.1}>
               <span className="font-heading text-3xl text-primary">{step.number}</span>
               <p className="mt-3 font-medium text-foreground">{step.title}</p>
               <p className="mt-1.5 text-sm text-foreground/70">{step.body}</p>
-            </div>
+            </FadeIn>
           ))}
         </div>
       </div>
@@ -504,7 +513,7 @@ function HowItWorks() {
 function FinalCta() {
   return (
     <section className="border-t border-border">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-5 py-16 text-center sm:px-8 sm:py-24">
+      <FadeIn className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-5 py-16 text-center sm:px-8 sm:py-24">
         <Image src="/brand/logo-mark.png" alt="" width={40} height={40} className="size-10" />
         <h2 className="text-balance font-heading text-3xl text-foreground sm:text-4xl">
           Sumá tu negocio a Proxi hoy.
@@ -520,7 +529,7 @@ function FinalCta() {
         >
           Sumar mi negocio gratis
         </Button>
-      </div>
+      </FadeIn>
     </section>
   )
 }
@@ -531,13 +540,13 @@ function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-5 py-8 text-sm text-foreground/60 sm:flex-row sm:justify-between sm:px-8">
         <p>© {new Date().getFullYear()} Proxi Marketplace</p>
         <div className="flex items-center gap-5">
-          <Link href="/" className="transition-colors hover:text-foreground">
+          <Link href="/" className="rounded-md outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50">
             Explorar comercios
           </Link>
-          <Link href="/terminos" className="transition-colors hover:text-foreground">
+          <Link href="/terminos" className="rounded-md outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50">
             Términos
           </Link>
-          <Link href="/login" className="transition-colors hover:text-foreground">
+          <Link href="/login" className="rounded-md outline-none transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50">
             Iniciar sesión
           </Link>
         </div>

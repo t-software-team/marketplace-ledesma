@@ -158,9 +158,21 @@ function GalleryCard({ card, index }: { card: GalleryCard; index: number }) {
               >
                 <X className="size-4" aria-hidden />
               </button>
-              <div className="relative aspect-[4/3] w-full sm:aspect-video">
-                <Image src={card.src} alt={card.title} fill className="object-cover" sizes="768px" priority />
-              </div>
+              {card.width && card.height ? (
+                <Image
+                  src={card.src}
+                  alt={card.title}
+                  width={card.width}
+                  height={card.height}
+                  className="max-h-[80vh] w-full object-contain"
+                  sizes="768px"
+                  priority
+                />
+              ) : (
+                <div className="relative aspect-[4/3] w-full sm:aspect-video">
+                  <Image src={card.src} alt={card.title} fill className="object-cover" sizes="768px" priority />
+                </div>
+              )}
             </motion.div>
           </div>
         )}
