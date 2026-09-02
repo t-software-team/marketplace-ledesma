@@ -91,7 +91,9 @@ export function RoleSelector() {
               </div>
               <div>
                 <p className="font-heading text-lg">Quiero vender</p>
-                <p className="mt-1 text-sm text-muted-foreground">Comercio o prestador de servicios</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Comercio, prestador de servicios o gimnasio
+                </p>
               </div>
               <ul className="space-y-1 text-left text-xs text-muted-foreground">
                 <li>• Sumá reseñas reales que generan confianza</li>
