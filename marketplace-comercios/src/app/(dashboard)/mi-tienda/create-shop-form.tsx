@@ -51,7 +51,7 @@ export function CreateShopForm({ categories }: CreateShopFormProps) {
         >
           <Wrench className="size-7 text-primary" aria-hidden />
           <span className="font-medium">Servicio</span>
-          <span className="text-xs text-muted-foreground">Ofrezco servicios</span>
+          <span className="text-xs text-muted-foreground">Ofrezco servicios o gimnasio</span>
         </button>
       </div>
     )
