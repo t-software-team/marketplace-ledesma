@@ -799,6 +799,7 @@ export type Database = {
           price: number | null
           search_vector: unknown
           shop_id: string
+          stock: number | null
           updated_at: string
           video_url: string | null
           wholesale_price: number | null
@@ -816,6 +817,7 @@ export type Database = {
           price?: number | null
           search_vector?: unknown
           shop_id: string
+          stock?: number | null
           updated_at?: string
           video_url?: string | null
           wholesale_price?: number | null
@@ -833,6 +835,7 @@ export type Database = {
           price?: number | null
           search_vector?: unknown
           shop_id?: string
+          stock?: number | null
           updated_at?: string
           video_url?: string | null
           wholesale_price?: number | null

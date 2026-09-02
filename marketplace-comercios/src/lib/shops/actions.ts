@@ -535,6 +535,7 @@ export async function createProduct(
     name: formData.get('name'),
     description: formData.get('description') ?? '',
     price: formData.get('price') ?? '',
+    stock: formData.get('stock') ?? '',
     currency: formData.get('currency') || 'ARS',
     category_id: formData.get('category_id') ?? '',
     is_active: formData.get('is_active') === 'on',
@@ -587,6 +588,7 @@ export async function createProduct(
       name: parsed.data.name,
       description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
+      stock: parsed.data.stock ? Number(parsed.data.stock) : null,
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
       is_active: parsed.data.is_active,
@@ -662,6 +664,7 @@ export async function updateProduct(
     name: formData.get('name'),
     description: formData.get('description') ?? '',
     price: formData.get('price') ?? '',
+    stock: formData.get('stock') ?? '',
     currency: formData.get('currency') || 'ARS',
     category_id: formData.get('category_id') ?? '',
     is_active: formData.get('is_active') === 'on',
@@ -721,6 +724,7 @@ export async function updateProduct(
       name: parsed.data.name,
       description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
+      stock: parsed.data.stock ? Number(parsed.data.stock) : null,
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
       is_active: parsed.data.is_active,
@@ -981,7 +985,7 @@ export async function duplicateProduct(productId: string) {
   const { data: original, error: fetchError } = await supabase
     .from('products')
     .select(
-      'shop_id, name, description, price, currency, category_id, video_url, product_images(url, sort_order), product_variants(name, price, sort_order)'
+      'shop_id, name, description, price, stock, currency, category_id, video_url, product_images(url, sort_order), product_variants(name, price, sort_order)'
     )
     .eq('id', productId)
     .single()
@@ -1010,6 +1014,7 @@ export async function duplicateProduct(productId: string) {
       name: `${original.name} (copia)`,
       description: original.description,
       price: original.price,
+      stock: original.stock,
       currency: original.currency,
       category_id: original.category_id,
       is_active: false,

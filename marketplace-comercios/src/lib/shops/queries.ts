@@ -300,6 +300,7 @@ export interface MyShopProductsResult {
     id: string;
     name: string;
     price: number | null;
+    stock: number | null;
     currency: string;
     is_active: boolean;
     is_featured: boolean;
@@ -333,6 +334,7 @@ export async function getMyShopProducts(
       id,
       name,
       price,
+      stock,
       currency,
       is_active,
       is_featured,
@@ -391,6 +393,7 @@ export async function getMyShopProducts(
       id: product.id,
       name: product.name,
       price: product.price,
+      stock: product.stock,
       currency: product.currency,
       is_active: product.is_active,
       is_featured: product.is_featured,
@@ -505,6 +508,7 @@ export async function getMyProduct(productId: string) {
       name,
       description,
       price,
+      stock,
       currency,
       category_id,
       is_active,
@@ -938,6 +942,7 @@ export const getProductDetail = unstable_cache(
         name,
         description,
         price,
+        stock,
         currency,
         is_active,
         category_id,
@@ -1016,6 +1021,7 @@ export const getProductDetail = unstable_cache(
       name: product.name,
       description: product.description,
       price: product.price,
+      stock: product.stock,
       currency: product.currency,
       is_active: product.is_active,
       category: product.categories,

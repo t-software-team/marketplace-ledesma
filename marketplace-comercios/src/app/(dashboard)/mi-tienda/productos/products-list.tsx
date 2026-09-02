@@ -26,6 +26,7 @@ interface Product {
   id: string
   name: string
   price: number | null
+  stock: number | null
   currency: string
   is_active: boolean
   is_featured: boolean
@@ -40,6 +41,12 @@ function formatPrice(price: number | null, currency: string) {
     currency,
     maximumFractionDigits: 0,
   }).format(price)
+}
+
+function StockCell({ stock }: { stock: number | null }) {
+  if (stock == null) return <span className="text-muted-foreground">—</span>
+  if (stock === 0) return <span className="font-medium text-destructive">Sin stock</span>
+  return <span>{stock}</span>
 }
 
 function ProductThumbnail({ product }: { product: Product }) {
@@ -268,6 +275,11 @@ export function ProductsList({
                       <span className="font-mono text-xs text-muted-foreground">
                         {formatPrice(product.price, product.currency)}
                       </span>
+                      {product.stock != null && (
+                        <span className="text-xs">
+                          <StockCell stock={product.stock} />
+                        </span>
+                      )}
                       {!product.category_name && (
                         <span className="flex items-center gap-0.5 text-xs font-medium text-warning-foreground">
                           <AlertTriangle className="size-3 shrink-0" aria-hidden />
@@ -302,6 +314,7 @@ export function ProductsList({
                 </TableHead>
                 <TableHead>{noun.charAt(0).toUpperCase() + noun.slice(1)}</TableHead>
                 <TableHead>Precio</TableHead>
+                <TableHead>Stock</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
@@ -324,6 +337,9 @@ export function ProductsList({
                   </TableCell>
                   <TableCell className="whitespace-nowrap font-mono">
                     {formatPrice(product.price, product.currency)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <StockCell stock={product.stock} />
                   </TableCell>
                   <TableCell>
                     <ProductStatusBadges product={product} />

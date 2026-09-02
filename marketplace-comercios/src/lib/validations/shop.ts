@@ -103,6 +103,13 @@ export const productSchema = z.object({
     .string()
     .optional()
     .refine((val) => !val || !Number.isNaN(Number(val)), 'Ingresá un precio válido'),
+  stock: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || (Number.isInteger(Number(val)) && Number(val) >= 0),
+      'Ingresá un stock válido (número entero no negativo)'
+    ),
   currency: z.string().default('ARS'),
   category_id: uuidLike('Elegí una subcategoría válida').optional().or(z.literal('')),
   is_active: z.boolean(),

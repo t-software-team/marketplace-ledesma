@@ -85,6 +85,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
           name: product.name,
           description: product.description,
           price: product.price,
+          stock: product.stock,
           currency: product.currency,
           category_id: product.category_id,
           is_active: product.is_active,

@@ -113,6 +113,30 @@ describe('productSchema', () => {
       expect(result.data.image_urls).toEqual([])
     }
   })
+
+  it('acepta stock vacío (sin control de stock)', () => {
+    const result = productSchema.safeParse({ ...base, stock: '' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.stock).toBe('')
+    }
+  })
+
+  it('acepta stock en 0', () => {
+    expect(productSchema.safeParse({ ...base, stock: '0' }).success).toBe(true)
+  })
+
+  it('acepta un stock entero positivo', () => {
+    expect(productSchema.safeParse({ ...base, stock: '15' }).success).toBe(true)
+  })
+
+  it('rechaza un stock negativo', () => {
+    expect(productSchema.safeParse({ ...base, stock: '-3' }).success).toBe(false)
+  })
+
+  it('rechaza un stock decimal', () => {
+    expect(productSchema.safeParse({ ...base, stock: '2.5' }).success).toBe(false)
+  })
 })
 
 describe('shopReviewSchema', () => {

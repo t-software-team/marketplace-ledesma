@@ -26,6 +26,7 @@ interface ProductFormProps {
     name: string
     description: string | null
     price: number | null
+    stock?: number | null
     currency: string
     category_id: string | null
     is_active: boolean
@@ -120,6 +121,25 @@ export function ProductForm({
           <p className="text-xs text-muted-foreground">Normalmente ARS (pesos argentinos).</p>
           <FieldError message={fieldErrors.currency} />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="stock" className="text-base font-medium sm:text-sm">
+          Stock
+        </label>
+        <Input
+          id="stock"
+          name="stock"
+          type="number"
+          min={0}
+          step={1}
+          defaultValue={defaultValues?.stock ?? ''}
+          aria-invalid={Boolean(fieldErrors.stock)}
+        />
+        <p className="text-xs text-muted-foreground">
+          Dejalo vacío si no querés controlar el stock disponible.
+        </p>
+        <FieldError message={fieldErrors.stock} />
       </div>
 
       <ProductImagesField

@@ -134,6 +134,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 )}
                 {formatPrice(product.price, product.currency)}
               </p>
+              {product.stock === 0 && (
+                <p className="mt-1 text-sm font-medium text-destructive">Sin stock</p>
+              )}
+              {typeof product.stock === 'number' && product.stock > 0 && (
+                <p className="mt-1 text-sm text-muted-foreground">{product.stock} disponibles</p>
+              )}
             </div>
             <ProductShare
               productId={product.id}
