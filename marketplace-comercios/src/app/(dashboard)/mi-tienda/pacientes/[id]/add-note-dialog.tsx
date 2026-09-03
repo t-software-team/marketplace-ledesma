@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { uploadPatientDocument } from '@/lib/shops/upload-image'
 import { createPatientNote, type PatientNoteActionState } from '@/lib/patients/notes-actions'
 import { NOTE_CATEGORY_OPTIONS } from '@/lib/patients/note-categories'
+import { VoiceNoteButton } from '@/components/shared/voice-note-button'
+import { VoiceOverlay } from '@/components/shared/voice-overlay'
+import { useSpeechToText } from '@/hooks/use-speech-to-text'
 
 interface AddNoteDialogProps {
   shopId: string
@@ -24,6 +27,10 @@ const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<PatientNoteActionState>(initialState)
+  const [content, setContent] = useState('')
+  const { isListening, isSupported, start, stop } = useSpeechToText((text) =>
+    setContent((current) => (current ? `${current} ${text}` : text))
+  )
   const [files, setFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -87,6 +94,7 @@ export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
       } else {
         toast.add({ title: 'Nota agregada', type: 'success' })
         setFiles([])
+        setContent('')
         setOpen(false)
       }
     })
@@ -95,7 +103,8 @@ export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
   const isBusy = isPending || isUploading
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+    <Dialog open={open && !isListening} onOpenChange={setOpen}>
       <DialogTrigger render={<Button size="sm" />}>Nueva nota</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -103,10 +112,21 @@ export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="content" className="text-sm font-medium">
-              Contenido
-            </label>
-            <Textarea id="content" name="content" required aria-invalid={Boolean(fieldErrors.content)} rows={5} />
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="content" className="text-sm font-medium">
+                Contenido
+              </label>
+              {isSupported && <VoiceNoteButton disabled={isBusy} onStart={start} />}
+            </div>
+            <Textarea
+              id="content"
+              name="content"
+              required
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              aria-invalid={Boolean(fieldErrors.content)}
+              rows={5}
+            />
             <FieldError message={fieldErrors.content} />
           </div>
 
@@ -190,5 +210,7 @@ export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
         </form>
       </DialogContent>
     </Dialog>
+    {isListening && <VoiceOverlay onStop={stop} />}
+    </>
   )
 }

@@ -149,7 +149,7 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           <h2 className="font-heading text-base">Historial clínico</h2>
           <AddNoteDialog shopId={shop.id} patientId={patient.id} />
         </div>
-        <NoteHistory patientId={patient.id} notes={notes} />
+        <NoteHistory shopId={shop.id} patientId={patient.id} notes={notes} />
       </div>
 
       <div className="space-y-3 border-t border-border pt-6">

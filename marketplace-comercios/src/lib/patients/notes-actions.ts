@@ -105,6 +105,7 @@ export async function createPatientNote(
 export async function updatePatientNote(
   noteId: string,
   patientId: string,
+  newAttachments: PatientNoteAttachmentInput[],
   _prev: PatientNoteActionState,
   formData: FormData
 ): Promise<PatientNoteActionState> {
@@ -151,6 +152,23 @@ export async function updatePatientNote(
   if (error) {
     console.error('updatePatientNote: fallo al actualizar la nota', { noteId, patientId, error })
     return { error: 'No pudimos actualizar la nota' }
+  }
+
+  if (newAttachments.length > 0) {
+    const attachmentsToInsert = newAttachments.map((attachment) => ({
+      note_id: noteId,
+      url: attachment.url,
+      file_name: attachment.file_name,
+    }))
+
+    const { error: attachmentsError } = await supabase
+      .from('patient_note_attachments')
+      .insert(attachmentsToInsert)
+
+    if (attachmentsError) {
+      console.error('updatePatientNote: fallo al guardar adjuntos nuevos', { noteId, attachmentsError })
+      return { error: 'La nota se actualizó, pero no pudimos guardar los adjuntos nuevos' }
+    }
   }
 
   revalidatePath(`/mi-tienda/pacientes/${patientId}`)

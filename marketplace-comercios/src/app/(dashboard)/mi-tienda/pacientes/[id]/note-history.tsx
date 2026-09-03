@@ -12,11 +12,12 @@ import type { PatientNoteRow } from '@/lib/patients/notes-queries'
 import { EditNoteDialog } from './edit-note-dialog'
 
 interface NoteHistoryProps {
+  shopId: string
   patientId: string
   notes: PatientNoteRow[]
 }
 
-export function NoteHistory({ patientId, notes }: NoteHistoryProps) {
+export function NoteHistory({ shopId, patientId, notes }: NoteHistoryProps) {
   const [isPending, startTransition] = useTransition()
 
   function handleDelete(noteId: string) {
@@ -47,7 +48,7 @@ export function NoteHistory({ patientId, notes }: NoteHistoryProps) {
               </p>
             </div>
             <div className="flex items-center gap-1">
-              <EditNoteDialog patientId={patientId} note={note} />
+              <EditNoteDialog shopId={shopId} patientId={patientId} note={note} />
               <ConfirmDialog
                 trigger={<Button variant="ghost" size="icon-sm" disabled={isPending} aria-label="Eliminar" />}
                 triggerLabel={<Trash2 className="size-4" aria-hidden />}

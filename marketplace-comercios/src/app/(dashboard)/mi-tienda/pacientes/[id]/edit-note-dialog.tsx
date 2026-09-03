@@ -1,48 +1,116 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Pencil } from 'lucide-react'
+import { useRef, useState, useTransition } from 'react'
+import { Loader2, Paperclip, Pencil, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { VoiceNoteButton } from '@/components/shared/voice-note-button'
+import { VoiceOverlay } from '@/components/shared/voice-overlay'
+import { useSpeechToText } from '@/hooks/use-speech-to-text'
+import { uploadPatientDocument } from '@/lib/shops/upload-image'
 import { updatePatientNote, type PatientNoteActionState } from '@/lib/patients/notes-actions'
 import { NOTE_CATEGORY_OPTIONS } from '@/lib/patients/note-categories'
 import type { PatientNoteRow } from '@/lib/patients/notes-queries'
 
 interface EditNoteDialogProps {
+  shopId: string
   patientId: string
   note: PatientNoteRow
 }
 
 const initialState: PatientNoteActionState = { error: null }
 
+const ALLOWED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf']
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
+
 /**
- * Reutiliza el layout de `AddNoteDialog` (contenido + categoría) en modo
- * edición, sin la sección de adjuntos — los adjuntos no se editan acá.
+ * Reutiliza el layout de `AddNoteDialog` (contenido + categoría + adjuntos +
+ * dictado) en modo edición. Los adjuntos nuevos se suman a los ya existentes
+ * de la nota — no se pueden quitar adjuntos viejos desde acá.
  */
-export function EditNoteDialog({ patientId, note }: EditNoteDialogProps) {
+export function EditNoteDialog({ shopId, patientId, note }: EditNoteDialogProps) {
   const [open, setOpen] = useState(false)
   const [state, setState] = useState<PatientNoteActionState>(initialState)
+  const [content, setContent] = useState(note.content)
+  const { isListening, isSupported, start, stop } = useSpeechToText((text) =>
+    setContent((current) => (current ? `${current} ${text}` : text))
+  )
+  const [files, setFiles] = useState<File[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const fieldErrors = state.fieldErrors ?? {}
 
+  function handleFilesChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const selected = event.target.files
+    if (!selected || selected.length === 0) return
+
+    const incoming = Array.from(selected)
+    const invalid = incoming.find(
+      (file) => !ALLOWED_ATTACHMENT_TYPES.includes(file.type) || file.size > MAX_ATTACHMENT_SIZE
+    )
+
+    if (invalid) {
+      setUploadError('Cada adjunto debe ser una imagen o un PDF de hasta 10MB')
+      event.target.value = ''
+      return
+    }
+
+    setUploadError(null)
+    setFiles((prev) => [...prev, ...incoming])
+    event.target.value = ''
+  }
+
+  function handleRemoveFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+  }
+
   function handleSubmit(formData: FormData) {
+    setUploadError(null)
     startTransition(async () => {
-      const result = await updatePatientNote(note.id, patientId, initialState, formData)
+      let attachments: { url: string; file_name: string }[] = []
+
+      if (files.length > 0) {
+        setIsUploading(true)
+        try {
+          attachments = await Promise.all(
+            files.map(async (file) => ({
+              url: await uploadPatientDocument(shopId, patientId, file),
+              file_name: file.name,
+            }))
+          )
+        } catch (error) {
+          setIsUploading(false)
+          console.error('EditNoteDialog: fallo al subir adjuntos', { shopId, patientId, error })
+          const message = error instanceof Error ? error.message : 'No pudimos subir los adjuntos'
+          setUploadError(message)
+          toast.add({ title: 'No pudimos subir los adjuntos', description: message, type: 'error' })
+          return
+        }
+        setIsUploading(false)
+      }
+
+      const result = await updatePatientNote(note.id, patientId, attachments, initialState, formData)
       setState(result)
       if (result.error) {
         toast.add({ title: 'No pudimos actualizar la nota', description: result.error, type: 'error' })
       } else {
         toast.add({ title: 'Nota actualizada', type: 'success' })
+        setFiles([])
         setOpen(false)
       }
     })
   }
 
+  const isBusy = isPending || isUploading
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+    <Dialog open={open && !isListening} onOpenChange={setOpen}>
       <DialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Editar nota" />}>
         <Pencil className="size-4" aria-hidden />
       </DialogTrigger>
@@ -52,14 +120,18 @@ export function EditNoteDialog({ patientId, note }: EditNoteDialogProps) {
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="edit-content" className="text-sm font-medium">
-              Contenido
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label htmlFor="edit-content" className="text-sm font-medium">
+                Contenido
+              </label>
+              {isSupported && <VoiceNoteButton disabled={isBusy} onStart={start} />}
+            </div>
             <Textarea
               id="edit-content"
               name="content"
               required
-              defaultValue={note.content}
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
               aria-invalid={Boolean(fieldErrors.content)}
               rows={5}
             />
@@ -85,13 +157,71 @@ export function EditNoteDialog({ patientId, note }: EditNoteDialogProps) {
             <FieldError message={fieldErrors.category} />
           </div>
 
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Agregar adjuntos</label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isBusy}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="size-4" aria-hidden />
+              Agregar archivo
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,application/pdf"
+              multiple
+              onChange={handleFilesChange}
+              disabled={isBusy}
+              className="hidden"
+              aria-hidden="true"
+            />
+            {files.length > 0 && (
+              <ul className="space-y-1">
+                {files.map((file, index) => (
+                  <li key={`${file.name}-${index}`} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFile(index)}
+                      disabled={isBusy}
+                      aria-label={`Quitar ${file.name}`}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="size-3.5" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
+            <p className="text-xs text-muted-foreground">
+              Los adjuntos existentes de la nota no se pueden quitar desde acá. Imágenes o PDF, hasta
+              10MB por archivo.
+            </p>
+          </div>
+
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-          <Button type="submit" disabled={isPending} className="w-full">
-            {isPending ? 'Guardando...' : 'Guardar cambios'}
+          <Button type="submit" disabled={isBusy} className="w-full">
+            {isUploading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Subiendo...
+              </>
+            ) : isPending ? (
+              'Guardando...'
+            ) : (
+              'Guardar cambios'
+            )}
           </Button>
         </form>
       </DialogContent>
     </Dialog>
+    {isListening && <VoiceOverlay onStop={stop} />}
+    </>
   )
 }
