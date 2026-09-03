@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { checkMercadoPagoSubscription } from '@/lib/admin/actions'
+import { checkMercadoPagoSubscription } from '@/lib/admin/actions/subscriptions'
 
 interface MercadoPagoCheckButtonProps {
   referenceId: string

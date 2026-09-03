@@ -13,10 +13,12 @@ import {
   Menu,
   MessageCircle,
   Package,
+  PanelLeft,
   ReceiptText,
   ShieldCheck,
   ShieldX,
   Star,
+  User,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -38,7 +40,7 @@ import {
 } from '@/components/ui/sheet'
 import { SidebarNav, type DashboardNavItem } from './dashboard-sidebar'
 import { signOut } from '@/lib/auth/actions'
-import { markAllNotificationsRead, deleteReadAdminNotifications } from '@/lib/admin/actions'
+import { markAllNotificationsRead, deleteReadAdminNotifications } from '@/lib/admin/actions/notifications'
 import { ThemeToggle } from '@/components/shared/theme-toggle'
 import { InstallAppButton } from '@/components/shared/install-app-button'
 import { ShareButton } from '@/components/shared/share-button'
@@ -128,7 +130,9 @@ interface DashboardHeaderProps {
   notifications?: AdminNotification[]
   unreadNotificationsCount?: number
   showSiteLink?: boolean
+  showFavoritesLink?: boolean
   showInstallButton?: boolean
+  installLabel?: string
   reviewInvite?: { shopName: string; shopUrl: string }
   accent?: boolean
   onMarkRead?: (id: string) => Promise<void>
@@ -137,6 +141,8 @@ interface DashboardHeaderProps {
   onDeleteAllRead?: () => Promise<void>
   realtimeTable?: string
   notificationsHref?: string
+  onToggleSidebar?: () => void
+  sidebarOpen?: boolean
 }
 
 function getInitials(fullName: string | null, email: string) {
@@ -159,7 +165,9 @@ export function DashboardHeader({
   notifications,
   unreadNotificationsCount,
   showSiteLink = true,
+  showFavoritesLink = true,
   showInstallButton = true,
+  installLabel,
   reviewInvite,
   accent = false,
   onMarkRead,
@@ -168,6 +176,8 @@ export function DashboardHeader({
   onDeleteAllRead = deleteReadAdminNotifications,
   realtimeTable = 'admin_notifications',
   notificationsHref = '/admin/notificaciones',
+  onToggleSidebar,
+  sidebarOpen = true,
 }: DashboardHeaderProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [isSigningOut, startSignOut] = useTransition()
@@ -197,6 +207,21 @@ export function DashboardHeader({
             </SheetContent>
           </Sheet>
 
+          {onToggleSidebar && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="hidden md:flex"
+              onClick={onToggleSidebar}
+              aria-label={sidebarOpen ? 'Ocultar menú' : 'Mostrar menú'}
+            >
+              <PanelLeft
+                className={cn('size-5 transition-transform duration-200', !sidebarOpen && 'rotate-180')}
+                aria-hidden
+              />
+            </Button>
+          )}
+
           {accent && (
             <Badge className="bg-violet-500 text-white hover:bg-violet-500 md:hidden">Admin</Badge>
           )}
@@ -204,7 +229,7 @@ export function DashboardHeader({
 
         <div className="flex items-center gap-1">
           
-          {showInstallButton && <InstallAppButton />}
+          {showInstallButton && <InstallAppButton label={installLabel} />}
           {showSiteLink && (
             <Button
               render={<Link href="/" />}
@@ -214,7 +239,7 @@ export function DashboardHeader({
               className="gap-1.5"
             >
               <ArrowLeft className="size-4" aria-hidden />
-              <span>Volver al sitio</span>
+              <span>Ir a Marketplace</span>
             </Button>
           )}
           {reviewInvite && (
@@ -228,14 +253,16 @@ export function DashboardHeader({
               label="Invitar a reseñar"
             />
           )}
-          <Button
-            render={<Link href="/favoritos" aria-label="Favoritos" />}
-            nativeButton={false}
-            variant="ghost"
-            size="icon"
-          >
-            <Heart className="size-4" aria-hidden />
-          </Button>
+          {showFavoritesLink && (
+            <Button
+              render={<Link href="/favoritos" aria-label="Favoritos" />}
+              nativeButton={false}
+              variant="ghost"
+              size="icon"
+            >
+              <Heart className="size-4" aria-hidden />
+            </Button>
+          )}
           <ThemeToggle />
           <NotificationBell
             notifications={notifications}
@@ -268,6 +295,11 @@ export function DashboardHeader({
                 <span className="font-medium text-foreground">{userFullName ?? 'Usuario'}</span>
                 <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem render={<Link href="/perfil" />}>
+                <User className="size-4" aria-hidden />
+                Mi perfil
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"

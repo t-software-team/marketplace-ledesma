@@ -4,6 +4,7 @@ import { ProductImage } from "@/components/shared/product-image";
 import { MapPin } from "lucide-react";
 import { FavoriteButton } from "@/components/shared/favorite-button";
 import { FeaturedRibbon } from "@/components/shared/featured-ribbon";
+import { StarRating } from "@/components/shared/star-rating";
 import { VerifiedStamp } from "@/components/shared/verified-stamp";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRubroIcon } from "@/lib/category-icons";
@@ -25,6 +26,8 @@ export interface ProductFeedItem {
   attributes?: unknown;
   rubro_slug?: string | null;
   is_service?: boolean | null;
+  shop_avg_rating?: number | null;
+  shop_review_count?: number | null;
 }
 
 const HEX_COLOR_REGEX = /^#[0-9a-f]{6}$/i;
@@ -154,6 +157,17 @@ export function ProductCard({
                   ),
                 )}
               </div>
+            )}
+            {Boolean(product.shop_review_count) && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <StarRating
+                  rating={product.shop_avg_rating ?? 0}
+                  starClassName="size-3"
+                />
+                <span>
+                  {product.shop_avg_rating} ({product.shop_review_count})
+                </span>
+              </span>
             )}
             <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span className="flex min-w-0 items-center gap-1">

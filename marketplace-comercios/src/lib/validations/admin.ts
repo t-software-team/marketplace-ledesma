@@ -21,6 +21,16 @@ export const rejectionReasonSchema = z.object({
 
 export type RejectionReasonFormValues = z.infer<typeof rejectionReasonSchema>
 
+const nullableNonNegativeIntString = (label: string) =>
+  z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine(
+      (val) => !val || (Number.isInteger(Number(val)) && Number(val) >= 0),
+      `Ingresá un número entero válido para ${label}`
+    )
+
 export const subscriptionPlanSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100),
   description: z.string().max(1000).optional().or(z.literal('')),
@@ -35,9 +45,32 @@ export const subscriptionPlanSchema = z.object({
       (val) => Number.isInteger(Number(val)) && Number(val) > 0,
       'Ingresá una duración en días válida'
     ),
-  benefits_text: z.string().max(2000).optional().or(z.literal('')),
+  benefits_max_products: nullableNonNegativeIntString('el máximo de productos del beneficio'),
+  benefits_max_videos: nullableNonNegativeIntString('el máximo de videos del beneficio'),
+  benefits_featured: z.boolean(),
+  benefits_analytics: z.boolean(),
+  benefits_priority_support: z.boolean(),
+  benefits_custom_branding: z.boolean(),
+  benefits_promotions: z.boolean(),
+  benefits_verified_badge: z.boolean(),
+  benefits_gym_freeze: z.boolean(),
+  benefits_gym_export: z.boolean(),
+  benefits_gym_stats: z.boolean(),
   is_active: z.boolean(),
   applies_to: z.enum(['all', 'product', 'service']).default('all'),
+  // Vacío = plan genérico (usa applies_to). Con valor = plan exclusivo de esa
+  // categoría (ej. Gimnasio), no se muestra a otros rubros.
+  // uuidLike (no z.uuid()): los ids de seed no cumplen los bits de versión
+  // RFC 4122 que Zod 4 valida estricto, y acá solo importa la forma.
+  category_id: uuidLike('Elegí un rubro válido').optional().or(z.literal('')),
+  // Límites (tabla plan_limits), opcionales: vacío = sin fila propia, el
+  // plan cae al fallback (fila "por defecto" para imágenes/variantes; para
+  // productos, a benefits.max_products si lo trae, o sin límite).
+  max_products_service: nullableNonNegativeIntString('el máximo de productos (servicios)'),
+  max_products_product: nullableNonNegativeIntString('el máximo de productos (productos)'),
+  max_images: nullableNonNegativeIntString('el máximo de imágenes por producto'),
+  max_variants: nullableNonNegativeIntString('el máximo de variantes por producto'),
+  max_gym_members: nullableNonNegativeIntString('el máximo de socios del gimnasio'),
 })
 
 export type SubscriptionPlanFormValues = z.infer<typeof subscriptionPlanSchema>

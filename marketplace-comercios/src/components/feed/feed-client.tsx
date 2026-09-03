@@ -2,13 +2,11 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { MapPin, Search, Store, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CategoryGrid } from './category-grid'
-import { SubcategoryFilterSheet } from './subcategory-filter-sheet'
-import { AttributeFilterSheet } from './attribute-filter-sheet'
 import { ProductCard, type ProductFeedItem } from '@/components/shared/product-card'
-import { BackToTopButton } from '@/components/shared/back-to-top-button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptySearchIllustration } from '@/components/shared/empty-illustrations'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
@@ -19,10 +17,28 @@ import { toast } from '@/components/ui/toast'
 import { useCategoryAttributes, useProductsFeed, useShopSearch } from '@/hooks/use-products'
 import { useScrolled } from '@/hooks/use-scrolled'
 import { useHideOnScrollDown } from '@/hooks/use-hide-on-scroll-down'
+import { useHeaderAuth } from '@/hooks/use-header-auth'
+import { useMyFavoriteIds } from '@/hooks/use-my-favorite-ids'
+import { useLocalStorageFlag } from '@/hooks/use-local-storage-flag'
 import { useFiltersStore } from '@/stores/use-filters-store'
 import { cn } from '@/lib/utils'
 
 const SELL_BANNER_DISMISSED_KEY = 'sell-banner-dismissed'
+
+// Lazy-loaded: not needed for the initial paint (LCP), only rendered once
+// category/attribute data is available or after the user scrolls.
+const SubcategoryFilterSheet = dynamic(() =>
+  import('./subcategory-filter-sheet').then((mod) => mod.SubcategoryFilterSheet)
+)
+const AttributeFilterSheet = dynamic(() =>
+  import('./attribute-filter-sheet').then((mod) => mod.AttributeFilterSheet)
+)
+const BackToTopButton = dynamic(() =>
+  import('@/components/shared/back-to-top-button').then((mod) => mod.BackToTopButton)
+)
+const FeaturedShopsRow = dynamic(() =>
+  import('./featured-shops-row').then((mod) => mod.FeaturedShopsRow)
+)
 
 interface Category {
   id: string
@@ -38,20 +54,23 @@ interface FeedClientProps {
   categories: Category[]
   subcategories: Subcategory[]
   initialProducts: ProductFeedItem[]
-  isLoggedIn?: boolean
-  favoriteIds?: string[]
 }
 
 export function FeedClient({
   categories,
   subcategories,
   initialProducts,
-  isLoggedIn = false,
-  favoriteIds = [],
 }: FeedClientProps) {
   const scrolled = useScrolled()
   const hideOnScrollDown = useHideOnScrollDown()
-  const [sellBannerDismissed, setSellBannerDismissed] = useState(true)
+  const storedSellBannerDismissed = useLocalStorageFlag(SELL_BANNER_DISMISSED_KEY)
+  const [sellBannerDismissedByUser, setSellBannerDismissedByUser] = useState(false)
+  const sellBannerDismissed = storedSellBannerDismissed || sellBannerDismissedByUser
+  // Login y favoritos se resuelven en el cliente para que el feed pueda ser
+  // estático/ISR (la página ya no lee la sesión en el servidor).
+  const { data: auth, isPending: authPending } = useHeaderAuth()
+  const isLoggedIn = Boolean(auth?.user)
+  const { data: favoriteIds = [] } = useMyFavoriteIds()
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds])
   const {
     categoryId,
@@ -79,12 +98,37 @@ export function FeedClient({
     data: products,
     isLoading,
     isFetching,
+    isError: isProductsError,
+    error: productsError,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useProductsFeed()
-  const { data: matchingShops } = useShopSearch()
-  const { data: rubroAttributes } = useCategoryAttributes(activeRubroId)
+    refetch: refetchProducts,
+  } = useProductsFeed(initialProducts)
+  const { data: matchingShops, isError: isShopSearchError, error: shopSearchError } = useShopSearch()
+  const {
+    data: rubroAttributes,
+    isError: isAttributesError,
+    error: attributesError,
+  } = useCategoryAttributes(activeRubroId)
+
+  useEffect(() => {
+    if (!isShopSearchError) return
+    console.error('useShopSearch: fallo al buscar comercios', shopSearchError)
+    toast.add({ title: 'No pudimos buscar comercios', type: 'error' })
+  }, [isShopSearchError, shopSearchError])
+
+  useEffect(() => {
+    if (!isProductsError) return
+    console.error('useProductsFeed: fallo al cargar el feed', productsError)
+    toast.add({ title: 'No pudimos cargar los productos', type: 'error' })
+  }, [isProductsError, productsError])
+
+  useEffect(() => {
+    if (!isAttributesError) return
+    console.error('useCategoryAttributes: fallo al cargar atributos del rubro', attributesError)
+    toast.add({ title: 'No pudimos cargar los filtros de este rubro', type: 'error' })
+  }, [isAttributesError, attributesError])
 
   const loadMoreRef = useRef<HTMLDivElement>(null)
   const [searchInput, setSearchInput] = useState(searchQuery)
@@ -96,13 +140,9 @@ export function FeedClient({
     searchDebounceRef.current = setTimeout(() => setSearch(value), 350)
   }
 
-  useEffect(() => {
-    setSellBannerDismissed(window.localStorage.getItem(SELL_BANNER_DISMISSED_KEY) === '1')
-  }, [])
-
   function handleDismissSellBanner() {
     window.localStorage.setItem(SELL_BANNER_DISMISSED_KEY, '1')
-    setSellBannerDismissed(true)
+    setSellBannerDismissedByUser(true)
   }
 
   useEffect(() => {
@@ -140,27 +180,30 @@ export function FeedClient({
 
   return (
     <div className="space-y-4">
-      {!isLoggedIn && !sellBannerDismissed && (
-        <div className="relative flex items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
-          <Link href="/login" className="flex min-w-0 flex-1 items-center justify-between gap-3">
-            <div>
+      {!authPending && !isLoggedIn && !sellBannerDismissed && (
+        <div className="relative rounded-xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:bg-primary/10">
+          <button
+            type="button"
+            onClick={handleDismissSellBanner}
+            aria-label="Cerrar"
+            className="absolute top-2.5 right-2.5 flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+          <Link
+            href="/registro"
+            className="flex flex-col gap-3 pr-8 sm:flex-row sm:items-center sm:justify-between sm:pr-10"
+          >
+            <div className="min-w-0">
               <p className="text-sm font-semibold">Vendé tus productos en Proxi</p>
               <p className="text-xs text-muted-foreground">
                 Creá tu cuenta gratis, abrí tu tienda y empezá a vender hoy mismo.
               </p>
             </div>
-            <span className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
+            <span className="flex shrink-0 items-center justify-center rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground sm:inline-flex">
               Crear cuenta gratis
             </span>
           </Link>
-          <button
-            type="button"
-            onClick={handleDismissSellBanner}
-            aria-label="Cerrar"
-            className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
         </div>
       )}
 
@@ -172,8 +215,8 @@ export function FeedClient({
       >
         <div
           className={cn(
-            'flex gap-2 px-4 py-2 transition-colors duration-200 md:px-6',
-            scrolled ? 'bg-background/95 backdrop-blur-sm' : 'bg-transparent backdrop-blur-md'
+            'flex gap-2 px-4 py-2 transition-all duration-200 md:px-6',
+            scrolled ? 'bg-background/95 pt-3 backdrop-blur-sm ' : 'bg-transparent backdrop-blur-md'
           )}
         >
           <div className="relative flex-1">
@@ -182,9 +225,19 @@ export function FeedClient({
               placeholder="Buscar productos, servicios o comercios..."
               value={searchInput}
               onChange={(event) => handleSearchChange(event.target.value)}
-              className="h-11 rounded-full border-transparent bg-muted pl-10 focus-visible:bg-surface"
+              className="h-11 rounded-full border-transparent bg-muted pl-10 pr-10 focus-visible:bg-surface"
               aria-label="Buscar productos, servicios o comercios"
             />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange('')}
+                className="absolute top-1/2 right-3 flex size-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Limpiar búsqueda"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            )}
           </div>
           <button
             type="button"
@@ -245,6 +298,12 @@ export function FeedClient({
         )}
       </div>
 
+      {!searchQuery && !categoryId && <FeaturedShopsRow />}
+
+      {isShopSearchError && searchQuery.trim().length >= 2 && (
+        <p className="text-sm text-destructive">No pudimos buscar comercios. Probá de nuevo.</p>
+      )}
+
       {matchingShops && matchingShops.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-sm font-medium text-muted-foreground">Comercios</h2>
@@ -283,6 +342,20 @@ export function FeedClient({
             <Skeleton key={index} className="aspect-[3/4] rounded-xl" />
           ))}
         </div>
+      ) : isProductsError && displayProducts.length === 0 ? (
+        <EmptyState
+          illustration={<EmptySearchIllustration />}
+          message="No pudimos cargar los productos. Revisá tu conexión e intentá de nuevo."
+          action={
+            <button
+              type="button"
+              onClick={() => refetchProducts()}
+              className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Reintentar
+            </button>
+          }
+        />
       ) : displayProducts.length === 0 ? (
         <EmptyState
           illustration={<EmptySearchIllustration />}

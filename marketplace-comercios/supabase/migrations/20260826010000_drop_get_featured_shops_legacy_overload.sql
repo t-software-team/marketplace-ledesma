@@ -1,0 +1,18 @@
+-- Drop the legacy 2-arg overload of get_featured_shops.
+--
+-- Migration 20260824000000 (applied directly to the remote DB, never
+-- committed) created get_featured_shops(p_limit int, p_offset int). Migrations
+-- 20260825000000 / 20260826000000 then redefined the function with a NEW
+-- signature: get_featured_shops(p_limit int, p_offset int, p_category_id uuid
+-- DEFAULT NULL). Because CREATE OR REPLACE keys on the argument signature, the
+-- 3-arg version is a separate overload, not a replacement — so both coexist.
+--
+-- The app calls the RPC without a category filter as a 2-arg call
+-- (p_category_id is omitted when undefined). With both overloads present,
+-- get_featured_shops(integer, integer) becomes ambiguous — the exact 2-arg
+-- function and the 3-arg function whose last param defaults are both
+-- candidates — and PostgreSQL raises 42725 "function ... is not unique".
+--
+-- Dropping the 2-arg overload leaves a single 3-arg function that serves both
+-- filtered (3-arg) and unfiltered (2-arg via default) calls unambiguously.
+DROP FUNCTION IF EXISTS "public"."get_featured_shops"("p_limit" integer, "p_offset" integer);

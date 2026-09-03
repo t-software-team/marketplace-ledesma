@@ -1,42 +1,25 @@
 import { createClient } from '@/lib/supabase/server'
-import { createServiceRoleClient } from '@/server/supabase-service-role'
-import type { Database } from '@/types/database.types'
 
 export async function getShopsForReview() {
   const supabase = await createClient()
 
-  const [{ data: shops }, { data: openReports }] = await Promise.all([
-    supabase
-      .from('shops')
-      .select(
-        `
-      id, name, city, whatsapp_number, verification_status, created_at, updated_at, is_active, logo_url,
-      subscriptions ( status, subscription_plans ( name ) ),
-      products ( count )
-    `
-      )
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-      .limit(200),
-    supabase.from('shop_reports').select('shop_id').eq('status', 'pending'),
-  ])
+  const { data, error } = await supabase.rpc('get_admin_shops_for_review', { p_limit: 200 })
+  if (error) throw error
 
-  const openReportsByShop = new Map<string, number>()
-  for (const report of openReports ?? []) {
-    openReportsByShop.set(report.shop_id, (openReportsByShop.get(report.shop_id) ?? 0) + 1)
-  }
-
-  return (shops ?? []).map((shop) => {
-    const { subscriptions, products, ...rest } = shop
-    const activePlanName =
-      subscriptions?.find((sub) => sub.status === 'active')?.subscription_plans?.name ?? null
-    return {
-      ...rest,
-      activePlanName,
-      productCount: products?.[0]?.count ?? 0,
-      openReportsCount: openReportsByShop.get(shop.id) ?? 0,
-    }
-  })
+  return (data ?? []).map((shop) => ({
+    id: shop.id,
+    name: shop.name,
+    city: shop.city,
+    whatsapp_number: shop.whatsapp_number,
+    verification_status: shop.verification_status,
+    created_at: shop.created_at,
+    updated_at: shop.updated_at,
+    is_active: shop.is_active,
+    logo_url: shop.logo_url,
+    active_plan_name: shop.active_plan_name,
+    product_count: shop.product_count ?? 0,
+    open_reports_count: shop.open_reports_count ?? 0,
+  }))
 }
 
 export async function searchShopsByName(query: string) {
@@ -46,7 +29,7 @@ export async function searchShopsByName(query: string) {
 
   const supabase = await createClient()
 
-  const { data: shops } = await supabase
+  const { data: shops, error } = await supabase
     .from('shops')
     .select('id, name')
     .is('deleted_at', null)
@@ -54,13 +37,19 @@ export async function searchShopsByName(query: string) {
     .order('name', { ascending: true })
     .limit(8)
 
+  if (error) console.error('searchShopsByName: fallo al buscar shops', { query: trimmed, error })
+
   return shops ?? []
 }
 
 export async function getShopForReview(shopId: string) {
   const supabase = await createClient()
 
-  const [{ data: shop }, { count: productCount }, { count: openReportsCount }] = await Promise.all([
+  const [
+    { data: shop, error: shopError },
+    { count: productCount, error: productCountError },
+    { count: openReportsCount, error: reportsCountError },
+  ] = await Promise.all([
     supabase
       .from('shops')
       .select(
@@ -81,14 +70,26 @@ export async function getShopForReview(shopId: string) {
       .eq('status', 'pending'),
   ])
 
+  if (shopError) {
+    console.error('getShopForReview: fallo al traer shop', { shopId, error: shopError })
+    throw shopError
+  }
+  if (productCountError)
+    console.error('getShopForReview: fallo al contar products', { shopId, error: productCountError })
+  if (reportsCountError)
+    console.error('getShopForReview: fallo al contar shop_reports', { shopId, error: reportsCountError })
+
   if (!shop) return null
 
   let documentUrl: string | null = null
 
   if (shop.verification_document_url) {
-    const { data: signed } = await supabase.storage
+    const { data: signed, error: signedUrlError } = await supabase.storage
       .from('verification-docs')
       .createSignedUrl(shop.verification_document_url, 60 * 5)
+
+    if (signedUrlError)
+      console.error('getShopForReview: fallo al firmar verification-docs', { shopId, error: signedUrlError })
 
     documentUrl = signed?.signedUrl ?? null
   }
@@ -98,33 +99,52 @@ export async function getShopForReview(shopId: string) {
 
   return {
     ...rest,
-    documentUrl,
-    activePlanId: activeSubscription?.plan_id ?? null,
-    activePlanName: activeSubscription?.subscription_plans?.name ?? null,
-    productCount: productCount ?? 0,
-    openReportsCount: openReportsCount ?? 0,
+    document_url: documentUrl,
+    active_plan_id: activeSubscription?.plan_id ?? null,
+    active_plan_name: activeSubscription?.subscription_plans?.name ?? null,
+    product_count: productCount ?? 0,
+    open_reports_count: openReportsCount ?? 0,
   }
+}
+
+export async function getPlanLimitsByPlanId(planId: string) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('plan_limits')
+    .select('max_products_service, max_products_product, max_images, max_variants, max_gym_members')
+    .eq('plan_id', planId)
+    .maybeSingle()
+
+  if (error) console.error('getPlanLimitsByPlanId: fallo al traer plan_limits', { planId, error })
+
+  return data
 }
 
 export async function getCategoriesList() {
   const supabase = await createClient()
 
-  const { data: categories } = await supabase
+  const { data: categories, error } = await supabase
     .from('categories')
     .select('id, name, slug, is_active, parent_id, created_at, products(count)')
     .order('name', { ascending: true })
     .limit(200)
 
+  if (error) {
+    console.error('getCategoriesList: fallo al traer categories', error)
+    throw error
+  }
+
   return (categories ?? []).map((category) => {
     const { products, ...rest } = category
-    return { ...rest, productCount: products?.[0]?.count ?? 0 }
+    return { ...rest, product_count: products?.[0]?.count ?? 0 }
   })
 }
 
 export async function getCategorySuggestions() {
   const supabase = await createClient()
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('category_suggestions')
     .select(
       'id, name, status, rejection_reason, created_at, shops ( name ), parent:categories!category_suggestions_parent_id_fkey ( name )'
@@ -132,17 +152,27 @@ export async function getCategorySuggestions() {
     .order('created_at', { ascending: false })
     .limit(200)
 
+  if (error) {
+    console.error('getCategorySuggestions: fallo al traer category_suggestions', error)
+    throw error
+  }
+
   return data ?? []
 }
 
 export async function getCategoryById(categoryId: string) {
   const supabase = await createClient()
 
-  const { data: category } = await supabase
+  const { data: category, error } = await supabase
     .from('categories')
     .select('id, name, slug, is_active, parent_id, icon_url')
     .eq('id', categoryId)
     .maybeSingle()
+
+  if (error) {
+    console.error('getCategoryById: fallo al traer category', { categoryId, error })
+    throw error
+  }
 
   return category
 }
@@ -150,7 +180,7 @@ export async function getCategoryById(categoryId: string) {
 export async function getSubscriptionRequests() {
   const supabase = await createClient()
 
-  const { data: subscriptions } = await supabase
+  const { data: subscriptions, error } = await supabase
     .from('subscriptions')
     .select(
       `
@@ -172,39 +202,73 @@ export async function getSubscriptionRequests() {
     .order('created_at', { ascending: false })
     .limit(200)
 
+  if (error) {
+    console.error('getSubscriptionRequests: fallo al traer subscriptions', error)
+    throw error
+  }
+
   return subscriptions ?? []
 }
 
 export async function getSubscriptionPlans() {
   const supabase = await createClient()
 
-  const { data: plans } = await supabase
+  const { data: plans, error } = await supabase
     .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active, applies_to, created_at')
+    .select(
+      'id, name, description, price, duration_days, benefits, is_active, applies_to, category_id, categories ( name ), created_at'
+    )
     .order('created_at', { ascending: true })
     .limit(200)
 
-  return plans ?? []
+  if (error) {
+    console.error('getSubscriptionPlans: fallo al traer subscription_plans', error)
+    throw error
+  }
+
+  return (plans ?? []).map((plan) => {
+    const { categories, ...rest } = plan
+    return { ...rest, category_name: (categories as { name: string } | null)?.name ?? null }
+  })
 }
 
 export async function getSubscriptionPlanById(planId: string) {
   const supabase = await createClient()
 
-  const { data: plan } = await supabase
-    .from('subscription_plans')
-    .select('id, name, description, price, duration_days, benefits, is_active, applies_to')
-    .eq('id', planId)
-    .maybeSingle()
+  const [{ data: plan, error }, limits] = await Promise.all([
+    supabase
+      .from('subscription_plans')
+      .select('id, name, description, price, duration_days, benefits, is_active, applies_to, category_id')
+      .eq('id', planId)
+      .maybeSingle(),
+    getPlanLimitsByPlanId(planId),
+  ])
 
-  return plan
+  if (error) {
+    console.error('getSubscriptionPlanById: fallo al traer subscription_plans', { planId, error })
+    throw error
+  }
+
+  if (!plan) return null
+
+  return {
+    ...plan,
+    max_products_service: limits?.max_products_service ?? null,
+    max_products_product: limits?.max_products_product ?? null,
+    max_images: limits?.max_images ?? null,
+    max_variants: limits?.max_variants ?? null,
+    max_gym_members: limits?.max_gym_members ?? null,
+  }
 }
 
 export async function getSignedPaymentProofUrl(path: string) {
   const supabase = await createClient()
 
-  const { data: signed } = await supabase.storage
+  const { data: signed, error } = await supabase.storage
     .from('payment-proofs')
     .createSignedUrl(path, 60 * 5)
+
+  if (error) console.error('getSignedPaymentProofUrl: fallo al firmar payment-proofs', { path, error })
 
   return signed?.signedUrl ?? null
 }
@@ -212,7 +276,7 @@ export async function getSignedPaymentProofUrl(path: string) {
 export async function getShopReports() {
   const supabase = await createClient()
 
-  const { data: reports } = await supabase
+  const { data: reports, error } = await supabase
     .from('shop_reports')
     .select(
       `
@@ -229,13 +293,18 @@ export async function getShopReports() {
     .order('created_at', { ascending: false })
     .limit(200)
 
+  if (error) {
+    console.error('getShopReports: fallo al traer shop_reports', error)
+    throw error
+  }
+
   return reports ?? []
 }
 
 export async function getAuditLog() {
   const supabase = await createClient()
 
-  const { data: entries } = await supabase
+  const { data: entries, error } = await supabase
     .from('audit_log')
     .select(
       `
@@ -251,18 +320,25 @@ export async function getAuditLog() {
     .order('created_at', { ascending: false })
     .limit(100)
 
+  if (error) {
+    console.error('getAuditLog: fallo al traer audit_log', error)
+    throw error
+  }
+
   return entries ?? []
 }
 
 export async function getUnreadNotifications() {
   const supabase = await createClient()
 
-  const { data: notifications } = await supabase
+  const { data: notifications, error } = await supabase
     .from('admin_notifications')
     .select('id, type, reference_id, is_read, created_at')
     .eq('is_read', false)
     .order('created_at', { ascending: false })
     .limit(10)
+
+  if (error) console.error('getUnreadNotifications: fallo al traer admin_notifications', error)
 
   return notifications ?? []
 }
@@ -289,11 +365,16 @@ export async function getAdminNotifications(
   const from = (safePage - 1) * pageSize
   const to = safePage * pageSize - 1
 
-  const { data, count } = await supabase
+  const { data, count, error } = await supabase
     .from('admin_notifications')
     .select('id, type, reference_id, is_read, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
+
+  if (error) {
+    console.error('getAdminNotifications: fallo al paginar admin_notifications', { page, pageSize, error })
+    throw error
+  }
 
   const totalCount = count ?? 0
 
@@ -304,79 +385,15 @@ export async function getAdminNotifications(
   }
 }
 
-type UserRole = Database['public']['Enums']['user_role']
-
-export interface UserDirectoryEntry {
-  id: string
-  role: UserRole | null
-  full_name: string | null
-  avatar_url: string | null
-  phone: string | null
-  city: string | null
-  created_at: string
-  email: string | null
-  last_sign_in_at: string | null
-  is_banned: boolean
-}
-
-export async function getUsersDirectory(): Promise<UserDirectoryEntry[]> {
-  const supabase = await createClient()
-
-  const { data: profiles } = await supabase
-    .from('profiles')
-    .select('id, role, full_name, avatar_url, phone, city, created_at')
-    .order('created_at', { ascending: false })
-
-  const rows = profiles ?? []
-
-  // Fetch every auth user via the service-role client to attach email/last_sign_in_at.
-  // Paginated with a generous cap (20 pages x 200 = 4000 users) — this is a marketplace
-  // admin tool, not expected to have huge user counts yet. If this cap is ever hit,
-  // switch to a server-side join/RPC instead of paging through auth.admin.listUsers.
-  const service = createServiceRoleClient()
-  const authUsersById = new Map<
-    string,
-    { email: string | null; last_sign_in_at: string | null; is_banned: boolean }
-  >()
-  const perPage = 200
-  const maxPages = 20
-
-  for (let page = 1; page <= maxPages; page++) {
-    const { data: userPage, error } = await service.auth.admin.listUsers({ page, perPage })
-    if (error || !userPage) break
-
-    for (const authUser of userPage.users) {
-      const bannedUntil = authUser.banned_until
-      authUsersById.set(authUser.id, {
-        email: authUser.email ?? null,
-        last_sign_in_at: authUser.last_sign_in_at ?? null,
-        is_banned: !!bannedUntil && new Date(bannedUntil).getTime() > Date.now(),
-      })
-    }
-
-    if (userPage.users.length < perPage) break
-  }
-
-  return rows
-    .map((profile) => {
-      const authUser = authUsersById.get(profile.id)
-      return {
-        ...profile,
-        email: authUser?.email ?? null,
-        last_sign_in_at: authUser?.last_sign_in_at ?? null,
-        is_banned: authUser?.is_banned ?? false,
-      }
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-}
-
 export async function getUnreadNotificationsCount() {
   const supabase = await createClient()
 
-  const { count } = await supabase
+  const { count, error } = await supabase
     .from('admin_notifications')
     .select('id', { count: 'exact', head: true })
     .eq('is_read', false)
+
+  if (error) console.error('getUnreadNotificationsCount: fallo al contar admin_notifications', error)
 
   return count ?? 0
 }

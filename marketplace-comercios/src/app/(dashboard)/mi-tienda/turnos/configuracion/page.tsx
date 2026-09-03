@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { getBookingSettings } from '@/lib/turnos/queries'
 import { BookingSettingsForm } from './booking-settings-form'
 
@@ -18,7 +18,8 @@ export default async function TurnosConfiguracionPage() {
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!shop || !isServiceRubro(shop.categories?.slug ?? null)) {
+  const rubroSlug = shop?.categories?.slug ?? null
+  if (!shop || !isServiceRubro(rubroSlug) || isGymRubro(rubroSlug)) {
     redirect('/mi-tienda')
   }
 

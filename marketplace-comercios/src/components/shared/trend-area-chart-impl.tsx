@@ -8,9 +8,19 @@ interface TrendAreaChartProps {
   label: string
   gradientId: string
   height?: number
+  /** 'pulse' draws straight segments between points (a heartbeat-monitor
+   * read) instead of the default smoothed curve. Opt-in per chart. */
+  variant?: 'smooth' | 'pulse'
 }
 
-export function TrendAreaChart({ data, dataKey, label, gradientId, height = 160 }: TrendAreaChartProps) {
+export function TrendAreaChart({
+  data,
+  dataKey,
+  label,
+  gradientId,
+  height = 160,
+  variant = 'smooth',
+}: TrendAreaChartProps) {
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -45,10 +55,10 @@ export function TrendAreaChart({ data, dataKey, label, gradientId, height = 160 
           formatter={(value) => [value, label]}
         />
         <Area
-          type="monotone"
+          type={variant === 'pulse' ? 'linear' : 'monotone'}
           dataKey={dataKey}
           stroke="var(--color-primary)"
-          strokeWidth={2}
+          strokeWidth={variant === 'pulse' ? 2.5 : 2}
           fill={`url(#${gradientId})`}
         />
       </AreaChart>

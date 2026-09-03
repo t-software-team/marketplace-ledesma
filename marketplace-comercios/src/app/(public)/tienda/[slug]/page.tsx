@@ -4,12 +4,12 @@ import { ArrowLeft, MapPin, Store } from 'lucide-react'
 import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { FacebookIcon } from '@/components/shared/facebook-icon'
 import { notFound } from 'next/navigation'
-import { headers } from 'next/headers'
 import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
 import { StarRating } from '@/components/shared/star-rating'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { FollowShopButton } from '@/components/shop/follow-shop-button'
+import { ShopReviewAction } from '@/components/shop/shop-review-action'
 import { LandingBannerSection, LandingGallerySection, LandingServicesSection } from '@/components/shop/landing-sections'
 import { LandingVideoSection } from '@/components/shop/landing-video-section'
 import { OpenNowBadge } from '@/components/shop/open-now-badge'
@@ -20,18 +20,16 @@ import { ShopProductGrid } from '@/components/shop/shop-product-grid'
 import { ShopServiceList } from '@/components/shop/shop-service-list'
 import { BookingSection } from '@/components/turnos/booking-section'
 import { getPublicBookingSettings } from '@/lib/turnos/queries'
+import { GymPlansSection } from '@/components/shop/gym-plans-section'
 import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
 import { ShopMoreLinksMenu } from '@/components/shop/shop-more-links-menu'
 import { ExpandableDescription } from '@/components/shop/expandable-description'
 import Link from 'next/link'
-import { ShopReviewDialog } from '@/components/shop/shop-review-dialog'
 import { ShopReviewsList } from '@/components/shop/shop-reviews-list'
 import { ShopViewTracker } from '@/components/shop/shop-view-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  getMyShopFollow,
-  getMyShopReview,
   getRelatedShops,
   getShopBySlug,
   getShopFollowStats,
@@ -39,8 +37,9 @@ import {
   getShopRating,
   getShopReviews,
 } from '@/lib/shops/queries'
+import { getPublicGymPlans } from '@/lib/gym/queries'
+import { isGymRubro } from '@/lib/category-icons'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
-import { createClient } from '@/lib/supabase/server'
 import { getAccentColor } from '@/lib/accent-colors'
 import { getBaseUrl } from '@/lib/site-url'
 import { cn } from '@/lib/utils'
@@ -50,12 +49,14 @@ interface ShopPageProps {
   params: Promise<{ slug: string }>
 }
 
-function getShopUrl(slug: string) {
-  return headers().then((headersList) => {
-    const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
-    const protocol = headersList.get('x-forwarded-proto') ?? 'http'
-    return `${protocol}://${host}/tienda/${slug}`
-  })
+// La página no depende de la sesión: follow y reseña del usuario se resuelven
+// en el cliente (useMyShopStatus). Sin generateStaticParams un segmento [slug]
+// cae a render dinámico y descarta el revalidate; devolvemos [] para marcar la
+// ruta como estática/ISR y generar cada tienda on-demand, cacheada 60s.
+export const revalidate = 60
+
+export function generateStaticParams() {
+  return []
 }
 
 function getMapsUrl(address: string | null, city: string | null) {
@@ -89,32 +90,30 @@ export async function generateMetadata({ params }: ShopPageProps): Promise<Metad
 
 export default async function ShopPage({ params }: ShopPageProps) {
   const { slug } = await params
-  const supabase = await createClient()
-  const [shop, {
-    data: { user },
-  }] = await Promise.all([getShopBySlug(slug), supabase.auth.getUser()])
+  const shop = await getShopBySlug(slug)
 
   if (!shop) {
     notFound()
   }
 
-  const [products, shopUrl, rating, reviews, myReview, followerCount, isFollowing, relatedShops] =
-    await Promise.all([
-      getShopProducts(shop.id),
-      getShopUrl(slug),
-      getShopRating(shop.id),
-      getShopReviews(shop.id),
-      user ? getMyShopReview(shop.id) : Promise.resolve(null),
-      getShopFollowStats(shop.id),
-      user ? getMyShopFollow(shop.id) : Promise.resolve(false),
-      getRelatedShops(shop.id, shop.category_id, shop.city),
-    ])
+  const baseUrl = getBaseUrl()
+  const shopUrl = `${baseUrl}/tienda/${slug}`
+
+  const isGym = isGymRubro(shop.categories?.slug)
+
+  const [products, rating, reviews, followerCount, relatedShops, gymPlans] = await Promise.all([
+    getShopProducts(shop.id),
+    getShopRating(shop.id),
+    getShopReviews(shop.id),
+    getShopFollowStats(shop.id),
+    getRelatedShops(shop.id, shop.category_id, shop.city),
+    isGym ? getPublicGymPlans(shop.id) : Promise.resolve([]),
+  ])
   const mapsUrl = getMapsUrl(shop.address, shop.city)
   const categoryName = shop.categories?.name ?? null
   const isService = shop.categories?.is_service ?? false
   const isVerified = hasVerifiedBadge(shop)
   const isFeatured = shop.subscription_status === 'active'
-  const baseUrl = getBaseUrl()
   const accentColor = shop.accent_color ? getAccentColor(shop.accent_color) : null
   const themeClass = accentColor ? `shop-theme-${shop.id}` : ''
 
@@ -181,7 +180,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
         </div>
 
         <div className="relative px-4 pb-5 md:px-6">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-start justify-between gap-3">
             <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-muted md:size-20">
               {shop.logo_url ? (
                 <Image
@@ -197,52 +196,44 @@ export default async function ShopPage({ params }: ShopPageProps) {
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1 pt-2">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h1 className="truncate text-2xl font-heading">{shop.name}</h1>
-                    {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
-                  </div>
-                </div>
-                <FollowShopButton
-                  shopId={shop.id}
-                  isLoggedIn={Boolean(user)}
-                  initialIsFollowing={isFollowing}
-                />
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
-                {isFeatured && rating.reviewCount > 0 && (
-                  <span className="flex shrink-0 items-center gap-1">
-                    <StarRating rating={rating.avgRating} />
-                    <span>
-                      {rating.avgRating} ({rating.reviewCount})
-                    </span>
-                  </span>
-                )}
-                {isFeatured && rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
-                {followerCount > 0 && (
-                  <span className="shrink-0">
-                    {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
-                  </span>
-                )}
-                {((isFeatured && rating.reviewCount > 0) || followerCount > 0) && categoryName && (
-                  <span aria-hidden>·</span>
-                )}
-                {categoryName && (
-                  <Badge variant="outline" className="shrink-0 font-normal">
-                    {categoryName}
-                  </Badge>
-                )}
-                {shop.city && (
-                  <span className="flex shrink-0 items-center gap-1">
-                    <MapPin className="size-3.5" aria-hidden />
-                    {shop.city}
-                  </span>
-                )}
-                <OpenNowBadge businessHours={shop.business_hours} />
-              </div>
+            <div className="pt-2">
+              <FollowShopButton shopId={shop.id} />
             </div>
+          </div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <h1 className="min-w-0 truncate text-2xl font-heading">{shop.name}</h1>
+            {isVerified && <VerifiedStamp className="size-5 shrink-0" />}
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+            {rating.reviewCount > 0 && (
+              <span className="flex shrink-0 items-center gap-1">
+                <StarRating rating={rating.avgRating} />
+                <span>
+                  {rating.avgRating} ({rating.reviewCount})
+                </span>
+              </span>
+            )}
+            {rating.reviewCount > 0 && followerCount > 0 && <span aria-hidden>·</span>}
+            {followerCount > 0 && (
+              <span className="shrink-0">
+                {followerCount} {followerCount === 1 ? 'seguidor' : 'seguidores'}
+              </span>
+            )}
+            {(rating.reviewCount > 0 || followerCount > 0) && categoryName && (
+              <span aria-hidden>·</span>
+            )}
+            {categoryName && (
+              <Badge variant="outline" className="shrink-0 font-normal">
+                {categoryName}
+              </Badge>
+            )}
+            {shop.city && (
+              <span className="flex shrink-0 items-center gap-1">
+                <MapPin className="size-3.5" aria-hidden />
+                {shop.city}
+              </span>
+            )}
+            <OpenNowBadge businessHours={shop.business_hours} />
           </div>
 
           {shop.is_paused && (
@@ -292,21 +283,29 @@ export default async function ShopPage({ params }: ShopPageProps) {
       <LandingGallerySection data={shop.landing_gallery} />
       <LandingVideoSection url={shop.landing_video_url} />
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
-        {isService ? (
-          <ShopServiceList
-            shopId={shop.id}
-            initialProducts={products}
-            shopName={shop.name}
-            whatsappNumber={shop.whatsapp_number}
-          />
-        ) : (
-          <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
-        )}
-      </section>
+      {isGym ? (
+        <GymPlansSection
+          plans={gymPlans}
+          shopName={shop.name}
+          whatsappNumber={shop.whatsapp_number}
+        />
+      ) : (
+        <section className="space-y-4">
+          <h2 className="text-lg font-heading">{isService ? 'Servicios' : 'Productos'}</h2>
+          {isService ? (
+            <ShopServiceList
+              shopId={shop.id}
+              initialProducts={products}
+              shopName={shop.name}
+              whatsappNumber={shop.whatsapp_number}
+            />
+          ) : (
+            <ShopProductGrid shopId={shop.id} initialProducts={products} shopName={shop.name} />
+          )}
+        </section>
+      )}
 
-      {isService && (await getPublicBookingSettings(shop.id))?.is_enabled && (
+      {isService && !isGym && (await getPublicBookingSettings(shop.id))?.is_enabled && (
         <section className="space-y-4">
           <h2 className="text-lg font-heading">Turnos</h2>
           <BookingSection shopId={shop.id} />
@@ -319,18 +318,7 @@ export default async function ShopPage({ params }: ShopPageProps) {
             <h2 className="text-lg font-heading">
               Reseñas {rating.reviewCount > 0 && `(${rating.reviewCount})`}
             </h2>
-            {user ? (
-              <ShopReviewDialog shopId={shop.id} myReview={myReview} />
-            ) : (
-              <Button
-                render={<Link href={`/login?next=/tienda/${slug}`} />}
-                nativeButton={false}
-                variant="outline"
-                size="sm"
-              >
-                Iniciar sesión para dejar una reseña
-              </Button>
-            )}
+            <ShopReviewAction shopId={shop.id} slug={slug} />
           </div>
           <ShopReviewsList reviews={reviews} />
         </section>

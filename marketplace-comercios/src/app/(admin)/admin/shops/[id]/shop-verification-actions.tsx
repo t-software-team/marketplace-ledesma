@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
 import { toast } from '@/components/ui/toast'
-import { approveShopVerification, rejectShopVerification } from '@/lib/admin/actions'
+import { approveShopVerification, rejectShopVerification } from '@/lib/admin/actions/shops'
 
 interface ShopVerificationActionsProps {
   shopId: string

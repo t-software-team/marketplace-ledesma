@@ -5,13 +5,11 @@ import { ShopSettingsForm } from './shop-settings-form'
 import { VerificationDocumentCard } from './verification-document-card'
 
 export default async function ShopSettingsPage() {
-  const shop = await getMyShop()
+  const [shop, categories] = await Promise.all([getMyShop(), getActiveCategories()])
 
   if (!shop) {
     redirect('/mi-tienda')
   }
-
-  const categories = await getActiveCategories()
 
   let documentUrl: string | null = null
   if (shop.verification_document_url) {

@@ -4,19 +4,32 @@ import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { FavoriteButton } from '@/components/shared/favorite-button'
-import { ShareButton } from '@/components/shared/share-button'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
+import { ProductShare } from '@/components/product/product-share'
 import { ProductContact } from '@/components/product/product-contact'
 import { ProductGallery } from '@/components/product/product-gallery'
 import { formatPrice } from '@/lib/format'
 import { getProductDetail } from '@/lib/shops/queries'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
-import { createClient } from '@/lib/supabase/server'
 import { getBaseUrl } from '@/lib/site-url'
 import { stripHtml } from '@/lib/strip-html'
 
 interface ProductPageProps {
   params: Promise<{ id: string }>
+}
+
+// La página no depende de la sesión (el estado de favorito lo resuelve
+// FavoriteButton en el cliente), así que puede renderizarse estática y
+// revalidarse cada 30s, igual que la caché de getProductDetail.
+export const revalidate = 30
+
+// Sin generateStaticParams, un segmento [id] cae a render dinámico y descarta
+// el revalidate (Next docs: "Dynamic segments without generateStaticParams").
+// Devolvemos [] para no prerenderizar ninguno en el build pero marcar la ruta
+// como estática/ISR: cada producto se genera on-demand en su primera visita y
+// se cachea 30s. dynamicParams=true (default) sirve los ids no listados.
+export function generateStaticParams() {
+  return []
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -47,25 +60,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const { id } = await params
   const product = await getProductDetail(id)
 
-  if (!product || !product.isActive || !product.shop) {
+  if (!product || !product.is_active || !product.shop) {
     notFound()
-  }
-
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  let isFavorite = false
-  if (user) {
-    const { data: favorite } = await supabase
-      .from('favorites')
-      .select('product_id')
-      .eq('client_id', user.id)
-      .eq('product_id', product.id)
-      .maybeSingle()
-
-    isFavorite = Boolean(favorite)
   }
 
   const shop = product.shop
@@ -104,12 +100,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <ProductGallery
             images={product.images}
             productName={product.name}
-            videoUrl={product.videoUrl}
+            videoUrl={product.video_url}
             imageOverlay={
               <FavoriteButton
                 productId={product.id}
-                initialIsFavorite={isFavorite}
-                isLoggedIn={Boolean(user)}
                 className="absolute right-2 bottom-2 z-10"
               />
             }
@@ -119,9 +113,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="space-y-4">
           {product.category && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              {product.parentCategoryName && (
+              {product.parent_category_name && (
                 <>
-                  <span>{product.parentCategoryName}</span>
+                  <span>{product.parent_category_name}</span>
                   <ChevronRight className="size-3" />
                 </>
               )}
@@ -140,8 +134,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 )}
                 {formatPrice(product.price, product.currency)}
               </p>
+              {product.stock === 0 && (
+                <p className="mt-1 text-sm font-medium text-destructive">Sin stock</p>
+              )}
+              {typeof product.stock === 'number' && product.stock > 0 && (
+                <p className="mt-1 text-sm text-muted-foreground">{product.stock} disponibles</p>
+              )}
             </div>
-            <ShareButton
+            <ProductShare
+              productId={product.id}
               title={product.name}
               text={`Mirá "${product.name}" en ${shop.name} — ${formatPrice(product.price, product.currency)}`}
               url={`${baseUrl}/producto/${product.id}`}
@@ -226,7 +227,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             productName={product.name}
             phoneNumber={shop.whatsapp_number}
             rubroSlug={
-              product.parentCategorySlug ??
+              product.parent_category_slug ??
               (product.category && !product.category.parent_id ? product.category.slug : null)
             }
             variants={product.variants}

@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
-import { ChevronRight, Search, Wrench } from 'lucide-react'
+import { ProductImage } from '@/components/shared/product-image'
+import { FeaturedRibbon } from '@/components/shared/featured-ribbon'
+import { ChevronRight, Play, Search, Wrench } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -31,10 +32,8 @@ export function ShopServiceList({
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useShopProductsPaged(
-    shopId,
-    searchQuery
-  )
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isError, error } =
+    useShopProductsPaged(shopId, searchQuery)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
   function handleSearchChange(value: string) {
@@ -48,6 +47,11 @@ export function ShopServiceList({
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isError) return
+    console.error('useShopProductsPaged: fallo al cargar servicios de la tienda', { shopId, error })
+  }, [isError, error, shopId])
 
   const services = useMemo(
     () => (data ? data.pages.flat() : searchQuery ? [] : initialProducts),
@@ -100,7 +104,17 @@ export function ShopServiceList({
         </div>
       )}
 
-      {services.length === 0 ? (
+      {searchQuery && isError ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No pudimos cargar la búsqueda. Probá de nuevo.
+        </p>
+      ) : searchQuery && isFetching && services.length === 0 ? (
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-20 rounded-xl" />
+          ))}
+        </div>
+      ) : services.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No encontramos servicios que coincidan con &quot;{searchInput}&quot;.
         </p>
@@ -110,7 +124,10 @@ export function ShopServiceList({
             {services.map((service) => (
               <Card
                 key={service.id}
-                className="overflow-hidden py-0 ring-border/60 transition-all sm:hover:-translate-y-0.5 sm:hover:shadow-md sm:hover:ring-primary/40"
+                className={cn(
+                  'overflow-hidden py-0 ring-border/60 transition-all sm:hover:-translate-y-0.5 sm:hover:shadow-md sm:hover:ring-primary/40',
+                  service.is_featured && 'ring-1 ring-primary/40'
+                )}
               >
                 <CardContent className="flex items-center gap-3 p-3 sm:gap-4 sm:p-4">
                   <Link
@@ -118,11 +135,10 @@ export function ShopServiceList({
                     className="flex min-w-0 flex-1 items-center gap-3 active:scale-[0.99] active:transition-transform sm:gap-4"
                   >
                     <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-16">
-                      {service.mainImage ? (
-                        <Image
-                          src={service.mainImage}
+                      {service.main_image ? (
+                        <ProductImage
+                          src={service.main_image}
                           alt={service.name}
-                          fill
                           className="object-cover"
                           sizes="64px"
                         />
@@ -131,20 +147,37 @@ export function ShopServiceList({
                           <Wrench className="size-6" />
                         </div>
                       )}
+                      {service.video_url && (
+                        <span
+                          className="absolute right-1 bottom-1 z-10 flex items-center justify-center rounded-full bg-black/55 p-1 text-white backdrop-blur-sm"
+                          aria-label="Con video"
+                        >
+                          <Play className="size-2.5 fill-current" aria-hidden />
+                        </span>
+                      )}
                     </div>
 
                     <div className="min-w-0 flex-1 space-y-1">
+                      {service.is_featured && <FeaturedRibbon variant="inline" />}
                       <p className="line-clamp-2 font-medium leading-snug">{service.name}</p>
                       <p
                         className={cn(
-                          'font-mono text-sm',
-                          service.price === null ? 'text-muted-foreground' : 'text-foreground'
+                          'font-mono',
+                          service.price === null
+                            ? 'text-sm text-muted-foreground'
+                            : 'text-base font-semibold text-foreground'
                         )}
                       >
                         {service.price === null
                           ? 'Consultar precio'
                           : formatPrice(service.price, service.currency)}
                       </p>
+                      {service.wholesale_price !== null && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Por mayor {formatPrice(service.wholesale_price, service.currency)}
+                          {service.min_order_qty ? ` · mín. ${service.min_order_qty}` : ''}
+                        </p>
+                      )}
                     </div>
 
                     <ChevronRight className="hidden size-4 shrink-0 text-muted-foreground sm:block" />

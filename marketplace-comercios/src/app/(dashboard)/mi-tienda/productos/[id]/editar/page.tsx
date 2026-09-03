@@ -20,13 +20,11 @@ interface EditProductPageProps {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const { id } = await params
-  const shop = await getMyShop()
+  const [shop, product] = await Promise.all([getMyShop(), getMyProduct(id)])
 
   if (!shop) {
     redirect('/mi-tienda')
   }
-
-  const product = await getMyProduct(id)
 
   if (!product || product.shop_id !== shop.id) {
     notFound()
@@ -85,10 +83,11 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
           name: product.name,
           description: product.description,
           price: product.price,
+          stock: product.stock,
           currency: product.currency,
           category_id: product.category_id,
           is_active: product.is_active,
-          imageUrls: images.map((image) => image.url),
+          image_urls: images.map((image) => image.url),
           videoUrl: product.video_url,
           variants: variants.map((v) => ({ name: v.name, price: v.price })),
           attributes: defaultAttributes,

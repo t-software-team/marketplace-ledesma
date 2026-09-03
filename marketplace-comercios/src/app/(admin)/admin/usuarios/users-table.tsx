@@ -23,8 +23,9 @@ import { BulkActionsBar } from '@/components/shared/bulk-actions-bar'
 import { PaginationControls } from '@/components/shared/pagination-controls'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
-import { banUser, bulkBanUsers, bulkUnbanUsers, unbanUser, type ActionState } from '@/lib/admin/actions'
-import type { getUsersDirectory } from '@/lib/admin/queries'
+import { banUser, bulkBanUsers, bulkUnbanUsers, unbanUser } from '@/lib/admin/actions/users'
+import type { ActionState } from '@/lib/admin/actions/shared'
+import type { getUsersDirectory } from '@/server/admin-users-directory'
 
 type UserEntry = Awaited<ReturnType<typeof getUsersDirectory>>[number]
 

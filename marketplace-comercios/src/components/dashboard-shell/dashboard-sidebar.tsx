@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+  BarChart3,
   Calendar,
   CreditCard,
   Flag,
@@ -15,7 +16,10 @@ import {
   Sparkles,
   Store,
   Tag,
+  UserCog,
   Users,
+  Wallet,
+  LogIn,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -35,6 +39,10 @@ const ICONS = {
   sparkles: Sparkles,
   users: Users,
   calendar: Calendar,
+  'user-cog': UserCog,
+  wallet: Wallet,
+  login: LogIn,
+  'bar-chart': BarChart3,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS
@@ -104,21 +112,23 @@ export function SidebarNav({ navItems, onNavigate }: SidebarNavProps) {
 interface DashboardSidebarProps {
   navItems: DashboardNavItem[]
   accent?: boolean
+  open?: boolean
 }
 
-export function DashboardSidebar({ navItems, accent = false }: DashboardSidebarProps) {
+export function DashboardSidebar({ navItems, accent = false, open = true }: DashboardSidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-border bg-surface md:flex',
-        accent && 'border-t-4 border-t-violet-500'
+        'fixed inset-y-0 left-0 z-20 flex-col border-r border-border bg-surface transition-all duration-200',
+        open ? 'w-60 translate-x-0' : 'w-60 -translate-x-full',
+        'hidden md:flex'
       )}
     >
       <div className="flex h-14 items-center gap-2 border-b border-border px-4 font-heading text-lg">
        <span className="relative hidden size-7 shrink-0 sm:block">
             <Image src="/brand/logo.png" alt="" fill className="object-contain" />
           </span>
-        Proxi Marketplace
+        Proxi
         {accent && (
           <Badge className="ml-auto bg-violet-500 text-white hover:bg-violet-500">Admin</Badge>
         )}

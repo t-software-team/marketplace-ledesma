@@ -2,13 +2,60 @@ function getBenefitLabels(noun: string, nounPlural: string): Record<string, (val
   return {
     max_products: (value) =>
       value === null ? `${nounPlural} ilimitados` : `Hasta ${value} ${noun}s`,
+    max_videos: (value) =>
+      value === null ? 'Videos ilimitados' : `Hasta ${value} videos`,
+    // El cupo de socios se muestra con su propia línea (gymMemberLine) en la
+    // página de suscripción, así que acá se omite para no duplicarlo crudo.
+    max_gym_members: () => null,
     featured: (value) => (value ? `Destacá tus ${noun}s en el feed` : null),
     analytics: (value) => (value ? 'Estadísticas de tu tienda' : null),
     priority_support: (value) => (value ? 'Soporte prioritario' : null),
     custom_branding: (value) => (value ? 'Personalizá tu tienda pública (color, banner, servicios, video)' : null),
     promotions: (value) => (value ? 'Creá promociones destacadas en el feed' : null),
     verified_badge: (value) => (value ? 'Ícono de comercio verificado en tu perfil' : null),
+    // Benefits específicos del rubro gimnasio.
+    gym_freeze: (value) => (value ? 'Congelar membresías de socios' : null),
+    gym_export: (value) => (value ? 'Exportar socios y pagos a CSV' : null),
+    gym_stats: (value) => (value ? 'Estadísticas de asistencia' : null),
   }
+}
+
+interface BenefitsFormInput {
+  benefits_max_products?: string
+  benefits_max_videos?: string
+  benefits_featured: boolean
+  benefits_analytics: boolean
+  benefits_priority_support: boolean
+  benefits_custom_branding: boolean
+  benefits_promotions: boolean
+  benefits_verified_badge: boolean
+  benefits_gym_freeze: boolean
+  benefits_gym_export: boolean
+  benefits_gym_stats: boolean
+}
+
+/** Arma el JSON de `subscription_plans.benefits` a partir de los campos
+ * tipados del formulario de admin (checkboxes + números), en vez de que el
+ * superadmin escriba el JSON a mano. Los numéricos vacíos se omiten (el
+ * plan no trae ese beneficio); si se cargan, `null` en la UI equivale a
+ * "sin límite" para los consumidores de `getBenefitLines`. */
+export function buildBenefitsFromForm(input: BenefitsFormInput): Record<string, unknown> {
+  const benefits: Record<string, unknown> = {
+    featured: input.benefits_featured,
+    analytics: input.benefits_analytics,
+    priority_support: input.benefits_priority_support,
+    custom_branding: input.benefits_custom_branding,
+    promotions: input.benefits_promotions,
+    verified_badge: input.benefits_verified_badge,
+    gym_freeze: input.benefits_gym_freeze,
+    gym_export: input.benefits_gym_export,
+    gym_stats: input.benefits_gym_stats,
+  }
+
+  if (input.benefits_max_products) benefits.max_products = Number(input.benefits_max_products)
+  if (input.benefits_max_videos) benefits.max_videos = Number(input.benefits_max_videos)
+
+  return benefits
 }
 
 export function getBenefitLines(benefits: unknown, noun: string, nounPlural: string): string[] {

@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import {
   getActiveSubscriptionPlans,
+  getFreeProductMax,
   getMyActiveSubscription,
   getMyPendingSubscription,
   getMyShop,
+  getPlanGymMemberCaps,
 } from '@/lib/shops/queries'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { syncMercadoPagoSubscription } from '@/lib/mercadopago/sync'
 import { getBenefitLines } from '@/lib/shops/benefits'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { cn } from '@/lib/utils'
 import { SubscribeButton } from './subscribe-button'
 
@@ -101,30 +104,48 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
     }
   }
 
-  const [allPlans, activeSubscription] = await Promise.all([
+  const isService = isServiceRubro(shop.categories?.slug)
+  const isGym = isGymRubro(shop.categories?.slug)
+
+  const [allPlans, activeSubscription, freeMaxForShop] = await Promise.all([
     getActiveSubscriptionPlans(),
     getMyActiveSubscription(shop.id),
+    getFreeProductMax(isService, shop.category_id),
   ])
 
-  const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
-  const freeMaxForShop = isService ? 3 : 15
 
   const activePlanId = activeSubscription?.plan_id ?? null
 
+  // Si la categoría del comercio tiene planes exclusivos, mostramos SOLO esos
+  // (además del plan activo actual). Si no hay ninguno, caemos a los genéricos
+  // por applies_to para no dejar al comercio sin opciones.
+  const hasCategoryPlans = Boolean(
+    shop.category_id && allPlans.some((plan) => plan.category_id === shop.category_id)
+  )
+
   const plans = allPlans
-    .filter(
-      (plan) =>
-        plan.id === activePlanId ||
-        plan.applies_to === 'all' ||
-        plan.applies_to === (isService ? 'service' : 'product')
-    )
+    .filter((plan) => {
+      if (plan.id === activePlanId) return true
+      if (hasCategoryPlans) return plan.category_id === shop.category_id
+      return planMatchesShop(plan, { categoryId: shop.category_id, isService })
+    })
     .map((plan) =>
-      plan.price === 0
+      // Los gyms muestran cupo de socios, no de productos, así que no inyectamos
+      // el límite de productos del free en sus tarjetas.
+      plan.price === 0 && !isGym
         ? { ...plan, benefits: { ...(plan.benefits as object), max_products: freeMaxForShop } }
         : plan
     )
+
+  // Cupo de socios por plan, para las viñetas de las tarjetas de un gimnasio.
+  const gymCaps = isGym ? await getPlanGymMemberCaps(plans.map((plan) => plan.id)) : {}
+  const gymMemberLine = (planId: string, benefits: unknown): string => {
+    const benefitCap = (benefits as { max_gym_members?: number | null } | null)?.max_gym_members
+    const cap = benefitCap ?? gymCaps[planId] ?? null
+    return cap === null ? 'Socios ilimitados' : `Hasta ${cap} socios`
+  }
 
   const freePlanId = !activePlanId ? (plans.find((plan) => plan.price === 0)?.id ?? null) : null
   const currentPlanPrice = activePlanId
@@ -234,9 +255,15 @@ export default async function MyShopSubscriptionPage({ searchParams }: Subscript
             const visibilityLines = isFree
               ? []
               : ['Reseñas de clientes habilitadas', 'Mejor posicionamiento en el feed']
-            const benefitLines = isService
-              ? [...visibilityLines, ...getBenefitLines(plan.benefits, noun, nounPlural)]
-              : [...getBenefitLines(plan.benefits, noun, nounPlural), ...visibilityLines]
+            const benefitLines = isGym
+              ? [
+                  gymMemberLine(plan.id, plan.benefits),
+                  ...getBenefitLines(plan.benefits, noun, nounPlural),
+                  ...visibilityLines,
+                ]
+              : isService
+                ? [...visibilityLines, ...getBenefitLines(plan.benefits, noun, nounPlural)]
+                : [...getBenefitLines(plan.benefits, noun, nounPlural), ...visibilityLines]
 
             return (
               <Card

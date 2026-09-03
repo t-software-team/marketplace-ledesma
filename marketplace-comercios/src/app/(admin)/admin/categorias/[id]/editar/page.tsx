@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getCategoriesList, getCategoryById } from '@/lib/admin/queries'
-import { updateCategory } from '@/lib/admin/actions'
+import { updateCategory } from '@/lib/admin/actions/categories'
 import { BackLink } from '@/components/shared/back-link'
 import { CategoryForm } from '../../category-form'
 

@@ -15,7 +15,7 @@ import {
   getProductVariantLimitInfo,
   getProductVideoLimitInfo,
 } from '@/lib/shops/queries'
-import { ACCENT_COLORS } from '@/lib/accent-colors'
+import { ACCENT_COLORS, isHexColor, normalizeHex } from '@/lib/accent-colors'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { sanitizeRichText } from '@/lib/sanitize-html'
 import { containsProfanity } from '@/lib/profanity-filter'
@@ -389,8 +389,13 @@ export async function updateShopPersonalization(
 
   let accentColor: string | null = null
   if (parsed.data.accent_color) {
-    const isValidColor = ACCENT_COLORS.some((color) => color.key === parsed.data.accent_color)
-    accentColor = isValidColor ? parsed.data.accent_color : null
+    const isPresetColor = ACCENT_COLORS.some((color) => color.key === parsed.data.accent_color)
+    if (isPresetColor) {
+      accentColor = parsed.data.accent_color
+    } else if (isHexColor(parsed.data.accent_color)) {
+      // El constraint de la DB solo acepta hex de 6 dígitos.
+      accentColor = normalizeHex(parsed.data.accent_color)
+    }
   }
 
   let landingBanner: unknown = null
@@ -513,7 +518,7 @@ export async function createProduct(
 
   const { data: shop } = await supabase
     .from('shops')
-    .select('id, category_id')
+    .select('id, category_id, slug')
     .eq('owner_id', user.id)
     .maybeSingle()
 
@@ -530,6 +535,7 @@ export async function createProduct(
     name: formData.get('name'),
     description: formData.get('description') ?? '',
     price: formData.get('price') ?? '',
+    stock: formData.get('stock') ?? '',
     currency: formData.get('currency') || 'ARS',
     category_id: formData.get('category_id') ?? '',
     is_active: formData.get('is_active') === 'on',
@@ -582,6 +588,7 @@ export async function createProduct(
       name: parsed.data.name,
       description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
+      stock: parsed.data.stock ? Number(parsed.data.stock) : null,
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
       is_active: parsed.data.is_active,
@@ -642,6 +649,7 @@ export async function createProduct(
   }
 
   revalidatePath('/mi-tienda/productos')
+  revalidatePath(`/tienda/${shop.slug}`)
   redirect('/mi-tienda/productos?saved=created')
 }
 
@@ -656,6 +664,7 @@ export async function updateProduct(
     name: formData.get('name'),
     description: formData.get('description') ?? '',
     price: formData.get('price') ?? '',
+    stock: formData.get('stock') ?? '',
     currency: formData.get('currency') || 'ARS',
     category_id: formData.get('category_id') ?? '',
     is_active: formData.get('is_active') === 'on',
@@ -715,6 +724,7 @@ export async function updateProduct(
       name: parsed.data.name,
       description: parsed.data.description ? sanitizeRichText(parsed.data.description) : null,
       price: minVariantPrice ?? (parsed.data.price ? Number(parsed.data.price) : null),
+      stock: parsed.data.stock ? Number(parsed.data.stock) : null,
       currency: parsed.data.currency,
       category_id: parsed.data.category_id || null,
       is_active: parsed.data.is_active,
@@ -975,7 +985,7 @@ export async function duplicateProduct(productId: string) {
   const { data: original, error: fetchError } = await supabase
     .from('products')
     .select(
-      'shop_id, name, description, price, currency, category_id, video_url, product_images(url, sort_order), product_variants(name, price, sort_order)'
+      'shop_id, name, description, price, stock, currency, category_id, video_url, product_images(url, sort_order), product_variants(name, price, sort_order)'
     )
     .eq('id', productId)
     .single()
@@ -1004,6 +1014,7 @@ export async function duplicateProduct(productId: string) {
       name: `${original.name} (copia)`,
       description: original.description,
       price: original.price,
+      stock: original.stock,
       currency: original.currency,
       category_id: original.category_id,
       is_active: false,
@@ -1080,6 +1091,12 @@ export async function duplicateProduct(productId: string) {
 export async function toggleProductActive(productId: string, isActive: boolean) {
   const { supabase } = await requireUser()
 
+  const { data: product } = await supabase
+    .from('products')
+    .select('shops ( slug )')
+    .eq('id', productId)
+    .maybeSingle()
+
   const { error } = await supabase
     .from('products')
     .update({ is_active: isActive })
@@ -1091,10 +1108,17 @@ export async function toggleProductActive(productId: string, isActive: boolean) 
   }
 
   revalidatePath('/mi-tienda/productos')
+  const slug = (product?.shops as { slug: string } | null)?.slug
+  if (slug) revalidatePath(`/tienda/${slug}`)
 }
 
 export async function bulkToggleProductActive(productIds: string[], isActive: boolean) {
   const { supabase } = await requireUser()
+
+  const { data: products } = await supabase
+    .from('products')
+    .select('shops ( slug )')
+    .in('id', productIds)
 
   const { error } = await supabase
     .from('products')
@@ -1107,6 +1131,12 @@ export async function bulkToggleProductActive(productIds: string[], isActive: bo
   }
 
   revalidatePath('/mi-tienda/productos')
+  const slugs = new Set(
+    (products ?? [])
+      .map((p) => (p.shops as { slug: string } | null)?.slug)
+      .filter((slug): slug is string => Boolean(slug))
+  )
+  for (const slug of slugs) revalidatePath(`/tienda/${slug}`)
 }
 
 export async function bulkToggleProductFeatured(productIds: string[], isFeatured: boolean) {

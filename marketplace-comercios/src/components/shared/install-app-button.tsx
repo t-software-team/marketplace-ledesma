@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { useInstallPrompt } from '@/hooks/use-install-prompt'
 
-export function InstallAppButton() {
+export function InstallAppButton({ label = 'Acceso directo' }: { label?: string }) {
   const { canInstall, isIos, promptInstall } = useInstallPrompt()
   const [showIosInstructions, setShowIosInstructions] = useState(false)
 
@@ -27,7 +27,7 @@ export function InstallAppButton() {
     <>
       <Button variant="outline" size="sm" onClick={handleClick}>
         <Download className="size-4" aria-hidden />
-        <span>Acceso directo</span>
+        <span>{label}</span>
       </Button>
       {isIos && (
         <Dialog open={showIosInstructions} onOpenChange={setShowIosInstructions}>

@@ -63,6 +63,62 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          ends_at: string
+          hold_expires_at: string | null
+          id: string
+          origin: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at: string | null
+          shop_id: string
+          starts_at: string
+          status: Database["public"]["Enums"]["appointment_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at: string
+          hold_expires_at?: string | null
+          id?: string
+          origin?: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at?: string | null
+          shop_id: string
+          starts_at: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          ends_at?: string
+          hold_expires_at?: string | null
+          id?: string
+          origin?: Database["public"]["Enums"]["appointment_origin"]
+          reminder_sent_at?: string | null
+          shop_id?: string
+          starts_at?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -322,6 +378,310 @@ export type Database = {
           },
         ]
       }
+      gym_check_ins: {
+        Row: {
+          attempted_ref: string | null
+          checked_in_at: string
+          created_by: string | null
+          id: string
+          member_id: string | null
+          outcome: string
+          shop_id: string
+          source: string
+        }
+        Insert: {
+          attempted_ref?: string | null
+          checked_in_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string | null
+          outcome?: string
+          shop_id: string
+          source?: string
+        }
+        Update: {
+          attempted_ref?: string | null
+          checked_in_at?: string
+          created_by?: string | null
+          id?: string
+          member_id?: string | null
+          outcome?: string
+          shop_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_check_ins_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_check_ins_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_members: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          created_at: string
+          created_by: string | null
+          document: string | null
+          email: string | null
+          full_name: string
+          id: string
+          is_archived: boolean
+          notes: string | null
+          phone: string | null
+          shop_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          phone?: string | null
+          shop_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          phone?: string | null
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_members_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_memberships: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          member_id: string
+          plan_id: string | null
+          price: number
+          shop_id: string
+          start_date: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          member_id: string
+          plan_id?: string | null
+          price?: number
+          shop_id: string
+          start_date?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          member_id?: string
+          plan_id?: string | null
+          price?: number
+          shop_id?: string
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_memberships_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "gym_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_memberships_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "gym_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_memberships_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          membership_id: string
+          method: string
+          paid_at: string | null
+          shop_id: string
+          status: string
+          void_reason: string | null
+          voided_at: string | null
+          voided_by: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          membership_id: string
+          method: string
+          paid_at?: string | null
+          shop_id: string
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          membership_id?: string
+          method?: string
+          paid_at?: string | null
+          shop_id?: string
+          status?: string
+          void_reason?: string | null
+          voided_at?: string | null
+          voided_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_payments_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "gym_memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gym_payments_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gym_plans: {
+        Row: {
+          created_at: string
+          duration_days: number
+          id: string
+          is_active: boolean
+          kind: string
+          name: string
+          price: number
+          shop_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days: number
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name: string
+          price?: number
+          shop_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name?: string
+          price?: number
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gym_plans_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_limits: {
+        Row: {
+          created_at: string
+          id: string
+          max_gym_members: number | null
+          max_images: number
+          max_products_product: number | null
+          max_products_service: number | null
+          max_variants: number
+          plan_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          max_gym_members?: number | null
+          max_images: number
+          max_products_product?: number | null
+          max_products_service?: number | null
+          max_variants: number
+          plan_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          max_gym_members?: number | null
+          max_images?: number
+          max_products_product?: number | null
+          max_products_service?: number | null
+          max_variants?: number
+          plan_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_limits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: true
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_attribute_values: {
         Row: {
           attribute_id: string
@@ -439,6 +799,7 @@ export type Database = {
           price: number | null
           search_vector: unknown
           shop_id: string
+          stock: number | null
           updated_at: string
           video_url: string | null
           wholesale_price: number | null
@@ -456,6 +817,7 @@ export type Database = {
           price?: number | null
           search_vector?: unknown
           shop_id: string
+          stock?: number | null
           updated_at?: string
           video_url?: string | null
           wholesale_price?: number | null
@@ -473,6 +835,7 @@ export type Database = {
           price?: number | null
           search_vector?: unknown
           shop_id?: string
+          stock?: number | null
           updated_at?: string
           video_url?: string | null
           wholesale_price?: number | null
@@ -550,62 +913,6 @@ export type Database = {
           id?: never
         }
         Relationships: []
-      }
-      appointments: {
-        Row: {
-          created_at: string
-          customer_email: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          ends_at: string
-          hold_expires_at: string | null
-          id: string
-          origin: Database["public"]["Enums"]["appointment_origin"]
-          reminder_sent_at: string | null
-          shop_id: string
-          starts_at: string
-          status: Database["public"]["Enums"]["appointment_status"]
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          ends_at: string
-          hold_expires_at?: string | null
-          id?: string
-          origin?: Database["public"]["Enums"]["appointment_origin"]
-          reminder_sent_at?: string | null
-          shop_id: string
-          starts_at: string
-          status?: Database["public"]["Enums"]["appointment_status"]
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          ends_at?: string
-          hold_expires_at?: string | null
-          id?: string
-          origin?: Database["public"]["Enums"]["appointment_origin"]
-          reminder_sent_at?: string | null
-          shop_id?: string
-          starts_at?: string
-          status?: Database["public"]["Enums"]["appointment_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appointments_shop_id_fkey"
-            columns: ["shop_id"]
-            isOneToOne: false
-            referencedRelation: "shops"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       shop_booking_settings: {
         Row: {
@@ -887,6 +1194,50 @@ export type Database = {
           },
         ]
       }
+      shop_staff: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          id: string
+          invite_token: string
+          invited_by: string | null
+          invited_email: string
+          shop_id: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string | null
+          invited_email: string
+          shop_id: string
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          id?: string
+          invite_token?: string
+          invited_by?: string | null
+          invited_email?: string
+          shop_id?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_staff_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           accent_color: string | null
@@ -900,6 +1251,7 @@ export type Database = {
           description: string | null
           email: string | null
           facebook_url: string | null
+          gym_self_checkin_token: string | null
           id: string
           instagram_url: string | null
           is_active: boolean
@@ -908,6 +1260,7 @@ export type Database = {
           landing_banner: Json | null
           landing_gallery: Json | null
           landing_services: Json | null
+          landing_template: string | null
           landing_video_url: string | null
           location: unknown
           logo_url: string | null
@@ -940,6 +1293,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          gym_self_checkin_token?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -948,6 +1302,7 @@ export type Database = {
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
+          landing_template?: string | null
           landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
@@ -980,6 +1335,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           facebook_url?: string | null
+          gym_self_checkin_token?: string | null
           id?: string
           instagram_url?: string | null
           is_active?: boolean
@@ -988,6 +1344,7 @@ export type Database = {
           landing_banner?: Json | null
           landing_gallery?: Json | null
           landing_services?: Json | null
+          landing_template?: string | null
           landing_video_url?: string | null
           location?: unknown
           logo_url?: string | null
@@ -1060,6 +1417,7 @@ export type Database = {
         Row: {
           applies_to: string
           benefits: Json | null
+          category_id: string | null
           created_at: string
           description: string | null
           duration_days: number
@@ -1071,6 +1429,7 @@ export type Database = {
         Insert: {
           applies_to?: string
           benefits?: Json | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_days: number
@@ -1082,6 +1441,7 @@ export type Database = {
         Update: {
           applies_to?: string
           benefits?: Json | null
+          category_id?: string | null
           created_at?: string
           description?: string | null
           duration_days?: number
@@ -1090,7 +1450,15 @@ export type Database = {
           name?: string
           price?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
@@ -1382,6 +1750,18 @@ export type Database = {
         Args: { p_subscription_id: string }
         Returns: undefined
       }
+      assert_owns_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: string
+      }
+      block_slot: {
+        Args: { p_ends_at: string; p_shop_id: string; p_starts_at: string }
+        Returns: string
+      }
+      cancel_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       check_rate_limit: {
         Args: {
           p_action: string
@@ -1391,10 +1771,25 @@ export type Database = {
         }
         Returns: boolean
       }
-      delete_admin_notification: {
-        Args: { p_id: string }
+      complete_appointment: {
+        Args: { p_appointment_id: string }
         Returns: undefined
       }
+      confirm_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
+      create_manual_appointment: {
+        Args: {
+          p_customer_email?: string
+          p_customer_name: string
+          p_customer_phone?: string
+          p_shop_id: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      delete_admin_notification: { Args: { p_id: string }; Returns: undefined }
       delete_read_admin_notifications: { Args: never; Returns: undefined }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
@@ -1427,8 +1822,20 @@ export type Database = {
           }
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
+      email_has_account: { Args: { p_email: string }; Returns: boolean }
       enablelongtransactions: { Args: never; Returns: string }
+      enqueue_appointment_reminders: {
+        Args: never
+        Returns: {
+          customer_email: string
+          id: string
+          shop_id: string
+          shop_name: string
+          starts_at: string
+        }[]
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
+      expire_pending_holds: { Args: { p_shop_id: string }; Returns: undefined }
       expire_subscriptions: { Args: never; Returns: undefined }
       geometry: { Args: { "": string }; Returns: unknown }
       geometry_above: {
@@ -1528,6 +1935,63 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
+      get_admin_dashboard_stats: {
+        Args: never
+        Returns: {
+          active_products: number
+          active_subscriptions_count: number
+          new_shops: number
+          paused_shops: number
+          pending_reports: number
+          pending_subscriptions_count: number
+          pending_suggestions: number
+          pending_verifications_over_48h: number
+          revenue_by_plan: Json
+          total_revenue: number
+          total_shops: number
+          verified_shops: number
+        }[]
+      }
+      get_admin_shops_for_review: {
+        Args: { p_limit?: number }
+        Returns: {
+          active_plan_name: string
+          city: string
+          created_at: string
+          id: string
+          is_active: boolean
+          logo_url: string
+          name: string
+          open_reports_count: number
+          product_count: number
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          whatsapp_number: string
+        }[]
+      }
+      get_available_slots: {
+        Args: { p_date: string; p_shop_id: string }
+        Returns: {
+          ends_at: string
+          starts_at: string
+        }[]
+      }
+      get_featured_shops: {
+        Args: { p_category_id?: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          avg_rating: number
+          category_id: string
+          city: string
+          id: string
+          logo_url: string
+          name: string
+          review_count: number
+          slug: string
+          subscription_status: Database["public"]["Enums"]["subscription_status"]
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }[]
+      }
+      get_gym_dashboard_stats: { Args: { p_shop_id: string }; Returns: Json }
       get_products_feed: {
         Args: {
           p_attribute_value?: string
@@ -1551,10 +2015,12 @@ export type Database = {
           product_is_featured: boolean
           product_name: string
           rubro_slug: string
+          shop_avg_rating: number
           shop_id: string
           shop_is_featured: boolean
           shop_is_verified: boolean
           shop_name: string
+          shop_review_count: number
         }[]
       }
       get_shop_follow_stats: {
@@ -1587,6 +2053,7 @@ export type Database = {
         Args: { p_metric: string; p_shop_id: string }
         Returns: undefined
       }
+      is_shop_staff: { Args: { p_shop_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       log_admin_action: {
         Args: {
@@ -1604,6 +2071,7 @@ export type Database = {
       }
       mark_all_admin_notifications_read: { Args: never; Returns: undefined }
       mark_client_notifications_read: { Args: never; Returns: undefined }
+      mark_no_show: { Args: { p_appointment_id: string }; Returns: undefined }
       normalize_category_text: { Args: { p_text: string }; Returns: string }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -1645,6 +2113,10 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      reject_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
       reject_category_suggestion: {
         Args: { p_reason: string; p_suggestion_id: string }
         Returns: undefined
@@ -1655,6 +2127,29 @@ export type Database = {
       }
       reject_subscription: {
         Args: { p_reason: string; p_subscription_id: string }
+        Returns: undefined
+      }
+      request_appointment: {
+        Args: {
+          p_customer_email?: string
+          p_customer_name: string
+          p_customer_phone: string
+          p_shop_id: string
+          p_starts_at: string
+        }
+        Returns: string
+      }
+      reschedule_appointment: {
+        Args: { p_appointment_id: string; p_new_starts_at: string }
+        Returns: undefined
+      }
+      set_booking_settings: {
+        Args: {
+          p_is_enabled: boolean
+          p_shop_id: string
+          p_slot_duration_minutes: number
+          p_weekly_hours: Json
+        }
         Returns: undefined
       }
       set_shop_location: {
@@ -2248,63 +2743,6 @@ export type Database = {
         Args: { p_reason?: string; p_shop_id: string }
         Returns: undefined
       }
-      request_appointment: {
-        Args: {
-          p_customer_email?: string
-          p_customer_name: string
-          p_customer_phone: string
-          p_shop_id: string
-          p_starts_at: string
-        }
-        Returns: string
-      }
-      confirm_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
-      reject_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
-      create_manual_appointment: {
-        Args: {
-          p_customer_email?: string
-          p_customer_name: string
-          p_customer_phone?: string
-          p_shop_id: string
-          p_starts_at: string
-        }
-        Returns: string
-      }
-      block_slot: {
-        Args: { p_ends_at: string; p_shop_id: string; p_starts_at: string }
-        Returns: string
-      }
-      reschedule_appointment: {
-        Args: { p_appointment_id: string; p_new_starts_at: string }
-        Returns: undefined
-      }
-      cancel_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
-      complete_appointment: { Args: { p_appointment_id: string }; Returns: undefined }
-      expire_pending_holds: { Args: { p_shop_id: string }; Returns: undefined }
-      mark_no_show: { Args: { p_appointment_id: string }; Returns: undefined }
-      set_booking_settings: {
-        Args: {
-          p_is_enabled: boolean
-          p_shop_id: string
-          p_slot_duration_minutes: number
-          p_weekly_hours: Json
-        }
-        Returns: undefined
-      }
-      get_available_slots: {
-        Args: { p_date: string; p_shop_id: string }
-        Returns: { starts_at: string; ends_at: string }[]
-      }
-      enqueue_appointment_reminders: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          id: string
-          shop_id: string
-          shop_name: string
-          starts_at: string
-          customer_email: string
-        }[]
-      }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }
       unsuspend_shop: { Args: { p_shop_id: string }; Returns: undefined }
@@ -2367,12 +2805,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2396,11 +2834,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2421,11 +2859,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2446,11 +2884,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2463,11 +2901,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

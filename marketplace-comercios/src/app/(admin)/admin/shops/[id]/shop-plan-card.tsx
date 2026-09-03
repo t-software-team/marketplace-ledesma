@@ -6,7 +6,7 @@ import { CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/components/ui/toast'
-import { adminSetShopPlan } from '@/lib/admin/actions'
+import { adminSetShopPlan } from '@/lib/admin/actions/shops'
 
 interface ShopPlanCardProps {
   shopId: string

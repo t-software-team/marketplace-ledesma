@@ -15,7 +15,7 @@ import {
   markAdminNotificationRead,
   deleteAdminNotification,
   deleteReadAdminNotifications,
-} from '@/lib/admin/actions'
+} from '@/lib/admin/actions/notifications'
 import { NotificationList, type NotificationListRow } from '@/components/shared/notification-list'
 import { PaginationLinks } from '@/components/shared/pagination-links'
 

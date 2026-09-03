@@ -18,23 +18,12 @@ import {
 } from '@/lib/notifications/actions'
 import {
   NotificationBell,
-  type NotificationItem,
   type NotificationTypeConfigMap,
 } from '@/components/shared/notification-bell'
 import { useFiltersStore } from '@/stores/use-filters-store'
 import { useScrolled } from '@/hooks/use-scrolled'
+import { useHeaderAuth } from '@/hooks/use-header-auth'
 import { cn } from '@/lib/utils'
-
-type ClientNotification = NotificationItem
-
-interface PublicHeaderProps {
-  user: { email: string } | null
-  profileRole: string | null
-  profileFullName: string | null
-  profileAvatarUrl: string | null
-  notifications?: ClientNotification[]
-  unreadNotificationsCount?: number
-}
 
 const NOTIFICATION_TYPE_CONFIG: NotificationTypeConfigMap = {
   new_product: {
@@ -54,17 +43,31 @@ const MINIMAL_HEADER_PREFIXES = ['/producto/', '/tienda/']
 // every tab/reload, since each gets its own JS execution context.
 let internalNavCount = 0
 
-export function PublicHeader({
-  user,
-  profileRole,
-  profileFullName,
-  profileAvatarUrl,
-  notifications = [],
-  unreadNotificationsCount = 0,
-}: PublicHeaderProps) {
+// Placeholder neutro mientras `useHeaderAuth` resuelve la sesión en el cliente.
+// Evita el salto de "Ingresar/Registrarse" (estado deslogueado del HTML
+// estático) a avatar/campana al hidratar: mostramos formas neutras hasta saber.
+function HeaderAuthSkeleton() {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2" aria-hidden>
+      <ThemeToggle />
+      <span className="size-9 animate-pulse rounded-full bg-muted" />
+      <span className="size-9 animate-pulse rounded-full bg-muted" />
+    </div>
+  )
+}
+
+export function PublicHeader() {
   const pathname = usePathname()
   const router = useRouter()
   const scrolled = useScrolled()
+  const { data: auth, isPending } = useHeaderAuth()
+  const user = auth?.user ?? null
+  const profileRole = auth?.profileRole ?? null
+  const profileFullName = auth?.profileFullName ?? null
+  const profileAvatarUrl = auth?.profileAvatarUrl ?? null
+  const notifications = auth?.notifications ?? []
+  const unreadNotificationsCount = auth?.unreadCount ?? 0
+  const isGymStaff = auth?.isGymStaff ?? false
   const setSearch = useFiltersStore((state) => state.setSearch)
   const [searchInput, setSearchInput] = useState('')
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -154,7 +157,7 @@ export function PublicHeader({
             <span className="hidden sm:inline">Marketplace</span>
           </span>
         </Link>
-        {pathname !== '/' && (
+        {pathname !== '/' && !pathname.startsWith('/comercios') && (
           <>
             <div className="relative hidden min-w-0 flex-1 sm:block sm:max-w-xs">
               <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -179,7 +182,18 @@ export function PublicHeader({
           </>
         )}
         <nav className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          {user ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            render={<Link href="/comercios" />}
+            nativeButton={false}
+            className="hidden sm:inline-flex"
+          >
+            Comercios
+          </Button>
+          {isPending ? (
+            <HeaderAuthSkeleton />
+          ) : user ? (
             <>
               {profileRole === 'shop_admin' && (
                 <Button
@@ -228,15 +242,17 @@ export function PublicHeader({
                     realtimeTable="client_notifications"
                     detailHref="/notificaciones"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    render={<Link href="/favoritos" aria-label="Favoritos" />}
-                    nativeButton={false}
-                    className="hidden sm:inline-flex"
-                  >
-                    <Heart className="size-4" aria-hidden />
-                  </Button>
+                  {!isGymStaff && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      render={<Link href="/favoritos" aria-label="Favoritos" />}
+                      nativeButton={false}
+                      className="hidden sm:inline-flex"
+                    >
+                      <Heart className="size-4" aria-hidden />
+                    </Button>
+                  )}
                 </>
               )}
               {!profileRole && (
@@ -273,23 +289,19 @@ export function PublicHeader({
 export function PublicMain({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  const noPaddingTop = pathname.startsWith('/comercios') || pathname === '/'
 
   return (
     <main
       id="main-content"
       className={cn(
         'mx-auto w-full max-w-5xl flex-1 px-4 md:px-6',
-        isMinimal ? 'pt-5 pb-6' : 'py-6 pb-24 sm:pb-6'
+        isMinimal ? 'pt-5 pb-6' : noPaddingTop ? 'pb-24 sm:pb-6' : 'py-6 pb-24 sm:pb-6'
       )}
     >
       {children}
     </main>
   )
-}
-
-interface BottomNavProps {
-  isLoggedIn: boolean
-  profileRole?: string | null
 }
 
 const NAV_ITEMS = [
@@ -301,14 +313,18 @@ const NAV_ITEMS = [
 const LAST_ITEM_SHOP_ADMIN = { href: '/mi-tienda', label: 'Mi tienda', icon: Store, exact: false } as const
 const LAST_ITEM_DEFAULT = { href: '/perfil', label: 'Perfil', icon: User, exact: false } as const
 
-export function BottomNav({ isLoggedIn, profileRole }: BottomNavProps) {
+export function BottomNav() {
   const pathname = usePathname()
+  const { data: auth } = useHeaderAuth()
+  const isLoggedIn = Boolean(auth?.user)
+  const profileRole = auth?.profileRole ?? null
+  const isGymStaff = auth?.isGymStaff ?? false
   const isMinimal = MINIMAL_HEADER_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
   if (isMinimal) return null
 
   const items = [
-    ...NAV_ITEMS,
+    ...NAV_ITEMS.filter((item) => item.href !== '/favoritos' || !isGymStaff),
     profileRole === 'shop_admin' ? LAST_ITEM_SHOP_ADMIN : LAST_ITEM_DEFAULT,
   ]
 

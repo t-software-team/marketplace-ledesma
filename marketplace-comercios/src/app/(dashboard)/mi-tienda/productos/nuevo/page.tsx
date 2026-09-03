@@ -24,23 +24,6 @@ export default async function NewProductPage() {
   const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
 
-  const limitInfo = await getProductLimitInfo(shop.id)
-  if (limitInfo.reached) {
-    return (
-      <div className="max-w-2xl space-y-4">
-        <BackLink href="/mi-tienda/productos" />
-        <h1 className="text-2xl font-heading">Nuevo {noun}</h1>
-        <p className="rounded-lg border border-warning bg-warning/30 p-3 text-sm text-warning-foreground">
-          Llegaste al límite de {limitInfo.max} {noun}s de tu plan actual.{' '}
-          <Link href="/mi-tienda/suscripcion" className="underline">
-            Mejorá tu suscripción
-          </Link>{' '}
-          para seguir cargando.
-        </p>
-      </div>
-    )
-  }
-
   if (!shop.category_id) {
     return (
       <div className="max-w-2xl space-y-4">
@@ -57,13 +40,31 @@ export default async function NewProductPage() {
     )
   }
 
-  const [categories, attributeDefs, videoLimitInfo, imageLimitInfo, variantLimitInfo] = await Promise.all([
-    getSubcategories(shop.category_id),
-    getCategoryAttributes(shop.category_id),
-    getProductVideoLimitInfo(shop.id),
-    getProductImageLimitInfo(shop.id),
-    getProductVariantLimitInfo(shop.id),
-  ])
+  const [limitInfo, categories, attributeDefs, videoLimitInfo, imageLimitInfo, variantLimitInfo] =
+    await Promise.all([
+      getProductLimitInfo(shop.id, { isService, categoryId: shop.category_id }),
+      getSubcategories(shop.category_id),
+      getCategoryAttributes(shop.category_id),
+      getProductVideoLimitInfo(shop.id),
+      getProductImageLimitInfo(shop.id),
+      getProductVariantLimitInfo(shop.id),
+    ])
+
+  if (limitInfo.reached) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <BackLink href="/mi-tienda/productos" />
+        <h1 className="text-2xl font-heading">Nuevo {noun}</h1>
+        <p className="rounded-lg border border-warning bg-warning/30 p-3 text-sm text-warning-foreground">
+          Llegaste al límite de {limitInfo.max} {noun}s de tu plan actual.{' '}
+          <Link href="/mi-tienda/suscripcion" className="underline">
+            Mejorá tu suscripción
+          </Link>{' '}
+          para seguir cargando.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl space-y-4">

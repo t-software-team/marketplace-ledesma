@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useFiltersStore } from '@/stores/use-filters-store'
+import type { ProductFeedItem } from '@/components/shared/product-card'
 
 const FEED_PAGE_SIZE = 20
 const SHOP_PRODUCTS_PAGE_SIZE = 24
@@ -15,7 +16,9 @@ export function useShopProductsPaged(shopId: string, searchQuery = '') {
     queryFn: async ({ pageParam }) => {
       let query = supabase
         .from('products')
-        .select('id, name, price, currency, product_images ( url, sort_order )')
+        .select(
+          'id, name, price, currency, is_featured, wholesale_price, min_order_qty, video_url, product_images ( url, sort_order )'
+        )
         .eq('shop_id', shopId)
         .eq('is_active', true)
 
@@ -36,7 +39,11 @@ export function useShopProductsPaged(shopId: string, searchQuery = '') {
           name: product.name,
           price: product.price,
           currency: product.currency,
-          mainImage: images[0]?.url ?? null,
+          is_featured: product.is_featured,
+          wholesale_price: product.wholesale_price,
+          min_order_qty: product.min_order_qty,
+          video_url: product.video_url,
+          main_image: images[0]?.url ?? null,
         }
       })
     },
@@ -45,7 +52,7 @@ export function useShopProductsPaged(shopId: string, searchQuery = '') {
   })
 }
 
-export function useProductsFeed() {
+export function useProductsFeed(seedProducts?: ProductFeedItem[]) {
   const { categoryId, searchQuery, userLocation, attributeValue } = useFiltersStore()
   const supabase = createClient()
   const seedRef = useRef<string | null>(null)
@@ -53,9 +60,16 @@ export function useProductsFeed() {
     seedRef.current = crypto.randomUUID()
   }
 
+  // La página 0 con los filtros por defecto ya la trajo el servidor
+  // (`getFeedData(20, 0)` en page.tsx) — sembrar react-query con esos datos
+  // evita un fetch duplicado y el flash del skeleton en el mount inicial.
+  const isDefaultFilters = !categoryId && !searchQuery && !userLocation && !attributeValue
+
   return useInfiniteQuery({
     queryKey: ['products-feed', categoryId, searchQuery, userLocation, attributeValue],
     initialPageParam: 0,
+    initialData:
+      isDefaultFilters && seedProducts ? { pages: [seedProducts], pageParams: [0] } : undefined,
     queryFn: async ({ pageParam }) => {
       const { data, error } = await supabase.rpc('get_products_feed', {
         user_lat: userLocation?.lat,
@@ -103,6 +117,62 @@ export interface ShopSearchResult {
   subscription_status: string
 }
 
+export interface FeaturedShop {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  city: string | null
+  category_id: string | null
+  verification_status: string
+  subscription_status: string
+  avg_rating: number | null
+  review_count: number
+}
+
+const FEATURED_SHOPS_LIMIT = 12
+const SHOPS_PAGE_SIZE = 20
+
+export function useFeaturedShops(categoryId?: string | null) {
+  const supabase = createClient()
+
+  return useQuery({
+    queryKey: ['featured-shops', categoryId ?? null],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_featured_shops', {
+        p_limit: FEATURED_SHOPS_LIMIT,
+        p_offset: 0,
+        p_category_id: categoryId ?? undefined,
+      })
+      if (error) throw error
+      return (data ?? []) as FeaturedShop[]
+    },
+  })
+}
+
+export function useFeaturedShopsInfinite(seedShops?: FeaturedShop[], categoryId?: string | null) {
+  const supabase = createClient()
+  const isDefaultFilters = !categoryId
+
+  return useInfiniteQuery({
+    queryKey: ['featured-shops-infinite', categoryId ?? null],
+    initialPageParam: 0,
+    initialData:
+      isDefaultFilters && seedShops ? { pages: [seedShops], pageParams: [0] } : undefined,
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.rpc('get_featured_shops', {
+        p_limit: SHOPS_PAGE_SIZE,
+        p_offset: pageParam,
+        p_category_id: categoryId ?? undefined,
+      })
+      if (error) throw error
+      return (data ?? []) as FeaturedShop[]
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length < SHOPS_PAGE_SIZE ? undefined : allPages.length * SHOPS_PAGE_SIZE,
+  })
+}
+
 export function useShopSearch() {
   const { searchQuery } = useFiltersStore()
   const supabase = createClient()
@@ -111,6 +181,9 @@ export function useShopSearch() {
   return useQuery({
     queryKey: ['shop-search', trimmed],
     queryFn: async () => {
+      // verification_status + subscription_status: no son datos de contacto,
+      // son los dos campos mínimos que necesita hasVerifiedBadge() para
+      // decidir si mostrar el ícono de comercio verificado en el listado.
       const { data, error } = await supabase
         .from('shops')
         .select('id, name, slug, logo_url, city, verification_status, subscription_status')

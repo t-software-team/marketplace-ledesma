@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
 import { getShopAppointments, getShopAppointmentStats } from '@/lib/turnos/queries'
 import { Button } from '@/components/ui/button'
 import { AppointmentsTable } from './appointments-table'
@@ -21,7 +21,8 @@ export default async function TurnosPage() {
     .eq('owner_id', user.id)
     .maybeSingle()
 
-  if (!shop || !isServiceRubro(shop.categories?.slug ?? null)) {
+  const rubroSlug = shop?.categories?.slug ?? null
+  if (!shop || !isServiceRubro(rubroSlug) || isGymRubro(rubroSlug)) {
     redirect('/mi-tienda')
   }
 

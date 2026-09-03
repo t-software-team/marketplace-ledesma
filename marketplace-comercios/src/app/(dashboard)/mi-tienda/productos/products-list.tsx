@@ -26,11 +26,12 @@ interface Product {
   id: string
   name: string
   price: number | null
+  stock: number | null
   currency: string
   is_active: boolean
   is_featured: boolean
-  mainImage: string | null
-  categoryName: string | null
+  main_image: string | null
+  category_name: string | null
 }
 
 function formatPrice(price: number | null, currency: string) {
@@ -42,12 +43,18 @@ function formatPrice(price: number | null, currency: string) {
   }).format(price)
 }
 
+function StockCell({ stock }: { stock: number | null }) {
+  if (stock == null) return <span className="text-muted-foreground">—</span>
+  if (stock === 0) return <span className="font-medium text-destructive">Sin stock</span>
+  return <span>{stock}</span>
+}
+
 function ProductThumbnail({ product }: { product: Product }) {
   return (
     <div className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-muted">
-      {product.mainImage ? (
+      {product.main_image ? (
         <Image
-          src={product.mainImage}
+          src={product.main_image}
           alt={product.name}
           fill
           className="object-cover"
@@ -71,8 +78,8 @@ function ProductNameCell({ product }: { product: Product }) {
   return (
     <div className="min-w-0 flex-1">
       <p className="truncate font-medium">{product.name}</p>
-      {product.categoryName ? (
-        <p className="truncate text-xs text-muted-foreground">{product.categoryName}</p>
+      {product.category_name ? (
+        <p className="truncate text-xs text-muted-foreground">{product.category_name}</p>
       ) : (
         <p className="flex items-center gap-1 truncate text-xs font-medium text-warning-foreground">
           <AlertTriangle className="size-3 shrink-0" aria-hidden />
@@ -268,7 +275,12 @@ export function ProductsList({
                       <span className="font-mono text-xs text-muted-foreground">
                         {formatPrice(product.price, product.currency)}
                       </span>
-                      {!product.categoryName && (
+                      {product.stock != null && (
+                        <span className="text-xs">
+                          <StockCell stock={product.stock} />
+                        </span>
+                      )}
+                      {!product.category_name && (
                         <span className="flex items-center gap-0.5 text-xs font-medium text-warning-foreground">
                           <AlertTriangle className="size-3 shrink-0" aria-hidden />
                           Sin subcategoría
@@ -302,6 +314,7 @@ export function ProductsList({
                 </TableHead>
                 <TableHead>{noun.charAt(0).toUpperCase() + noun.slice(1)}</TableHead>
                 <TableHead>Precio</TableHead>
+                <TableHead>Stock</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-center">Acciones</TableHead>
               </TableRow>
@@ -324,6 +337,9 @@ export function ProductsList({
                   </TableCell>
                   <TableCell className="whitespace-nowrap font-mono">
                     {formatPrice(product.price, product.currency)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <StockCell stock={product.stock} />
                   </TableCell>
                   <TableCell>
                     <ProductStatusBadges product={product} />

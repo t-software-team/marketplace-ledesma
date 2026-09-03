@@ -21,6 +21,7 @@ import {
   Music,
   Sparkles,
   Flower2,
+  Dumbbell,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -46,7 +47,10 @@ export const RUBRO_ICONS: Record<string, LucideIcon> = {
   'bandas-musicales': Music,
   detailing: Sparkles,
   estetica: Flower2,
+  gimnasio: Dumbbell,
 }
+
+export const GYM_RUBRO_SLUG = 'gimnasio'
 
 export function getRubroIcon(slug: string): LucideIcon {
   return RUBRO_ICONS[slug] ?? Tag
@@ -65,8 +69,13 @@ const SERVICE_RUBROS = new Set([
   'bandas-musicales',
   'detailing',
   'estetica',
+  'gimnasio',
 ])
 
 export function isServiceRubro(slug: string | null | undefined): boolean {
   return slug ? SERVICE_RUBROS.has(slug) : false
+}
+
+export function isGymRubro(slug: string | null | undefined): boolean {
+  return slug === GYM_RUBRO_SLUG
 }

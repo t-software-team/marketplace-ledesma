@@ -14,8 +14,21 @@ import { signIn } from '@/lib/auth/actions'
 import { loginSchema, type LoginFormValues } from '@/lib/validations/auth'
 import { GoogleButton } from '@/components/auth/google-button'
 
+/** Forwards next/email (e.g. from an invite link) into the "Registrate" hop
+ * so someone without an account yet doesn't lose that context. */
+function registroQuery(searchParams: ReturnType<typeof useSearchParams>) {
+  const params = new URLSearchParams()
+  const next = searchParams.get('next')
+  const email = searchParams.get('email')
+  if (next) params.set('next', next)
+  if (email) params.set('email', email)
+  const query = params.toString()
+  return query ? `?${query}` : ''
+}
+
 export default function LoginForm() {
   const searchParams = useSearchParams()
+  const prefillEmail = searchParams.get('email') ?? undefined
   const [authError, setAuthError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -26,6 +39,7 @@ export default function LoginForm() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: prefillEmail },
   })
 
   function onSubmit(values: LoginFormValues) {
@@ -129,7 +143,10 @@ export default function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         ¿No tenés cuenta?{' '}
-        <Link href="/registro" className="font-medium text-foreground underline-offset-4 hover:underline">
+        <Link
+          href={`/registro${registroQuery(searchParams)}`}
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+        >
           Registrate
         </Link>
       </p>

@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { dismissReport, markReportReviewed } from '@/lib/admin/actions'
+import { dismissReport, markReportReviewed } from '@/lib/admin/actions/reports'
 
 interface ReportActionsProps {
   reportId: string

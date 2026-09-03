@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import { Play, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ProductImage } from '@/components/shared/product-image'
 import { Dialog, DialogPortal, DialogOverlay, DialogContent } from '@/components/ui/dialog'
 
 interface ProductGalleryProps {
@@ -80,10 +81,9 @@ export function ProductGallery({ images, productName, videoUrl, imageOverlay }: 
               {slide.type === 'video' ? (
                 <>
                   {images[0] && (
-                    <Image
+                    <ProductImage
                       src={images[0].url}
                       alt={`${productName} - imagen 1`}
-                      fill
                       className="object-cover"
                       sizes="56px"
                     />
@@ -93,10 +93,9 @@ export function ProductGallery({ images, productName, videoUrl, imageOverlay }: 
                   </span>
                 </>
               ) : (
-                <Image
+                <ProductImage
                   src={slide.url}
                   alt={`${productName} - imagen ${index + 1}`}
-                  fill
                   className="object-cover"
                   sizes="56px"
                 />

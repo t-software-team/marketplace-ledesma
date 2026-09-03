@@ -24,12 +24,17 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     redirect('/mi-tienda')
   }
 
-  const [productsResult, limitInfo] = await Promise.all([
-    getMyShopProducts(shop.id, page, 24, search),
-    getProductLimitInfo(shop.id),
-  ])
-  const { products, totalCount, totalPages } = productsResult
   const isService = isServiceRubro(shop.categories?.slug)
+  const productsResult = await getMyShopProducts(shop.id, page, 24, search)
+  const { products, totalCount, totalPages } = productsResult
+  // Sin búsqueda, totalCount es el conteo total de productos de la tienda, así
+  // que se reusa como usedCount y getProductLimitInfo evita un segundo
+  // count: 'exact'. isService ya viene del getMyShop cacheado.
+  const limitInfo = await getProductLimitInfo(shop.id, {
+    usedCount: search ? undefined : totalCount,
+    isService,
+    categoryId: shop.category_id,
+  })
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
   const canFeature = shop.subscription_status === 'active'

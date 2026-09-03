@@ -99,6 +99,19 @@ export function shopVerificationRejectedEmail(shopName: string) {
   }
 }
 
+export function gymStaffInviteEmail(shopName: string, inviteToken: string) {
+  return {
+    subject: `Te invitaron a trabajar en ${shopName} — Proxi Marketplace`,
+    html: layout(
+      `Te invitaron a ${shopName}`,
+      `<p><strong>${shopName}</strong> te invitó a sumarte como empleado en Proxi Marketplace.</p>
+       <p>Vas a poder registrar ingresos, dar de alta socios y renovar membresías desde tu propia cuenta.</p>`,
+      `/invitacion/${inviteToken}`,
+      'Aceptar invitación'
+    ),
+  }
+}
+
 export function subscriptionApprovedEmail(shopName: string, planName: string) {
   return {
     subject: `Tu suscripción está activa 🎉`,

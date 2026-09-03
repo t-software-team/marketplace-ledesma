@@ -26,6 +26,16 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser()
 
       if (user) {
+        // An explicit destination (e.g. an invite link) always wins, even for
+        // a role-less brand-new user — that page decides what it needs, and
+        // the middleware still gates the *protected* routes on having a role.
+        // Only fall back to the role-based routing below for a bare "/"
+        // (the common signup confirm, which arrives here as next=/onboarding
+        // anyway, not as "/").
+        if (next !== '/') {
+          return NextResponse.redirect(`${origin}${next}`)
+        }
+
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -36,15 +46,13 @@ export async function GET(request: Request) {
           return NextResponse.redirect(`${origin}/onboarding`)
         }
 
-        if (next === '/') {
-          const roleDestination =
-            profile.role === 'shop_admin'
-              ? '/mi-tienda'
-              : profile.role === 'superadmin'
-                ? '/admin/dashboard'
-                : '/'
-          return NextResponse.redirect(`${origin}${roleDestination}`)
-        }
+        const roleDestination =
+          profile.role === 'shop_admin'
+            ? '/mi-tienda'
+            : profile.role === 'superadmin'
+              ? '/admin/dashboard'
+              : '/'
+        return NextResponse.redirect(`${origin}${roleDestination}`)
       }
 
       return NextResponse.redirect(`${origin}${next}`)

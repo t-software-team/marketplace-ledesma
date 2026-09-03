@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { Eye, MessageCircle, Package, Percent, Store, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
@@ -11,12 +12,17 @@ import { ShareButton } from '@/components/shared/share-button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
-import { isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { planMatchesShop } from '@/lib/shops/plan-scope'
+import { GymResumen } from '@/components/gym/gym-resumen'
+import { getGymDashboardStats, getMyGymAccess, getRecentGymCheckIns } from '@/lib/gym/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
   getActiveCategories,
   getActiveSubscriptionPlans,
+  getFreeProductMax,
+  getGymMemberLimitInfo,
   getMyActiveSubscription,
   getMyShop,
   getMyShopProducts,
@@ -25,6 +31,7 @@ import {
 } from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
 import { OnboardingChecklist } from './onboarding-checklist'
+import { ScrollToTop } from './scroll-to-top'
 import { SubscriptionBenefits } from './subscription-benefits'
 
 const subscriptionLabels: Record<string, string> = {
@@ -57,6 +64,13 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   const shop = await getMyShop()
 
   if (!shop) {
+    // Not an owner — a gym employee (see shop_staff) has no shop of their own
+    // and no Resumen to look at; send them straight to their actual work.
+    const gymAccess = await getMyGymAccess()
+    if (gymAccess?.role === 'staff') {
+      redirect('/mi-tienda/ingresos')
+    }
+
     const categories = await getActiveCategories()
     return (
       <div className="-mx-4 -my-6 md:-mx-6 sm:mx-0 sm:my-0">
@@ -78,18 +92,39 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount] = await Promise.all([
-    getMyShopProducts(shop.id, 1, 4),
-    getShopContactsSeries(shop.id, 14),
-    getMyActiveSubscription(shop.id),
-    getActiveSubscriptionPlans(),
-    getShopFollowStats(shop.id),
-  ])
+  // Gyms get a dedicated management dashboard instead of the catalog resumen.
+  if (isGymRubro(shop.categories?.slug)) {
+    const [stats, memberLimit, recentCheckIns] = await Promise.all([
+      getGymDashboardStats(shop.id),
+      getGymMemberLimitInfo(shop.id),
+      getRecentGymCheckIns(shop.id),
+    ])
+    return (
+      <GymResumen
+        shopName={shop.name}
+        logoUrl={shop.logo_url}
+        stats={stats}
+        memberLimit={memberLimit}
+        recentCheckIns={recentCheckIns}
+      />
+    )
+  }
+
+  const isService = isServiceRubro(shop.categories?.slug)
+
+  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount, freeMaxForShop] =
+    await Promise.all([
+      getMyShopProducts(shop.id, 1, 4),
+      getShopContactsSeries(shop.id, 14),
+      getMyActiveSubscription(shop.id),
+      getActiveSubscriptionPlans(),
+      getShopFollowStats(shop.id),
+      getFreeProductMax(isService, shop.category_id),
+    ])
   const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
   const conversionRate =
     shop.profile_views > 0 ? Math.round((shop.whatsapp_clicks / shop.profile_views) * 100) : null
-  const isService = isServiceRubro(shop.categories?.slug)
   const noun = isService ? 'servicio' : 'producto'
   const nounPlural = isService ? 'Servicios' : 'Productos'
 
@@ -100,10 +135,8 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
 
   const daysUntilExpiry = shop.subscription_expires_at ? daysUntil(shop.subscription_expires_at) : null
 
-  const freeMaxForShop = isService ? 3 : 15
   const freePlan = allPlans.find(
-    (plan) =>
-      plan.price === 0 && (plan.applies_to === 'all' || plan.applies_to === (isService ? 'service' : 'product'))
+    (plan) => plan.price === 0 && planMatchesShop(plan, { categoryId: shop.category_id, isService })
   )
 
   const planName = activeSubscription?.subscription_plans?.name ?? freePlan?.name ?? 'Free'
@@ -120,6 +153,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-8">
+      <ScrollToTop />
       {subscription === 'activada' && (
         <p className="rounded-lg border border-success bg-success/30 p-3 text-sm text-success-foreground">
           ¡Listo! Tu pago se acreditó y tu suscripción ya está activa.
@@ -234,35 +268,6 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="space-y-3 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Suscripción</p>
-              <div className="flex items-center gap-2">
-                <StatusBadge
-                  status={shop.subscription_status}
-                  label={
-                    shop.subscription_status === 'active' || shop.subscription_status === 'none'
-                      ? planName
-                      : subscriptionLabels[shop.subscription_status]
-                  }
-                />
-                {shop.subscription_expires_at && (
-                  <span className="text-xs text-muted-foreground">
-                    Vence {new Date(shop.subscription_expires_at).toLocaleDateString('es-AR')}
-                  </span>
-                )}
-              </div>
-            </div>
-            <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
-              {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
-            </Button>
-          </div>
-          <SubscriptionBenefits lines={benefitLines} />
-        </CardContent>
-      </Card>
-
       <div className="space-y-3">
         <div>
           <h2 className="font-heading text-lg">Tu alcance</h2>
@@ -333,6 +338,35 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         </Card>
 
         <ShopLinkCard shopName={shop.name} shopUrl={shopUrl} />
+
+        <Card>
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Suscripción</p>
+                <div className="flex items-center gap-2">
+                  <StatusBadge
+                    status={shop.subscription_status}
+                    label={
+                      shop.subscription_status === 'active' || shop.subscription_status === 'none'
+                        ? planName
+                        : subscriptionLabels[shop.subscription_status]
+                    }
+                  />
+                  {shop.subscription_expires_at && (
+                    <span className="text-xs text-muted-foreground">
+                      Vence {new Date(shop.subscription_expires_at).toLocaleDateString('es-AR')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
+                {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
+              </Button>
+            </div>
+            <SubscriptionBenefits lines={benefitLines} />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="space-y-3">
@@ -367,9 +401,9 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
                 className="overflow-hidden rounded-xl border border-border bg-surface transition-colors hover:border-primary"
               >
                 <div className="relative aspect-square bg-muted">
-                  {product.mainImage ? (
+                  {product.main_image ? (
                     <Image
-                      src={product.mainImage}
+                      src={product.main_image}
                       alt={product.name}
                       fill
                       className="object-cover"

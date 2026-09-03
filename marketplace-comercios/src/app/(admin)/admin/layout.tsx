@@ -6,7 +6,7 @@ import {
   markAdminNotificationRead,
   deleteAdminNotification,
   deleteReadAdminNotifications,
-} from '@/lib/admin/actions'
+} from '@/lib/admin/actions/notifications'
 import { CommandPalette } from './command-palette'
 
 const navItems: DashboardNavItem[] = [
@@ -15,6 +15,7 @@ const navItems: DashboardNavItem[] = [
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'users' },
   { href: '/admin/categorias', label: 'Categorías', icon: 'tag' },
   { href: '/admin/subscripciones', label: 'Suscripciones', icon: 'credit-card' },
+  { href: '/admin/planes', label: 'Planes', icon: 'package' },
   { href: '/admin/reportes', label: 'Reportes', icon: 'flag' },
   { href: '/admin/auditoria', label: 'Auditoría', icon: 'clock' },
 ]
@@ -25,9 +26,20 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+
+  // Las notificaciones no dependen del usuario/perfil, así que se piden en
+  // paralelo con la sesión en vez de esperar a que termine getUser() primero.
+  const [
+    {
+      data: { user },
+    },
+    notifications,
+    unreadNotificationsCount,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    getUnreadNotifications(),
+    getUnreadNotificationsCount(),
+  ])
 
   let fullName: string | null = null
   let avatarUrl: string | null = null
@@ -42,11 +54,6 @@ export default async function AdminLayout({
     fullName = profile?.full_name ?? null
     avatarUrl = profile?.avatar_url ?? null
   }
-
-  const [notifications, unreadNotificationsCount] = await Promise.all([
-    getUnreadNotifications(),
-    getUnreadNotificationsCount(),
-  ])
 
   return (
     <>

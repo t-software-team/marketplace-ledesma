@@ -14,7 +14,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { toast } from '@/components/ui/toast'
 import { useRowSelection } from '@/hooks/use-row-selection'
 import { getRubroIcon, isServiceRubro } from '@/lib/category-icons'
-import { bulkDeleteCategories, bulkToggleCategoryActive } from '@/lib/admin/actions'
+import { bulkDeleteCategories, bulkToggleCategoryActive } from '@/lib/admin/actions/categories'
 import type { getCategoriesList } from '@/lib/admin/queries'
 import { CategoryRowActions } from './category-row-actions'
 
@@ -200,7 +200,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">/{category.slug}</TableCell>
                 <TableCell className="font-mono text-muted-foreground tabular-nums">
-                  {category.productCount}
+                  {category.product_count}
                 </TableCell>
                 <TableCell>
                   <StatusBadge
