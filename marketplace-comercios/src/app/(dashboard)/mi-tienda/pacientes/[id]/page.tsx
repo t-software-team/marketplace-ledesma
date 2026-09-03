@@ -16,13 +16,15 @@ import { AppointmentHistory } from './appointment-history'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ tratamiento?: string }>
 }
 
 // Detalle de paciente: ficha básica (PR1) + sección de Tratamientos
 // aplicados (PR2) con botón para registrar una nueva aplicación y el
 // historial con su status derivado (al día/próximo/vencido).
-export default async function PatientDetailPage({ params }: PatientDetailPageProps) {
+export default async function PatientDetailPage({ params, searchParams }: PatientDetailPageProps) {
   const { id } = await params
+  const { tratamiento } = await searchParams
   const shop = await getMyShop()
 
   if (!shop) {
@@ -118,7 +120,11 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
       <div className="space-y-3 border-t border-border pt-6">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-heading text-base">Tratamientos aplicados</h2>
-          <ApplyTreatmentDialog patientId={patient.id} templates={templates} />
+          <ApplyTreatmentDialog
+            patientId={patient.id}
+            templates={templates}
+            defaultOpen={tratamiento === 'nuevo'}
+          />
         </div>
         <TreatmentHistory patientId={patient.id} treatments={treatments} />
       </div>

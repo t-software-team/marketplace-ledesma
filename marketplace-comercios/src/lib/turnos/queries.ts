@@ -13,6 +13,7 @@ export interface AppointmentRow {
   customer_phone: string | null
   customer_email: string | null
   created_at: string
+  patient_id: string | null
 }
 
 export interface AppointmentFilters {
@@ -37,7 +38,7 @@ export async function getShopAppointments(
   let query = supabase
     .from('appointments')
     .select(
-      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at'
+      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at, patient_id'
     )
     .eq('shop_id', shopId)
 
@@ -210,7 +211,7 @@ export async function getShopUpcomingAppointments(shopId: string, limit = 5): Pr
   const { data, error } = await supabase
     .from('appointments')
     .select(
-      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at'
+      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at, patient_id'
     )
     .eq('shop_id', shopId)
     .in('status', ['pending', 'confirmed'])
@@ -233,7 +234,7 @@ export async function getPatientAppointments(patientId: string): Promise<Appoint
   const { data, error } = await supabase
     .from('appointments')
     .select(
-      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at'
+      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at, patient_id'
     )
     .eq('patient_id', patientId)
     .order('starts_at', { ascending: false })

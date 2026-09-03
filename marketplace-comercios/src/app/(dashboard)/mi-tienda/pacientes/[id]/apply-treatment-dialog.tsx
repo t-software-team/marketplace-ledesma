@@ -12,12 +12,13 @@ import type { TreatmentTemplateWithDoses } from '@/lib/treatments/queries'
 interface ApplyTreatmentDialogProps {
   patientId: string
   templates: TreatmentTemplateWithDoses[]
+  defaultOpen?: boolean
 }
 
 const initialState: TreatmentActionState = { error: null }
 
-export function ApplyTreatmentDialog({ patientId, templates }: ApplyTreatmentDialogProps) {
-  const [open, setOpen] = useState(false)
+export function ApplyTreatmentDialog({ patientId, templates, defaultOpen = false }: ApplyTreatmentDialogProps) {
+  const [open, setOpen] = useState(defaultOpen)
   const [state, setState] = useState<TreatmentActionState>(initialState)
   const [isPending, startTransition] = useTransition()
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? '')
