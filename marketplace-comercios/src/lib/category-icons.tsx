@@ -51,6 +51,7 @@ export const RUBRO_ICONS: Record<string, LucideIcon> = {
 }
 
 export const GYM_RUBRO_SLUG = 'gimnasio'
+export const VETERINARIA_RUBRO_SLUG = 'veterinaria'
 
 export function getRubroIcon(slug: string): LucideIcon {
   return RUBRO_ICONS[slug] ?? Tag
@@ -78,4 +79,10 @@ export function isServiceRubro(slug: string | null | undefined): boolean {
 
 export function isGymRubro(slug: string | null | undefined): boolean {
   return slug === GYM_RUBRO_SLUG
+}
+
+// Dedicado en vez de reusar isServiceRubro: ese set incluye ~11 rubros
+// (peluquerías, talleres, etc.) que no deben ver Pacientes/Tratamientos.
+export function isVeterinariaRubro(slug: string | null | undefined): boolean {
+  return slug === VETERINARIA_RUBRO_SLUG
 }

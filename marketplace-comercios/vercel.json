@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/expire-subscriptions",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/appointment-reminders",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/treatment-reminders",
+      "schedule": "0 3 * * *"
     }
   ]
 }
