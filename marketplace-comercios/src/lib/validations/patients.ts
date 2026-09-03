@@ -33,3 +33,9 @@ export const patientReminderSchema = z.object({
 })
 
 export type PatientReminderFormValues = z.infer<typeof patientReminderSchema>
+
+export const patientNoteSchema = z.object({
+  content: z.string().min(1, 'El contenido de la nota es obligatorio').max(4000),
+})
+
+export type PatientNoteFormValues = z.infer<typeof patientNoteSchema>

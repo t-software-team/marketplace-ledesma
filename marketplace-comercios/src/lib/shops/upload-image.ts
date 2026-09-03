@@ -17,6 +17,13 @@ const BUCKET_LIMITS: Record<
   'patient-photos': 5 * 1024 * 1024,
 }
 
+// NOTA (runbook, ver docs/PENDIENTES.md): igual que `patient-photos`, el
+// bucket `patient-documents` (adjuntos del historial clínico, PR7a) todavía
+// no está provisionado en Supabase — se crea a mano en el dashboard antes de
+// poder subir adjuntos en producción.
+const PATIENT_DOCUMENT_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
+const PATIENT_DOCUMENT_MAX_SIZE = 10 * 1024 * 1024
+
 function assertValidImage(bucket: keyof typeof BUCKET_LIMITS, file: File) {
   if (!IMAGE_MIME_TYPES.includes(file.type)) {
     throw new Error('El archivo debe ser una imagen (PNG, JPEG, WEBP o GIF)')
@@ -332,6 +339,43 @@ export async function uploadVerificationDocument(shopId: string, file: File) {
   }
 
   return path
+}
+
+/**
+ * Adjunto del historial clínico de un paciente (foto o PDF). Clon exacto de
+ * `uploadVerificationDocument` en cuanto a validación/límite (imagen o PDF,
+ * 10MB), pero el path incluye `patientId` además de `shopId`
+ * (`shopId/patientId/uuid.ext`) para poder scopear las policies de Storage
+ * del bucket `patient-documents` por comercio Y filtrar por paciente si hace
+ * falta más adelante — mismo criterio que `patient-photos`.
+ */
+export async function uploadPatientDocument(shopId: string, patientId: string, file: File) {
+  if (!PATIENT_DOCUMENT_MIME_TYPES.includes(file.type)) {
+    throw new Error('El documento debe ser una imagen o un PDF')
+  }
+
+  if (file.size > PATIENT_DOCUMENT_MAX_SIZE) {
+    throw new Error('El documento no puede pesar más de 10MB')
+  }
+
+  const supabase = createClient()
+  const extension = file.name.split('.').pop() ?? 'jpg'
+  const path = `${shopId}/${patientId}/${crypto.randomUUID()}.${extension}`
+
+  const { error } = await supabase.storage.from('patient-documents').upload(path, file, {
+    upsert: false,
+  })
+
+  if (error) {
+    console.error('uploadPatientDocument: fallo al subir a Storage', { shopId, patientId, error })
+    throw new Error('No pudimos subir el documento')
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from('patient-documents').getPublicUrl(path)
+
+  return publicUrl
 }
 
 const AVATAR_MAX_SIZE = 3 * 1024 * 1024

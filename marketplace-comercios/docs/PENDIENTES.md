@@ -333,3 +333,23 @@ inflar el PR con un rename mecánico de imports en todo el proyecto.
 Es un cambio de organización/cosmético, sin impacto funcional — no bloquea
 nada hoy. Buen candidato para una sesión de limpieza dedicada, no para
 colarlo dentro de otro PR funcional.
+
+## 13. Bucket `patient-documents` pendiente de provisión manual (módulo Veterinaria, PR7a, 2026-09-03)
+
+**Contexto:** el historial clínico de pacientes (`patient_notes` +
+`patient_note_attachments`, migración `20260926000000_patient_notes.sql`,
+`src/lib/patients/notes-actions.ts`) permite adjuntar fotos/PDFs por nota vía
+`uploadPatientDocument(shopId, patientId, file)`
+(`src/lib/shops/upload-image.ts`). Siguiendo la misma convención que
+`patient-photos` (ítem 11) y `product-images`, el bucket
+`patient-documents` **no** se crea en la migración SQL.
+
+**Pendiente:** crear el bucket `patient-documents` en el dashboard de
+Supabase (público o privado a definir — se sube documentación
+potencialmente sensible de la mascota, evaluar si conviene privado + URLs
+firmadas en vez de público como `patient-photos`) + sus policies de Storage
+(INSERT/UPDATE/DELETE restringido al dueño autenticado del `shop_id`,
+primer segmento del path `shopId/patientId/uuid.ext`) antes de que la subida
+de adjuntos funcione en producción. La UI que consume esto (timeline de
+historial clínico) es PR7b — hasta que el bucket exista, la subida fallará
+con "No pudimos subir el documento".
