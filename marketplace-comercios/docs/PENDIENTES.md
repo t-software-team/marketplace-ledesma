@@ -312,13 +312,24 @@ establecida (ningún bucket existente — `shop-logos`, `product-images`,
 `avatars`, `payment-proofs`, etc. — se crea vía migración SQL), el bucket
 `patient-photos` **no** se crea en `supabase/migrations/20260919000000_patients.sql`.
 
-**Pendiente antes de deploy a producción:** crear a mano en el dashboard de
-Supabase (Storage):
-1. Bucket `patient-photos`, público (mismo criterio que `product-images`, ya
-   que las URLs se muestran directo en el panel del dueño).
-2. Policies de Storage equivalentes a las de `product-images`: INSERT/UPDATE/
-   DELETE restringido al dueño autenticado del `shop_id` correspondiente al
-   primer segmento del path (`{shopId}/...`), SELECT público.
+**Resuelto (2026-09-03):** bucket `patient-photos` creado (público) con sus 4
+policies de Storage (SELECT público; INSERT/UPDATE/DELETE restringido al
+dueño autenticado del `shop_id` correspondiente al primer segmento del path),
+mismo patrón que `product-images`. Aplicado directo en la base real vía
+`supabase db query`, sin migración SQL (consistente con el resto de los
+buckets del proyecto). La subida de foto de paciente ya funciona en runtime.
 
-Hasta que el bucket exista, la subida de foto de paciente falla en runtime
-(no en build/typecheck) — el resto del CRUD de pacientes funciona sin foto.
+## 12. Carpeta `src/lib/gym/` mal nombrada tras reuso para veterinaria (PR3, 2026-09-03)
+
+**Contexto:** el módulo de "Equipo" (invitar/revocar empleados con acceso a
+la cuenta — `shop_staff`, `getMyGymAccess`, `staff-actions.ts`) vive en
+`src/lib/gym/` y originalmente era exclusivo de gimnasios. En PR3 se reusó
+tal cual para veterinarias (el guard en `mi-tienda/layout.tsx` ahora acepta
+`isGymRubro(...) || isVeterinariaRubro(...)`), decisión explícita para no
+inflar el PR con un rename mecánico de imports en todo el proyecto.
+
+**Pendiente:** renombrar `src/lib/gym/` a algo genérico (ej.
+`src/lib/shop-staff/`) y actualizar todos los imports que lo referencian.
+Es un cambio de organización/cosmético, sin impacto funcional — no bloquea
+nada hoy. Buen candidato para una sesión de limpieza dedicada, no para
+colarlo dentro de otro PR funcional.

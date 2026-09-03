@@ -5,6 +5,7 @@ import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-si
 import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
 import { getMyActiveSubscription, getMyShop } from '@/lib/shops/queries'
 import { getMyGymAccess } from '@/lib/gym/queries'
+import { resolveStaffNavItems, resolveStaffRootHref } from '@/lib/staff-nav'
 import { getMyClientNotifications } from '@/lib/notifications/queries'
 import {
   markClientNotificationRead,
@@ -69,7 +70,10 @@ export default async function MiTiendaLayout({
       // Not an owner — check gym staff membership before giving up. Staff
       // never gets reviewInvite/subscription info; those are owner concerns.
       const gymAccess = await getMyGymAccess()
-      if (gymAccess?.role === 'staff' && isGymRubro(gymAccess.categorySlug)) {
+      if (
+        gymAccess?.role === 'staff' &&
+        (isGymRubro(gymAccess.categorySlug) || isVeterinariaRubro(gymAccess.categorySlug))
+      ) {
         isStaff = true
         staffShopName = gymAccess.shopName
         rubroSlug = gymAccess.categorySlug
@@ -81,13 +85,11 @@ export default async function MiTiendaLayout({
   const isGym = isGymRubro(rubroSlug)
   const isVeterinaria = isVeterinariaRubro(rubroSlug)
 
-  // Staff gets a scoped-down nav: mostrador + altas/renovaciones only, per
-  // the agreed access boundary — no caja completa, planes, reportes,
-  // personalizar, suscripción, configuración or equipo.
-  const staffNavItems: DashboardNavItem[] = [
-    { href: '/mi-tienda/ingresos', label: 'Ingresos', icon: 'login' },
-    { href: '/mi-tienda/socios', label: 'Socios', icon: 'users' },
-  ]
+  // Staff gets a scoped-down nav, rubro-aware: gym staff keeps mostrador +
+  // altas/renovaciones, veterinaria staff gets turnos/pacientes/tratamientos
+  // — no caja completa, planes, reportes, personalizar, suscripción,
+  // configuración or equipo for either.
+  const staffNavItems: DashboardNavItem[] = resolveStaffNavItems(rubroSlug)
 
   // Gyms swap the catalog-first nav for gym-management sections, but still
   // get to sell services (visible in the feed like any product) and
@@ -144,7 +146,7 @@ export default async function MiTiendaLayout({
       userFullName={fullName}
       userAvatarUrl={avatarUrl}
       sectionTitle={isStaff && staffShopName ? staffShopName : 'Mi tienda'}
-      rootHref={isStaff ? '/mi-tienda/ingresos' : '/mi-tienda'}
+      rootHref={isStaff ? resolveStaffRootHref(rubroSlug) : '/mi-tienda'}
       showInstallButton={isGym}
       showSiteLink={!isGym && !isStaff}
       showFavoritesLink={!isGym && !isStaff}
