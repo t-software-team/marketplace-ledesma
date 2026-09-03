@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { uploadPatientDocument } from '@/lib/shops/upload-image'
 import { createPatientNote, type PatientNoteActionState } from '@/lib/patients/notes-actions'
+import { NOTE_CATEGORY_OPTIONS } from '@/lib/patients/note-categories'
 
 interface AddNoteDialogProps {
   shopId: string
@@ -107,6 +108,25 @@ export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
             </label>
             <Textarea id="content" name="content" required aria-invalid={Boolean(fieldErrors.content)} rows={5} />
             <FieldError message={fieldErrors.content} />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="category" className="text-sm font-medium">
+              Categoría
+            </label>
+            <select
+              id="category"
+              name="category"
+              defaultValue="otro"
+              className="h-9 w-full rounded-lg border border-border bg-surface px-3 text-sm"
+            >
+              {NOTE_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <FieldError message={fieldErrors.category} />
           </div>
 
           <div className="space-y-2">

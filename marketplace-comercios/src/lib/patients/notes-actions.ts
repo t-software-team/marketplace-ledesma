@@ -33,6 +33,7 @@ export async function createPatientNote(
 
   const parsed = patientNoteSchema.safeParse({
     content: formData.get('content'),
+    category: formData.get('category') || undefined,
   })
 
   if (!parsed.success) {
@@ -63,7 +64,7 @@ export async function createPatientNote(
 
   const { data: note, error } = await supabase
     .from('patient_notes')
-    .insert({ patient_id: patientId, content: parsed.data.content })
+    .insert({ patient_id: patientId, content: parsed.data.content, category: parsed.data.category })
     .select('id')
     .single()
 
@@ -88,6 +89,68 @@ export async function createPatientNote(
       await supabase.from('patient_notes').delete().eq('id', note.id)
       return { error: 'No pudimos guardar los adjuntos de la nota' }
     }
+  }
+
+  revalidatePath(`/mi-tienda/pacientes/${patientId}`)
+  return { error: null }
+}
+
+/**
+ * Edita contenido y/o categoría de una nota existente. Mismo estilo que
+ * `updatePatient`/`updateTreatmentTemplate`: `getMyShop()` + chequeo
+ * explícito de ownership (join patient->shop, igual que `createPatientNote`)
+ * antes del update; la policy `patient_notes_owner_update` de RLS es la
+ * segunda barrera.
+ */
+export async function updatePatientNote(
+  noteId: string,
+  patientId: string,
+  _prev: PatientNoteActionState,
+  formData: FormData
+): Promise<PatientNoteActionState> {
+  const shop = await getMyShop()
+  if (!shop) return { error: 'No tenés un comercio creado' }
+
+  const parsed = patientNoteSchema.safeParse({
+    content: formData.get('content'),
+    category: formData.get('category') || undefined,
+  })
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {}
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0]
+      if (typeof key === 'string' && !fieldErrors[key]) fieldErrors[key] = issue.message
+    }
+    return { error: parsed.error.issues[0]?.message ?? 'Revisá los campos', fieldErrors }
+  }
+
+  const supabase = await createClient()
+
+  const { data: patient, error: patientError } = await supabase
+    .from('patients')
+    .select('id')
+    .eq('id', patientId)
+    .eq('shop_id', shop.id)
+    .maybeSingle()
+
+  if (patientError || !patient) {
+    console.error('updatePatientNote: paciente no encontrado en este comercio', {
+      patientId,
+      error: patientError,
+    })
+    return { error: 'No pudimos encontrar ese paciente' }
+  }
+
+  const { error } = await supabase
+    .from('patient_notes')
+    .update({ content: parsed.data.content, category: parsed.data.category })
+    .eq('id', noteId)
+    .eq('patient_id', patientId)
+
+  if (error) {
+    console.error('updatePatientNote: fallo al actualizar la nota', { noteId, patientId, error })
+    return { error: 'No pudimos actualizar la nota' }
   }
 
   revalidatePath(`/mi-tienda/pacientes/${patientId}`)

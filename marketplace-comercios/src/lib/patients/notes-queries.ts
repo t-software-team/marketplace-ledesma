@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import type { PatientNoteCategory } from '@/lib/validations/patients'
 
 export interface PatientNoteAttachmentRow {
   id: string
@@ -12,12 +13,13 @@ export interface PatientNoteRow {
   id: string
   patient_id: string
   content: string
+  category: PatientNoteCategory
   created_at: string
   updated_at: string
   attachments: PatientNoteAttachmentRow[]
 }
 
-const NOTE_COLUMNS = 'id, patient_id, content, created_at, updated_at'
+const NOTE_COLUMNS = 'id, patient_id, content, category, created_at, updated_at'
 const ATTACHMENT_COLUMNS = 'id, note_id, url, file_name, created_at'
 
 /**
@@ -53,7 +55,7 @@ export async function listPatientNotes(patientId: string): Promise<PatientNoteRo
 
   if (attachmentsError) {
     console.error('listPatientNotes: fallo al traer adjuntos', { patientId, attachmentsError })
-    return notes.map((note) => ({ ...note, attachments: [] }))
+    return notes.map((note) => ({ ...note, category: note.category as PatientNoteCategory, attachments: [] }))
   }
 
   const attachmentsByNoteId = new Map<string, PatientNoteAttachmentRow[]>()
@@ -65,6 +67,7 @@ export async function listPatientNotes(patientId: string): Promise<PatientNoteRo
 
   return notes.map((note) => ({
     ...note,
+    category: note.category as PatientNoteCategory,
     attachments: attachmentsByNoteId.get(note.id) ?? [],
   }))
 }

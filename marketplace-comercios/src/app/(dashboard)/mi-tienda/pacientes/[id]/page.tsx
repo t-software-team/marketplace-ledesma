@@ -118,13 +118,6 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
         </div>
       </dl>
 
-      {patient.notes && (
-        <div>
-          <h2 className="text-xs text-muted-foreground">Notas</h2>
-          <p className="text-sm whitespace-pre-wrap">{patient.notes}</p>
-        </div>
-      )}
-
       <div className="space-y-3 border-t border-border pt-6">
         <div className="flex items-center justify-between gap-2">
           <h2 className="font-heading text-base">Tratamientos aplicados</h2>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { patientSchema } from './patients'
+import { patientNoteSchema, patientSchema } from './patients'
 
 describe('patientSchema', () => {
   const base = { name: 'Firulais' }
@@ -20,7 +20,6 @@ describe('patientSchema', () => {
       sex: 'macho',
       birth_date: '2022-01-15',
       weight: '18.5',
-      notes: 'Alérgico a la penicilina',
       photo_url: 'https://example.com/foto.jpg',
       owner_name: 'Juan Pérez',
       owner_email: 'juan@example.com',
@@ -59,5 +58,33 @@ describe('patientSchema', () => {
     if (result.success) {
       expect(result.data.birth_date).toBeNull()
     }
+  })
+})
+
+describe('patientNoteSchema', () => {
+  it('acepta una categoría válida', () => {
+    const result = patientNoteSchema.safeParse({ content: 'Control anual', category: 'consulta' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.category).toBe('consulta')
+    }
+  })
+
+  it('rechaza una categoría inválida', () => {
+    expect(patientNoteSchema.safeParse({ content: 'Control anual', category: 'no-existe' }).success).toBe(
+      false
+    )
+  })
+
+  it('la categoría omitida cae por defecto en "otro"', () => {
+    const result = patientNoteSchema.safeParse({ content: 'Control anual' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.category).toBe('otro')
+    }
+  })
+
+  it('rechaza contenido vacío', () => {
+    expect(patientNoteSchema.safeParse({ content: '', category: 'otro' }).success).toBe(false)
   })
 })
