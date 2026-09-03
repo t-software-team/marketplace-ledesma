@@ -596,9 +596,17 @@ export const getRelatedShops = unstable_cache(
 
     const supabase = createPublicClient();
 
+    // El valor de un filtro .or() de PostgREST debe ir entre comillas dobles
+    // para poder contener comas/paréntesis sin romper el parser; dentro de
+    // las comillas hay que escapar backslash antes que comillas (si se
+    // escapa en el orden inverso, el backslash agregado por la comilla queda
+    // sin escapar).
+    const escapePostgrestValue = (value: string) =>
+      value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+
     const filters = [
       categoryId ? `category_id.eq.${categoryId}` : null,
-      city ? `city.eq."${city.replace(/"/g, '\\"')}"` : null,
+      city ? `city.eq."${escapePostgrestValue(city)}"` : null,
     ].filter(Boolean);
 
     const { data, error } = await supabase
