@@ -7,12 +7,15 @@ import { getPatient } from '@/lib/patients/queries'
 import { calculateAge } from '@/lib/patients/age'
 import { getPatientTreatments, getTreatmentTemplatesWithDoses } from '@/lib/treatments/queries'
 import { getPatientAppointments } from '@/lib/turnos/queries'
+import { listPatientReminders } from '@/lib/patients/reminders-queries'
 import { BackLink } from '@/components/shared/back-link'
 import { Button } from '@/components/ui/button'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { ApplyTreatmentDialog } from './apply-treatment-dialog'
 import { TreatmentHistory } from './treatment-history'
 import { AppointmentHistory } from './appointment-history'
+import { AddReminderDialog } from './add-reminder-dialog'
+import { ReminderList } from './reminder-list'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
@@ -41,10 +44,11 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
     notFound()
   }
 
-  const [treatments, templates, appointments] = await Promise.all([
+  const [treatments, templates, appointments, reminders] = await Promise.all([
     getPatientTreatments(patient.id),
     getTreatmentTemplatesWithDoses(shop.id),
     getPatientAppointments(patient.id),
+    listPatientReminders(patient.id),
   ])
 
   const age = calculateAge(patient.birth_date)
@@ -127,6 +131,14 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           />
         </div>
         <TreatmentHistory patientId={patient.id} treatments={treatments} />
+      </div>
+
+      <div className="space-y-3 border-t border-border pt-6">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-heading text-base">Recordatorios</h2>
+          <AddReminderDialog patientId={patient.id} />
+        </div>
+        <ReminderList patientId={patient.id} reminders={reminders} />
       </div>
 
       <div className="space-y-3 border-t border-border pt-6">
