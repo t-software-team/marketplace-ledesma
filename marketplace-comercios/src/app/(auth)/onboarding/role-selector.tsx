@@ -44,40 +44,39 @@ export function RoleSelector() {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => selectRole('client')}
-          disabled={loadingRole !== null || !acceptedTerms}
-          className="text-left"
-        >
-          <Card className="h-full transition-colors hover:ring-primary/40">
-            <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-primary/20">
-                <ShoppingBag className="size-6 text-primary-foreground" />
-              </div>
-              <div>
-                <p className="font-heading text-lg">Quiero comprar</p>
-                <p className="mt-1 text-sm text-muted-foreground">Cliente</p>
-              </div>
-              <ul className="space-y-1 text-left text-xs text-muted-foreground">
-                <li>• Descubrí comercios y productos cerca tuyo</li>
-                <li>• Contactá por WhatsApp en un toque</li>
-                <li>• Guardá tus favoritos y seguí comercios</li>
-              </ul>
-              <Button
-                render={<span />}
-                nativeButton={false}
-                disabled={loadingRole === 'client'}
-                variant="outline"
-                className="mt-2"
-              >
-                {loadingRole === 'client' ? 'Guardando...' : 'Elegir'}
-              </Button>
-            </CardContent>
-          </Card>
-        </button>
+      <div
+        className={`space-y-1.5 rounded-lg border p-3 transition-colors ${
+          !acceptedTerms ? 'border-primary/40 bg-primary/5' : 'border-transparent'
+        }`}
+      >
+        <div className="flex items-start justify-center gap-3">
+          <Checkbox
+            id="acceptedTerms"
+            checked={acceptedTerms}
+            onCheckedChange={(checked) => {
+              setAcceptedTerms(checked === true)
+              if (checked === true) setError(null)
+            }}
+            aria-invalid={!!error}
+            className="mt-0.5 size-5"
+          />
+          <label htmlFor="acceptedTerms" className="text-sm text-foreground">
+            Acepto los{' '}
+            <Link href="/terminos" className="underline" target="_blank">
+              Términos y Condiciones
+            </Link>
+          </label>
+        </div>
+        {!acceptedTerms && (
+          <p className="text-center text-xs font-medium text-primary">
+            Tocá acá arriba para poder elegir una opción ↑
+          </p>
+        )}
+      </div>
 
+      {error && <p className="text-center text-sm text-destructive">{error}</p>}
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
           onClick={() => selectRole('shop_admin')}
@@ -111,35 +110,40 @@ export function RoleSelector() {
             </CardContent>
           </Card>
         </button>
-      </div>
 
-      <div className="space-y-1.5">
-        <div className="flex items-start justify-center gap-2">
-          <Checkbox
-            id="acceptedTerms"
-            checked={acceptedTerms}
-            onCheckedChange={(checked) => {
-              setAcceptedTerms(checked === true)
-              if (checked === true) setError(null)
-            }}
-            aria-invalid={!!error}
-            className="mt-0.5"
-          />
-          <label htmlFor="acceptedTerms" className="text-sm text-foreground">
-            Acepto los{' '}
-            <Link href="/terminos" className="underline" target="_blank">
-              Términos y Condiciones
-            </Link>
-          </label>
-        </div>
-        {!acceptedTerms && !error && (
-          <p className="text-center text-xs text-muted-foreground">
-            Tenés que aceptar los términos para poder elegir una opción.
-          </p>
-        )}
+        <button
+          type="button"
+          onClick={() => selectRole('client')}
+          disabled={loadingRole !== null || !acceptedTerms}
+          className="text-left"
+        >
+          <Card className="h-full transition-colors hover:ring-primary/40">
+            <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-primary/20">
+                <ShoppingBag className="size-6 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="font-heading text-lg">Quiero comprar</p>
+                <p className="mt-1 text-sm text-muted-foreground">Cliente</p>
+              </div>
+              <ul className="space-y-1 text-left text-xs text-muted-foreground">
+                <li>• Descubrí comercios y productos cerca tuyo</li>
+                <li>• Contactá por WhatsApp en un toque</li>
+                <li>• Guardá tus favoritos y seguí comercios</li>
+              </ul>
+              <Button
+                render={<span />}
+                nativeButton={false}
+                disabled={loadingRole === 'client'}
+                variant="outline"
+                className="mt-2"
+              >
+                {loadingRole === 'client' ? 'Guardando...' : 'Elegir'}
+              </Button>
+            </CardContent>
+          </Card>
+        </button>
       </div>
-
-      {error && <p className="text-center text-sm text-destructive">{error}</p>}
     </>
   )
 }

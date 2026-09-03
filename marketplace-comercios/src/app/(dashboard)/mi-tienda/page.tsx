@@ -31,6 +31,7 @@ import {
 } from '@/lib/shops/queries'
 import { CreateShopForm } from './create-shop-form'
 import { OnboardingChecklist } from './onboarding-checklist'
+import { ScrollToTop } from './scroll-to-top'
 import { SubscriptionBenefits } from './subscription-benefits'
 
 const subscriptionLabels: Record<string, string> = {
@@ -152,6 +153,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-8">
+      <ScrollToTop />
       {subscription === 'activada' && (
         <p className="rounded-lg border border-success bg-success/30 p-3 text-sm text-success-foreground">
           ¡Listo! Tu pago se acreditó y tu suscripción ya está activa.
@@ -266,35 +268,6 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="space-y-3 pt-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Suscripción</p>
-              <div className="flex items-center gap-2">
-                <StatusBadge
-                  status={shop.subscription_status}
-                  label={
-                    shop.subscription_status === 'active' || shop.subscription_status === 'none'
-                      ? planName
-                      : subscriptionLabels[shop.subscription_status]
-                  }
-                />
-                {shop.subscription_expires_at && (
-                  <span className="text-xs text-muted-foreground">
-                    Vence {new Date(shop.subscription_expires_at).toLocaleDateString('es-AR')}
-                  </span>
-                )}
-              </div>
-            </div>
-            <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
-              {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
-            </Button>
-          </div>
-          <SubscriptionBenefits lines={benefitLines} />
-        </CardContent>
-      </Card>
-
       <div className="space-y-3">
         <div>
           <h2 className="font-heading text-lg">Tu alcance</h2>
@@ -365,6 +338,35 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         </Card>
 
         <ShopLinkCard shopName={shop.name} shopUrl={shopUrl} />
+
+        <Card>
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Suscripción</p>
+                <div className="flex items-center gap-2">
+                  <StatusBadge
+                    status={shop.subscription_status}
+                    label={
+                      shop.subscription_status === 'active' || shop.subscription_status === 'none'
+                        ? planName
+                        : subscriptionLabels[shop.subscription_status]
+                    }
+                  />
+                  {shop.subscription_expires_at && (
+                    <span className="text-xs text-muted-foreground">
+                      Vence {new Date(shop.subscription_expires_at).toLocaleDateString('es-AR')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
+                {shop.subscription_status === 'active' ? 'Ver planes' : 'Mejorar visibilidad'}
+              </Button>
+            </div>
+            <SubscriptionBenefits lines={benefitLines} />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="space-y-3">

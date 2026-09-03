@@ -232,7 +232,7 @@ export function DashboardHeader({
               className="gap-1.5"
             >
               <ArrowLeft className="size-4" aria-hidden />
-              <span>Volver al sitio</span>
+              <span>Ir a Marketplace</span>
             </Button>
           )}
           {reviewInvite && (

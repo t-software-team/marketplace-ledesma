@@ -1395,26 +1395,10 @@ export async function getGymBenefits(shopId: string): Promise<GymBenefits> {
 }
 
 export async function getProductImageLimitInfo(shopId: string) {
-  const supabase = await createClient();
-
-  const [{ data: activeSubscription, error }, limitsData] = await Promise.all([
-    supabase
-      .from("subscriptions")
-      .select("subscription_plans ( benefits )")
-      .eq("shop_id", shopId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const [activeSubscription, limitsData] = await Promise.all([
+    getMyActiveSubscription(shopId),
     getPlanLimitsData(),
   ]);
-
-  if (error) {
-    console.error("getProductImageLimitInfo: fallo al traer suscripción activa", {
-      shopId,
-      error,
-    });
-  }
 
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_images?: number | null } | null | undefined;
@@ -1428,26 +1412,10 @@ export async function getProductImageLimitInfo(shopId: string) {
 }
 
 export async function getProductVariantLimitInfo(shopId: string) {
-  const supabase = await createClient();
-
-  const [{ data: activeSubscription, error }, limitsData] = await Promise.all([
-    supabase
-      .from("subscriptions")
-      .select("subscription_plans ( benefits )")
-      .eq("shop_id", shopId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+  const [activeSubscription, limitsData] = await Promise.all([
+    getMyActiveSubscription(shopId),
     getPlanLimitsData(),
   ]);
-
-  if (error) {
-    console.error("getProductVariantLimitInfo: fallo al traer suscripción activa", {
-      shopId,
-      error,
-    });
-  }
 
   const benefits = activeSubscription?.subscription_plans?.benefits as
     { max_variants?: number | null } | null | undefined;
@@ -1467,33 +1435,20 @@ export async function getProductVideoLimitInfo(shopId: string) {
 
   const [
     { count, error: countError },
-    { data: activeSubscription, error: subscriptionError },
+    activeSubscription,
   ] = await Promise.all([
     supabase
       .from("products")
       .select("id", { count: "exact", head: true })
       .eq("shop_id", shopId)
       .not("video_url", "is", null),
-    supabase
-      .from("subscriptions")
-      .select("subscription_plans ( benefits )")
-      .eq("shop_id", shopId)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+    getMyActiveSubscription(shopId),
   ]);
 
   if (countError) {
     console.error("getProductVideoLimitInfo: fallo al contar videos de productos", {
       shopId,
       error: countError,
-    });
-  }
-  if (subscriptionError) {
-    console.error("getProductVideoLimitInfo: fallo al traer suscripción activa", {
-      shopId,
-      error: subscriptionError,
     });
   }
 

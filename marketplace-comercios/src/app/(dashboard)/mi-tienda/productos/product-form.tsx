@@ -3,6 +3,7 @@
 import { Search } from 'lucide-react'
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { RichTextEditor } from '@/components/shared/rich-text-editor'
 import { ProductImagesField } from '@/components/shared/product-images-field'
@@ -75,81 +76,76 @@ export function ProductForm({
   }, [state, noun])
 
   return (
-    <form action={formAction} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="name" className="text-base font-medium sm:text-sm">
-          Nombre
-        </label>
-        <Input
-          id="name"
-          name="name"
-          defaultValue={defaultValues?.name}
-          required
-          aria-invalid={Boolean(fieldErrors.name)}
-        />
-        <p className="text-xs text-muted-foreground">
-          Usá un nombre claro y concreto — así tus clientes lo encuentran más fácil. Ej: &quot;Zapatillas
-          urbanas talle 42&quot;.
-        </p>
-        <FieldError message={fieldErrors.name} />
-      </div>
+    <form action={formAction} className="space-y-6 pb-20 sm:pb-4">
+      <section className="space-y-4">
+        <h2 className="font-heading text-base">Datos básicos</h2>
 
-      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label htmlFor="price" className="text-base font-medium sm:text-sm">
-            {isService ? 'Precio del servicio' : 'Precio'}
-          </label>
-          <PriceInput
-            id="price"
-            name="price"
-            defaultValue={defaultValues?.price ?? ''}
-            aria-invalid={Boolean(fieldErrors.price)}
-          />
-          <p className="text-xs text-muted-foreground">Dejalo vacío si preferís que digan &quot;Consultar precio&quot;.</p>
-          <FieldError message={fieldErrors.price} />
-        </div>
-        <div className="space-y-2">
-          <label htmlFor="currency" className="text-base font-medium sm:text-sm">
-            Moneda
+          <label htmlFor="name" className="text-base font-medium sm:text-sm">
+            Nombre
           </label>
           <Input
-            id="currency"
-            name="currency"
-            defaultValue={defaultValues?.currency ?? 'ARS'}
-            aria-invalid={Boolean(fieldErrors.currency)}
+            id="name"
+            name="name"
+            defaultValue={defaultValues?.name}
+            required
+            aria-invalid={Boolean(fieldErrors.name)}
           />
-          <p className="text-xs text-muted-foreground">Normalmente ARS (pesos argentinos).</p>
-          <FieldError message={fieldErrors.currency} />
+          <p className="text-xs text-muted-foreground">
+            Usá un nombre claro y concreto — así tus clientes lo encuentran más fácil. Ej: &quot;Zapatillas
+            urbanas talle 42&quot;.
+          </p>
+          <FieldError message={fieldErrors.name} />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <label htmlFor="stock" className="text-base font-medium sm:text-sm">
-          Stock
-        </label>
-        <Input
-          id="stock"
-          name="stock"
-          type="number"
-          min={0}
-          step={1}
-          defaultValue={defaultValues?.stock ?? ''}
-          aria-invalid={Boolean(fieldErrors.stock)}
-        />
-        <p className="text-xs text-muted-foreground">
-          Dejalo vacío si no querés controlar el stock disponible.
-        </p>
-        <FieldError message={fieldErrors.stock} />
-      </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="price" className="text-base font-medium sm:text-sm">
+              {isService ? 'Precio del servicio' : 'Precio'}
+            </label>
+            <PriceInput
+              id="price"
+              name="price"
+              defaultValue={defaultValues?.price ?? ''}
+              aria-invalid={Boolean(fieldErrors.price)}
+            />
+            <p className="text-xs text-muted-foreground">Dejalo vacío si preferís que digan &quot;Consultar precio&quot;.</p>
+            <FieldError message={fieldErrors.price} />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="currency" className="text-base font-medium sm:text-sm">
+              Moneda
+            </label>
+            <Input
+              id="currency"
+              name="currency"
+              defaultValue={defaultValues?.currency ?? 'ARS'}
+              aria-invalid={Boolean(fieldErrors.currency)}
+            />
+            <p className="text-xs text-muted-foreground">Normalmente ARS (pesos argentinos).</p>
+            <FieldError message={fieldErrors.currency} />
+          </div>
+        </div>
 
-      <ProductImagesField
-        shopId={shopId}
-        initialImages={defaultValues?.image_urls}
-        noun={noun}
-        maxImages={maxImages}
-      />
+        <div className="space-y-2">
+          <label htmlFor="stock" className="text-base font-medium sm:text-sm">
+            Stock
+          </label>
+          <Input
+            id="stock"
+            name="stock"
+            type="number"
+            min={0}
+            step={1}
+            defaultValue={defaultValues?.stock ?? ''}
+            aria-invalid={Boolean(fieldErrors.stock)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Dejalo vacío si no querés controlar el stock disponible.
+          </p>
+          <FieldError message={fieldErrors.stock} />
+        </div>
 
-      <div className="space-y-4">
         <div className="space-y-2">
           <label id="description-label" className="text-base font-medium sm:text-sm">
             Descripción
@@ -172,6 +168,28 @@ export function ProductForm({
           isService={isService}
           maxVariants={maxVariants}
         />
+      </section>
+
+      <section className="space-y-4 border-t border-border pt-6">
+        <h2 className="font-heading text-base">Imágenes y video</h2>
+
+        <ProductImagesField
+          shopId={shopId}
+          initialImages={defaultValues?.image_urls}
+          noun={noun}
+          maxImages={maxImages}
+        />
+
+        <ProductVideoField
+          shopId={shopId}
+          initialVideoUrl={defaultValues?.videoUrl}
+          noun={noun}
+          videoLimitReached={videoLimitReached}
+        />
+      </section>
+
+      <section className="space-y-4 border-t border-border pt-6">
+        <h2 className="font-heading text-base">Clasificación</h2>
 
         <fieldset className="m-0 min-w-0 border-0 p-0 space-y-2">
           <legend className="text-base font-medium sm:text-sm">Subcategoría</legend>
@@ -223,35 +241,32 @@ export function ProductForm({
 
         <ProductAttributesFields attributeDefs={attributeDefs} initialValues={defaultValues?.attributes} />
 
-        <ProductVideoField
-          shopId={shopId}
-          initialVideoUrl={defaultValues?.videoUrl}
-          noun={noun}
-          videoLimitReached={videoLimitReached}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="flex items-center gap-2 text-base font-medium sm:text-sm">
-          <input
-            type="checkbox"
-            name="is_active"
-            defaultChecked={defaultValues?.is_active ?? true}
-            className="size-4"
-          />
-          {isService ? 'Servicio activo' : 'Producto activo'}
-        </label>
-        <p className="pl-6 text-xs text-muted-foreground">
-          Si lo desmarcás, dejás de mostrarlo en el feed y en tu tienda pública, pero no lo borrás —
-          podés volver a activarlo cuando quieras.
-        </p>
-      </div>
+        <div className="mt-4 space-y-1">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="is_active"
+              name="is_active"
+              value="on"
+              defaultChecked={defaultValues?.is_active ?? true}
+            />
+            <label htmlFor="is_active" className="text-base font-medium sm:text-sm">
+              {isService ? 'Servicio activo' : 'Producto activo'}
+            </label>
+          </div>
+          <p className="pl-6 text-xs text-muted-foreground">
+            Si lo desmarcás, dejás de mostrarlo en el feed y en tu tienda pública, pero no lo borrás —
+            podés volver a activarlo cuando quieras.
+          </p>
+        </div>
+      </section>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
 
-      <Button type="submit" disabled={isPending}>
-        {isPending ? 'Guardando...' : submitLabel}
-      </Button>
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-surface p-4 sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          {isPending ? 'Guardando...' : submitLabel}
+        </Button>
+      </div>
     </form>
   )
 }
