@@ -127,11 +127,13 @@ const TABS: { value: Tab; label: string }[] = [
 interface AppointmentsTableProps {
   shopId: string;
   appointments: AppointmentRow[];
+  isVeterinaria?: boolean;
 }
 
 export function AppointmentsTable({
   shopId,
   appointments,
+  isVeterinaria = false,
 }: AppointmentsTableProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -577,6 +579,7 @@ export function AppointmentsTable({
         onOpenChange={setManualOpen}
         onSuccess={(message) => refresh(message, null)}
         onError={(message) => refresh("", message)}
+        isVeterinaria={isVeterinaria}
       />
 
       <Dialog open={blockOpen} onOpenChange={setBlockOpen}>

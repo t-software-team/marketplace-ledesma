@@ -57,6 +57,48 @@ export async function getShopPatients(
   return data ?? []
 }
 
+/**
+ * Despoja metacaracteres del filtro .or() de PostgREST (comas/paréntesis/%)
+ * y recorta espacios — mismo patrón que getShopPatients, extraído como
+ * función pura para poder testearla sin mockear Supabase.
+ */
+export function sanitizeOwnerSearchTerm(query: string): string {
+  return query.replace(/[%_,()]/g, ' ').trim()
+}
+
+export interface PatientOwnerSuggestion {
+  id: string
+  name: string
+  owner_name: string | null
+  owner_phone: string | null
+  owner_email: string | null
+}
+
+export async function searchPatientsByOwner(
+  shopId: string,
+  query: string
+): Promise<PatientOwnerSuggestion[]> {
+  const q = sanitizeOwnerSearchTerm(query)
+  if (!q) return []
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('patients')
+    .select('id, name, owner_name, owner_phone, owner_email')
+    .eq('shop_id', shopId)
+    .or(`owner_name.ilike.%${q}%,owner_phone.ilike.%${q}%,owner_email.ilike.%${q}%`)
+    .order('created_at', { ascending: false })
+    .limit(8)
+
+  if (error) {
+    console.error('searchPatientsByOwner: fallo al buscar pacientes por dueño', { shopId, error })
+    return []
+  }
+
+  return data ?? []
+}
+
 export async function getPatient(shopId: string, id: string): Promise<PatientRow | null> {
   const supabase = await createClient()
 

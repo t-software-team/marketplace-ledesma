@@ -6,6 +6,7 @@ import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { getMyShop } from '@/lib/shops/queries'
 import { patientSchema } from '@/lib/validations/patients'
+import { searchPatientsByOwner, type PatientOwnerSuggestion } from '@/lib/patients/queries'
 
 export type PatientActionState = {
   error: string | null
@@ -123,6 +124,20 @@ export async function updatePatient(
 
   revalidatePath(PATIENTS_PATH)
   redirect(PATIENTS_PATH)
+}
+
+/**
+ * Autocomplete de paciente por dueño para el alta manual de turnos.
+ * RLS (`patients_owner_select`) ya restringe la lectura a los pacientes
+ * del comercio del usuario autenticado, así que `shopId` es un hint de
+ * filtro y no una fuente de autorización por sí sola.
+ */
+export async function searchPatientsByOwnerAction(
+  shopId: string,
+  query: string
+): Promise<PatientOwnerSuggestion[]> {
+  if (!shopId || !query.trim()) return []
+  return searchPatientsByOwner(shopId, query)
 }
 
 export async function deletePatient(patientId: string): Promise<PatientActionState> {

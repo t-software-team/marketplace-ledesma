@@ -73,6 +73,7 @@ export type Database = {
           hold_expires_at: string | null
           id: string
           origin: Database["public"]["Enums"]["appointment_origin"]
+          patient_id: string | null
           reminder_sent_at: string | null
           shop_id: string
           starts_at: string
@@ -88,6 +89,7 @@ export type Database = {
           hold_expires_at?: string | null
           id?: string
           origin?: Database["public"]["Enums"]["appointment_origin"]
+          patient_id?: string | null
           reminder_sent_at?: string | null
           shop_id: string
           starts_at: string
@@ -103,6 +105,7 @@ export type Database = {
           hold_expires_at?: string | null
           id?: string
           origin?: Database["public"]["Enums"]["appointment_origin"]
+          patient_id?: string | null
           reminder_sent_at?: string | null
           shop_id?: string
           starts_at?: string
@@ -110,6 +113,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_shop_id_fkey"
             columns: ["shop_id"]
@@ -2004,6 +2014,7 @@ export type Database = {
           p_customer_email?: string
           p_customer_name: string
           p_customer_phone?: string
+          p_patient_id?: string
           p_shop_id: string
           p_starts_at: string
         }

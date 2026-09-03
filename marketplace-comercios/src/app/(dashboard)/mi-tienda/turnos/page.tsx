@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
 import { getShopAppointments, getShopAppointmentStats } from '@/lib/turnos/queries'
 import { Button } from '@/components/ui/button'
 import { AppointmentsTable } from './appointments-table'
@@ -42,7 +42,11 @@ export default async function TurnosPage() {
 
       <TurnosStats stats={stats} />
 
-      <AppointmentsTable shopId={shop.id} appointments={appointments} />
+      <AppointmentsTable
+        shopId={shop.id}
+        appointments={appointments}
+        isVeterinaria={isVeterinariaRubro(rubroSlug)}
+      />
     </div>
   )
 }

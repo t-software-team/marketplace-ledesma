@@ -158,6 +158,7 @@ export async function createManualAppointment(
   customerName: string,
   customerPhone?: string,
   customerEmail?: string,
+  patientId?: string | null,
 ): Promise<TurnoActionState> {
   const supabase = await createClient();
 
@@ -167,6 +168,7 @@ export async function createManualAppointment(
     p_customer_name: customerName,
     p_customer_phone: customerPhone || undefined,
     p_customer_email: customerEmail || undefined,
+    p_patient_id: patientId || undefined,
   });
 
   if (error) {

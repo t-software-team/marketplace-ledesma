@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createManualAppointment } from "@/lib/turnos/actions";
+import {
+  searchPatientsByOwnerAction,
+} from "@/lib/patients/actions";
+import type { PatientOwnerSuggestion } from "@/lib/patients/queries";
 import { cn } from "@/lib/utils";
 import { useAvailableSlots, type AvailableSlot } from "@/hooks/use-turnos";
 
@@ -26,6 +30,7 @@ interface ManualAppointmentDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
+  isVeterinaria?: boolean;
 }
 
 function todayInTimezone() {
@@ -53,6 +58,7 @@ export function ManualAppointmentDialog({
   onOpenChange,
   onSuccess,
   onError,
+  isVeterinaria = false,
 }: ManualAppointmentDialogProps) {
   const [date, setDate] = useState(todayInTimezone());
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -61,11 +67,48 @@ export function ManualAppointmentDialog({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<PatientOwnerSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
   const slotsQuery = useAvailableSlots(shopId, date);
   const slots = open ? (slotsQuery.data ?? []) : [];
   const loadingSlots = open && slotsQuery.isLoading;
+
+  function handleOwnerQueryChange(value: string) {
+    setPatientId(null);
+    if (!isVeterinaria) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!value.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      const results = await searchPatientsByOwnerAction(shopId, value);
+      setSuggestions(results);
+      setShowSuggestions(results.length > 0);
+    }, 400);
+  }
+
+  function handleSelectSuggestion(patient: PatientOwnerSuggestion) {
+    setPatientId(patient.id);
+    setName(patient.owner_name ?? name);
+    setPhone(patient.owner_phone ?? phone);
+    setEmail(patient.owner_email ?? email);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
   function handleDateChange(nextDate: string) {
     setDate(nextDate);
@@ -81,6 +124,9 @@ export function ManualAppointmentDialog({
       setName("");
       setPhone("");
       setEmail("");
+      setPatientId(null);
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
     onOpenChange(nextOpen);
   }
@@ -103,6 +149,7 @@ export function ManualAppointmentDialog({
         name,
         phone,
         email,
+        patientId,
       );
       if (result.error) {
         onError(result.error);
@@ -191,15 +238,61 @@ export function ManualAppointmentDialog({
           )}
 
           <div className="space-y-3 border-t border-border pt-3">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nombre del cliente"
-              required
-            />
+            {patientId && (
+              <p className="text-xs font-medium text-primary">
+                Paciente vinculado ✓
+              </p>
+            )}
+            <div className="relative">
+              <Input
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  handleOwnerQueryChange(e.target.value);
+                }}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                onBlur={() =>
+                  setTimeout(() => setShowSuggestions(false), 150)
+                }
+                placeholder="Nombre del cliente"
+                required
+              />
+              {isVeterinaria && showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-surface shadow-md">
+                  {suggestions.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleSelectSuggestion(s)}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                      >
+                        <span className="font-medium">
+                          {s.owner_name ?? "Sin nombre"}
+                        </span>
+                        {s.owner_phone && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            · {s.owner_phone}
+                          </span>
+                        )}
+                        <span className="block text-xs text-muted-foreground">
+                          Paciente: {s.name}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <Input
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                setPhone(e.target.value);
+                handleOwnerQueryChange(e.target.value);
+              }}
               placeholder="Teléfono (opcional)"
             />
             <Input
