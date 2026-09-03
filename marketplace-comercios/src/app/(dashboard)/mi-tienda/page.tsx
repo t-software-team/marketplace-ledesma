@@ -13,12 +13,12 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
-import { getShopReminderAlerts } from '@/lib/patients/alerts'
+import { getShopPatientAlertsMap, getShopReminderAlerts } from '@/lib/patients/alerts'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
 import { VetResumen } from '@/components/vet/vet-resumen'
 import { getGymDashboardStats, getMyGymAccess, getRecentGymCheckIns } from '@/lib/gym/queries'
-import { getShopPatientsCount } from '@/lib/patients/queries'
+import { getShopPatients, getShopPatientsCount } from '@/lib/patients/queries'
 import { getShopUpcomingAppointments } from '@/lib/turnos/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
@@ -117,12 +117,23 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   // Veterinarias get a dedicated management dashboard instead of the catalog
   // resumen — mismo criterio que gyms, antes de calcular nada del flujo genérico.
   if (isVeterinariaRubro(shop.categories?.slug)) {
-    const [upcomingAppointments, treatmentAlerts, patientsCount, followerCount] = await Promise.all([
-      getShopUpcomingAppointments(shop.id),
-      getShopReminderAlerts(shop.id),
-      getShopPatientsCount(shop.id),
-      getShopFollowStats(shop.id),
-    ])
+    const [upcomingAppointments, treatmentAlerts, patientsCount, followerCount, patientAlertsMap, patients] =
+      await Promise.all([
+        getShopUpcomingAppointments(shop.id),
+        getShopReminderAlerts(shop.id),
+        getShopPatientsCount(shop.id),
+        getShopFollowStats(shop.id),
+        getShopPatientAlertsMap(shop.id),
+        getShopPatients(shop.id),
+      ])
+    const patientNameById = new Map(patients.map((patient) => [patient.id, patient.name]))
+    const alertedPatients = Object.entries(patientAlertsMap)
+      .map(([patientId, alerts]) => ({
+        id: patientId,
+        name: patientNameById.get(patientId) ?? 'Paciente',
+        ...alerts,
+      }))
+      .sort((a, b) => b.overdue - a.overdue || b.upcoming - a.upcoming)
     const headersList = await headers()
     const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
     const protocol = headersList.get('x-forwarded-proto') ?? 'http'
@@ -140,6 +151,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         pausedReason={shop.paused_reason}
         upcomingAppointments={upcomingAppointments}
         treatmentAlerts={treatmentAlerts}
+        alertedPatients={alertedPatients}
         patientsCount={patientsCount}
         profileViews={shop.profile_views}
         whatsappClicks={shop.whatsapp_clicks}

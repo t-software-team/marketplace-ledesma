@@ -138,7 +138,13 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           <h2 className="font-heading text-base">Recordatorios</h2>
           <AddReminderDialog patientId={patient.id} />
         </div>
-        <ReminderList patientId={patient.id} reminders={reminders} />
+        <ReminderList
+          patientId={patient.id}
+          reminders={reminders}
+          patientName={patient.name}
+          ownerName={patient.owner_name}
+          ownerPhone={patient.owner_phone}
+        />
       </div>
 
       <div className="space-y-3 border-t border-border pt-6">

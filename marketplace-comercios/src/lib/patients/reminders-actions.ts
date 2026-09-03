@@ -69,6 +69,7 @@ export async function createPatientReminder(
   }
 
   revalidatePath(`/mi-tienda/pacientes/${patientId}`)
+  revalidatePath('/mi-tienda')
   return { error: null }
 }
 
@@ -88,5 +89,6 @@ export async function deletePatientReminder(
   }
 
   revalidatePath(`/mi-tienda/pacientes/${patientId}`)
+  revalidatePath('/mi-tienda')
   return { error: null }
 }

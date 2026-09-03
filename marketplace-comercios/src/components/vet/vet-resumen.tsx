@@ -51,6 +51,7 @@ interface VetResumenProps {
   pausedReason?: string | null
   upcomingAppointments: AppointmentRow[]
   treatmentAlerts: ShopReminderAlerts
+  alertedPatients: { id: string; name: string; overdue: number; upcoming: number }[]
   patientsCount: number
   profileViews: number
   whatsappClicks: number
@@ -96,6 +97,7 @@ export function VetResumen({
   pausedReason,
   upcomingAppointments,
   treatmentAlerts,
+  alertedPatients,
   patientsCount,
   profileViews,
   whatsappClicks,
@@ -281,18 +283,38 @@ export function VetResumen({
       </Card>
 
       {hasAlerts && (
-        <LinkCard href="/mi-tienda/pacientes" alert>
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="size-4 shrink-0" aria-hidden />
-            <p className="text-sm">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 px-1">
+            <AlertTriangle className="size-4 shrink-0 text-warning-foreground" aria-hidden />
+            <p className="text-sm text-warning-foreground">
               {treatmentAlerts.overdue > 0 &&
-                `${treatmentAlerts.overdue} tratamiento${treatmentAlerts.overdue === 1 ? '' : 's'} vencido${treatmentAlerts.overdue === 1 ? '' : 's'}`}
+                `${treatmentAlerts.overdue} pendiente${treatmentAlerts.overdue === 1 ? '' : 's'} vencido${treatmentAlerts.overdue === 1 ? '' : 's'}`}
               {treatmentAlerts.overdue > 0 && treatmentAlerts.upcoming > 0 && ' y '}
               {treatmentAlerts.upcoming > 0 &&
                 `${treatmentAlerts.upcoming} próximo${treatmentAlerts.upcoming === 1 ? '' : 's'} a vencer`}
             </p>
           </div>
-        </LinkCard>
+          {alertedPatients.length > 0 ? (
+            alertedPatients.map((patient) => (
+              <LinkCard key={patient.id} href={`/mi-tienda/pacientes/${patient.id}`} alert>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-sm font-medium">{patient.name}</span>
+                  <span className="shrink-0 text-xs text-warning-foreground">
+                    {patient.overdue > 0 &&
+                      `${patient.overdue} vencido${patient.overdue === 1 ? '' : 's'}`}
+                    {patient.overdue > 0 && patient.upcoming > 0 && ' · '}
+                    {patient.upcoming > 0 &&
+                      `${patient.upcoming} próximo${patient.upcoming === 1 ? '' : 's'}`}
+                  </span>
+                </div>
+              </LinkCard>
+            ))
+          ) : (
+            <LinkCard href="/mi-tienda/pacientes" alert>
+              <span className="text-sm">Ver pacientes</span>
+            </LinkCard>
+          )}
+        </div>
       )}
 
       <Card>
