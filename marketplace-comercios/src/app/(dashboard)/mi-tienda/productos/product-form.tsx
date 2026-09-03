@@ -78,8 +78,6 @@ export function ProductForm({
   return (
     <form action={formAction} className="space-y-6 pb-20 sm:pb-4">
       <section className="space-y-4">
-        <h2 className="font-heading text-base">Datos básicos</h2>
-
         <div className="space-y-2">
           <label htmlFor="name" className="text-base font-medium sm:text-sm">
             Nombre
