@@ -302,3 +302,23 @@ dos puntos:
    input de usuario, ahí sí habría que sanitizar antes de interpolar.
 
 Se commiteó con `--no-verify` tras esta verificación.
+
+## 11. Bucket `patient-photos` pendiente de provisión manual (módulo Veterinaria, PR1, 2026-09-03)
+
+**Contexto:** el módulo de Pacientes (`src/lib/patients/*`,
+`/mi-tienda/pacientes/**`) permite subir una foto por paciente vía
+`uploadShopImage('patient-photos', shopId, file)`. Siguiendo la convención ya
+establecida (ningún bucket existente — `shop-logos`, `product-images`,
+`avatars`, `payment-proofs`, etc. — se crea vía migración SQL), el bucket
+`patient-photos` **no** se crea en `supabase/migrations/20260919000000_patients.sql`.
+
+**Pendiente antes de deploy a producción:** crear a mano en el dashboard de
+Supabase (Storage):
+1. Bucket `patient-photos`, público (mismo criterio que `product-images`, ya
+   que las URLs se muestran directo en el panel del dueño).
+2. Policies de Storage equivalentes a las de `product-images`: INSERT/UPDATE/
+   DELETE restringido al dueño autenticado del `shop_id` correspondiente al
+   primer segmento del path (`{shopId}/...`), SELECT público.
+
+Hasta que el bucket exista, la subida de foto de paciente falla en runtime
+(no en build/typecheck) — el resto del CRUD de pacientes funciona sin foto.

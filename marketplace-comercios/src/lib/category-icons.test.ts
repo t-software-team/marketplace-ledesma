@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isServiceRubro } from './category-icons'
+import { isServiceRubro, isVeterinariaRubro } from './category-icons'
 
 describe('isServiceRubro', () => {
   it('clasifica peluquerías como servicio', () => {
@@ -25,5 +25,24 @@ describe('isServiceRubro', () => {
   it('devuelve false para null o undefined', () => {
     expect(isServiceRubro(null)).toBe(false)
     expect(isServiceRubro(undefined)).toBe(false)
+  })
+})
+
+describe('isVeterinariaRubro', () => {
+  it('clasifica veterinaria como true', () => {
+    expect(isVeterinariaRubro('veterinaria')).toBe(true)
+  })
+
+  it('clasifica peluquerías como false (no es genérico isServiceRubro)', () => {
+    expect(isVeterinariaRubro('peluquerias')).toBe(false)
+  })
+
+  it('clasifica gimnasio como false', () => {
+    expect(isVeterinariaRubro('gimnasio')).toBe(false)
+  })
+
+  it('devuelve false para null o undefined', () => {
+    expect(isVeterinariaRubro(null)).toBe(false)
+    expect(isVeterinariaRubro(undefined)).toBe(false)
   })
 })

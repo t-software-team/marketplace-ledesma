@@ -20,6 +20,7 @@ import {
   Users,
   Wallet,
   LogIn,
+  PawPrint,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -43,6 +44,7 @@ const ICONS = {
   wallet: Wallet,
   login: LogIn,
   'bar-chart': BarChart3,
+  paw: PawPrint,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

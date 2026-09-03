@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell'
 import type { DashboardNavItem } from '@/components/dashboard-shell/dashboard-sidebar'
-import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
 import { getMyActiveSubscription, getMyShop } from '@/lib/shops/queries'
 import { getMyGymAccess } from '@/lib/gym/queries'
 import { getMyClientNotifications } from '@/lib/notifications/queries'
@@ -79,6 +79,7 @@ export default async function MiTiendaLayout({
 
   const isService = isServiceRubro(rubroSlug)
   const isGym = isGymRubro(rubroSlug)
+  const isVeterinaria = isVeterinariaRubro(rubroSlug)
 
   // Staff gets a scoped-down nav: mostrador + altas/renovaciones only, per
   // the agreed access boundary — no caja completa, planes, reportes,
@@ -118,6 +119,9 @@ export default async function MiTiendaLayout({
         { href: '/mi-tienda/productos', label: isService ? 'Servicios' : 'Productos', icon: 'package' },
         ...(isService
           ? [{ href: '/mi-tienda/turnos', label: 'Turnos', icon: 'calendar' } as DashboardNavItem]
+          : []),
+        ...(isVeterinaria
+          ? [{ href: '/mi-tienda/pacientes', label: 'Pacientes', icon: 'paw' } as DashboardNavItem]
           : []),
         { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
         {

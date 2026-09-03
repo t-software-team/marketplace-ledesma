@@ -638,6 +638,68 @@ export type Database = {
           },
         ]
       }
+      patients: {
+        Row: {
+          birth_date: string | null
+          breed: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          owner_email: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          photo_url: string | null
+          sex: string | null
+          shop_id: string
+          species: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          photo_url?: string | null
+          sex?: string | null
+          shop_id: string
+          species?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          photo_url?: string | null
+          sex?: string | null
+          shop_id?: string
+          species?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plan_limits: {
         Row: {
           created_at: string
@@ -1752,6 +1814,10 @@ export type Database = {
       }
       assert_owns_appointment: {
         Args: { p_appointment_id: string }
+        Returns: string
+      }
+      assert_owns_patient: {
+        Args: { p_patient_id: string }
         Returns: string
       }
       block_slot: {
