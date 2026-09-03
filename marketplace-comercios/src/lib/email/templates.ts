@@ -202,3 +202,19 @@ export function treatmentReminderEmail(
     ),
   }
 }
+
+export function patientReminderEmail(
+  shopName: string,
+  petName: string,
+  label: string,
+  whenText: string
+) {
+  return {
+    subject: `Recordatorio: ${petName} tiene un pendiente`,
+    html: layout(
+      'Recordatorio',
+      `<p><strong>${petName}</strong> tiene un recordatorio (<strong>${label}</strong>) programado para el <strong>${whenText}</strong>.</p>
+       <p>Contactá a <strong>${shopName}</strong> para coordinar.</p>`
+    ),
+  }
+}

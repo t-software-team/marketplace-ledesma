@@ -648,6 +648,44 @@ export type Database = {
           },
         ]
       }
+      patient_reminders: {
+        Row: {
+          created_at: string
+          due_at: string
+          id: string
+          label: string
+          patient_id: string
+          reminder_sent_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          due_at: string
+          id?: string
+          label: string
+          patient_id: string
+          reminder_sent_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          due_at?: string
+          id?: string
+          label?: string
+          patient_id?: string
+          reminder_sent_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_reminders_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           birth_date: string | null
@@ -1976,6 +2014,10 @@ export type Database = {
         Returns: string
       }
       assert_owns_patient: { Args: { p_patient_id: string }; Returns: string }
+      assert_owns_patient_reminder: {
+        Args: { p_reminder_id: string }
+        Returns: string
+      }
       assert_owns_treatment_application: {
         Args: { p_application_id: string }
         Returns: string
@@ -2063,6 +2105,18 @@ export type Database = {
           shop_id: string
           shop_name: string
           starts_at: string
+        }[]
+      }
+      enqueue_patient_reminders: {
+        Args: never
+        Returns: {
+          due_at: string
+          id: string
+          label: string
+          owner_email: string
+          owner_name: string
+          patient_name: string
+          shop_name: string
         }[]
       }
       enqueue_treatment_reminders: {

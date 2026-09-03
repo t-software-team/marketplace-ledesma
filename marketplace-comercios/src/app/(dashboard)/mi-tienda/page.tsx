@@ -13,7 +13,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
-import { getShopTreatmentAlerts } from '@/lib/treatments/queries'
+import { getShopReminderAlerts } from '@/lib/patients/alerts'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
 import { VetResumen } from '@/components/vet/vet-resumen'
@@ -119,7 +119,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   if (isVeterinariaRubro(shop.categories?.slug)) {
     const [upcomingAppointments, treatmentAlerts, patientsCount, followerCount] = await Promise.all([
       getShopUpcomingAppointments(shop.id),
-      getShopTreatmentAlerts(shop.id),
+      getShopReminderAlerts(shop.id),
       getShopPatientsCount(shop.id),
       getShopFollowStats(shop.id),
     ])

@@ -27,7 +27,7 @@ import { StatusBadge } from '@/components/shared/status-badge'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { cn } from '@/lib/utils'
 import type { AppointmentRow } from '@/lib/turnos/queries'
-import type { ShopTreatmentAlerts } from '@/lib/treatments/queries'
+import type { ShopReminderAlerts } from '@/lib/patients/alerts'
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString('es-AR', {
@@ -50,7 +50,7 @@ interface VetResumenProps {
   isPaused: boolean
   pausedReason?: string | null
   upcomingAppointments: AppointmentRow[]
-  treatmentAlerts: ShopTreatmentAlerts
+  treatmentAlerts: ShopReminderAlerts
   patientsCount: number
   profileViews: number
   whatsappClicks: number
