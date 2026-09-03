@@ -20,13 +20,11 @@ interface EditProductPageProps {
 
 export default async function EditProductPage({ params }: EditProductPageProps) {
   const { id } = await params
-  const shop = await getMyShop()
+  const [shop, product] = await Promise.all([getMyShop(), getMyProduct(id)])
 
   if (!shop) {
     redirect('/mi-tienda')
   }
-
-  const product = await getMyProduct(id)
 
   if (!product || product.shop_id !== shop.id) {
     notFound()

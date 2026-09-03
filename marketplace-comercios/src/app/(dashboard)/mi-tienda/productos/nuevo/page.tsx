@@ -42,7 +42,7 @@ export default async function NewProductPage() {
 
   const [limitInfo, categories, attributeDefs, videoLimitInfo, imageLimitInfo, variantLimitInfo] =
     await Promise.all([
-      getProductLimitInfo(shop.id),
+      getProductLimitInfo(shop.id, { isService, categoryId: shop.category_id }),
       getSubcategories(shop.category_id),
       getCategoryAttributes(shop.category_id),
       getProductVideoLimitInfo(shop.id),
