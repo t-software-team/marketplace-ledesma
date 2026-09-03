@@ -4,16 +4,19 @@ import { Pencil } from 'lucide-react'
 import { isVeterinariaRubro } from '@/lib/category-icons'
 import { getMyShop } from '@/lib/shops/queries'
 import { getPatient } from '@/lib/patients/queries'
+import { getPatientTreatments, getTreatmentTemplatesWithDoses } from '@/lib/treatments/queries'
 import { BackLink } from '@/components/shared/back-link'
 import { Button } from '@/components/ui/button'
+import { ApplyTreatmentDialog } from './apply-treatment-dialog'
+import { TreatmentHistory } from './treatment-history'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
 }
 
-// Shell del detalle de paciente: PR1 solo muestra la ficha básica. El
-// historial de tratamientos (aplicar/consultar) se agrega en PR2, dentro de
-// esta misma página.
+// Detalle de paciente: ficha básica (PR1) + sección de Tratamientos
+// aplicados (PR2) con botón para registrar una nueva aplicación y el
+// historial con su status derivado (al día/próximo/vencido).
 export default async function PatientDetailPage({ params }: PatientDetailPageProps) {
   const { id } = await params
   const shop = await getMyShop()
@@ -31,6 +34,11 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
   if (!patient) {
     notFound()
   }
+
+  const [treatments, templates] = await Promise.all([
+    getPatientTreatments(patient.id),
+    getTreatmentTemplatesWithDoses(shop.id),
+  ])
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -89,6 +97,14 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           <p className="text-sm whitespace-pre-wrap">{patient.notes}</p>
         </div>
       )}
+
+      <div className="space-y-3 border-t border-border pt-6">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-heading text-base">Tratamientos aplicados</h2>
+          <ApplyTreatmentDialog patientId={patient.id} templates={templates} />
+        </div>
+        <TreatmentHistory patientId={patient.id} treatments={treatments} />
+      </div>
     </div>
   )
 }

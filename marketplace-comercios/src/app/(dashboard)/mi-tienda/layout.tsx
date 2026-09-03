@@ -121,7 +121,10 @@ export default async function MiTiendaLayout({
           ? [{ href: '/mi-tienda/turnos', label: 'Turnos', icon: 'calendar' } as DashboardNavItem]
           : []),
         ...(isVeterinaria
-          ? [{ href: '/mi-tienda/pacientes', label: 'Pacientes', icon: 'paw' } as DashboardNavItem]
+          ? [
+              { href: '/mi-tienda/pacientes', label: 'Pacientes', icon: 'paw' } as DashboardNavItem,
+              { href: '/mi-tienda/tratamientos', label: 'Tratamientos', icon: 'syringe' } as DashboardNavItem,
+            ]
           : []),
         { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
         {

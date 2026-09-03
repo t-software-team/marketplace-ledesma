@@ -1619,6 +1619,155 @@ export type Database = {
           },
         ]
       }
+      treatment_applications: {
+        Row: {
+          applied_at: string
+          created_at: string
+          id: string
+          next_due_at: string | null
+          notes: string | null
+          patient_id: string
+          product_name: string | null
+          reminder_sent_at: string | null
+          template_dose_id: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string
+          created_at?: string
+          id?: string
+          next_due_at?: string | null
+          notes?: string | null
+          patient_id: string
+          product_name?: string | null
+          reminder_sent_at?: string | null
+          template_dose_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string
+          created_at?: string
+          id?: string
+          next_due_at?: string | null
+          notes?: string | null
+          patient_id?: string
+          product_name?: string | null
+          reminder_sent_at?: string | null
+          template_dose_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_applications_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_applications_template_dose_id_fkey"
+            columns: ["template_dose_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_template_doses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_applications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_template_doses: {
+        Row: {
+          age_weeks: number | null
+          created_at: string
+          dose_number: number
+          id: string
+          interval_days_after_previous: number | null
+          is_recurring: boolean
+          label: string
+          recurrence_interval_days: number | null
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          age_weeks?: number | null
+          created_at?: string
+          dose_number: number
+          id?: string
+          interval_days_after_previous?: number | null
+          is_recurring?: boolean
+          label: string
+          recurrence_interval_days?: number | null
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          age_weeks?: number | null
+          created_at?: string
+          dose_number?: number
+          id?: string
+          interval_days_after_previous?: number | null
+          is_recurring?: boolean
+          label?: string
+          recurrence_interval_days?: number | null
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_template_doses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          shop_id: string
+          species: string | null
+          type: Database["public"]["Enums"]["treatment_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          shop_id: string
+          species?: string | null
+          type: Database["public"]["Enums"]["treatment_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          shop_id?: string
+          species?: string | null
+          type?: Database["public"]["Enums"]["treatment_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_templates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       geography_columns: {
@@ -1816,8 +1965,13 @@ export type Database = {
         Args: { p_appointment_id: string }
         Returns: string
       }
-      assert_owns_patient: {
-        Args: { p_patient_id: string }
+      assert_owns_patient: { Args: { p_patient_id: string }; Returns: string }
+      assert_owns_treatment_application: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
+      assert_owns_treatment_template: {
+        Args: { p_template_id: string }
         Returns: string
       }
       block_slot: {
@@ -2846,6 +3000,7 @@ export type Database = {
         | "active"
         | "expired"
         | "rejected"
+      treatment_type: "vacuna" | "desparasitacion"
       user_role: "client" | "shop_admin" | "superadmin"
       verification_status: "pending" | "verified" | "rejected"
     }
@@ -3005,6 +3160,7 @@ export const Constants = {
       ],
       report_status: ["pending", "reviewed", "dismissed"],
       subscription_status: ["none", "pending", "active", "expired", "rejected"],
+      treatment_type: ["vacuna", "desparasitacion"],
       user_role: ["client", "shop_admin", "superadmin"],
       verification_status: ["pending", "verified", "rejected"],
     },
