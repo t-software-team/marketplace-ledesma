@@ -4,11 +4,15 @@ import { Pencil } from 'lucide-react'
 import { isVeterinariaRubro } from '@/lib/category-icons'
 import { getMyShop } from '@/lib/shops/queries'
 import { getPatient } from '@/lib/patients/queries'
+import { calculateAge } from '@/lib/patients/age'
 import { getPatientTreatments, getTreatmentTemplatesWithDoses } from '@/lib/treatments/queries'
+import { getPatientAppointments } from '@/lib/turnos/queries'
 import { BackLink } from '@/components/shared/back-link'
 import { Button } from '@/components/ui/button'
+import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import { ApplyTreatmentDialog } from './apply-treatment-dialog'
 import { TreatmentHistory } from './treatment-history'
+import { AppointmentHistory } from './appointment-history'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
@@ -35,10 +39,13 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
     notFound()
   }
 
-  const [treatments, templates] = await Promise.all([
+  const [treatments, templates, appointments] = await Promise.all([
     getPatientTreatments(patient.id),
     getTreatmentTemplatesWithDoses(shop.id),
+    getPatientAppointments(patient.id),
   ])
+
+  const age = calculateAge(patient.birth_date)
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -70,8 +77,8 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           <dd>{patient.sex ?? '—'}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Nacimiento</dt>
-          <dd>{patient.birth_date ?? '—'}</dd>
+          <dt className="text-xs text-muted-foreground">Edad</dt>
+          <dd>{age ?? (patient.birth_date ?? '—')}</dd>
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Peso</dt>
@@ -83,7 +90,17 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Teléfono</dt>
-          <dd>{patient.owner_phone ?? '—'}</dd>
+          <dd className="flex items-center gap-2">
+            {patient.owner_phone ?? '—'}
+            {patient.owner_phone && (
+              <WhatsAppButton
+                phoneNumber={patient.owner_phone}
+                message={`Hola ${patient.owner_name ?? ''}, te contactamos por ${patient.name}`}
+                iconOnly
+                variant="outline"
+              />
+            )}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Email</dt>
@@ -104,6 +121,11 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
           <ApplyTreatmentDialog patientId={patient.id} templates={templates} />
         </div>
         <TreatmentHistory patientId={patient.id} treatments={treatments} />
+      </div>
+
+      <div className="space-y-3 border-t border-border pt-6">
+        <h2 className="font-heading text-base">Historial de turnos</h2>
+        <AppointmentHistory appointments={appointments} />
       </div>
     </div>
   )

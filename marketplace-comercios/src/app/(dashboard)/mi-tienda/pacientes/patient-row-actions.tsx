@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/shared/confirm-dialog'
@@ -24,6 +24,15 @@ export function PatientRowActions({ patientId }: { patientId: string }) {
 
   return (
     <div className="flex shrink-0 items-center justify-center gap-1.5">
+      <Button
+        render={<Link href={`/mi-tienda/pacientes/${patientId}`} aria-label="Ver ficha" />}
+        nativeButton={false}
+        variant="outline"
+        size="icon"
+      >
+        <Eye className="size-4" aria-hidden />
+      </Button>
+
       <Button
         render={<Link href={`/mi-tienda/pacientes/${patientId}/editar`} aria-label="Editar" />}
         nativeButton={false}

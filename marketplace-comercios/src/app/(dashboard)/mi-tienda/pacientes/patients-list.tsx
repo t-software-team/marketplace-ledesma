@@ -1,17 +1,31 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { PawPrint, Search } from 'lucide-react'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { WhatsAppButton } from '@/components/shared/whatsapp-button'
 import type { PatientRow } from '@/lib/patients/queries'
 import { PatientRowActions } from './patient-row-actions'
 
 function formatOwner(patient: PatientRow) {
   return [patient.owner_name, patient.owner_phone].filter(Boolean).join(' · ') || '—'
+}
+
+function OwnerWhatsAppButton({ patient }: { patient: PatientRow }) {
+  if (!patient.owner_phone) return null
+  return (
+    <WhatsAppButton
+      phoneNumber={patient.owner_phone}
+      message={`Hola ${patient.owner_name ?? ''}, te contactamos por ${patient.name}`}
+      iconOnly
+      variant="outline"
+    />
+  )
 }
 
 function PatientAvatar({ patient, size = 36 }: { patient: PatientRow; size?: number }) {
@@ -86,7 +100,10 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
             {patients.map((patient) => (
               <Card key={patient.id}>
                 <CardContent className="flex items-center justify-between gap-2 p-3">
-                  <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                  <Link
+                    href={`/mi-tienda/pacientes/${patient.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-2.5"
+                  >
                     <PatientAvatar patient={patient} />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{patient.name}</p>
@@ -95,8 +112,11 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
                       </p>
                       <p className="truncate text-xs text-muted-foreground">{formatOwner(patient)}</p>
                     </div>
+                  </Link>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <OwnerWhatsAppButton patient={patient} />
+                    <PatientRowActions patientId={patient.id} />
                   </div>
-                  <PatientRowActions patientId={patient.id} />
                 </CardContent>
               </Card>
             ))}
@@ -116,15 +136,23 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
                 {patients.map((patient) => (
                   <TableRow key={patient.id}>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2.5">
+                      <Link
+                        href={`/mi-tienda/pacientes/${patient.id}`}
+                        className="flex items-center gap-2.5 hover:underline"
+                      >
                         <PatientAvatar patient={patient} />
                         {patient.name}
-                      </div>
+                      </Link>
                     </TableCell>
                     <TableCell>
                       {[patient.species, patient.breed].filter(Boolean).join(' · ') || '—'}
                     </TableCell>
-                    <TableCell>{formatOwner(patient)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {formatOwner(patient)}
+                        <OwnerWhatsAppButton patient={patient} />
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center">
                       <PatientRowActions patientId={patient.id} />
                     </TableCell>

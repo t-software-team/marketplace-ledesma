@@ -16,7 +16,10 @@ import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-i
 import { getShopTreatmentAlerts } from '@/lib/treatments/queries'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
+import { VetResumen } from '@/components/vet/vet-resumen'
 import { getGymDashboardStats, getMyGymAccess, getRecentGymCheckIns } from '@/lib/gym/queries'
+import { getShopPatientsCount } from '@/lib/patients/queries'
+import { getShopUpcomingAppointments } from '@/lib/turnos/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
@@ -111,26 +114,51 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
     )
   }
 
-  const isService = isServiceRubro(shop.categories?.slug)
-  const isVeterinaria = isVeterinariaRubro(shop.categories?.slug)
+  // Veterinarias get a dedicated management dashboard instead of the catalog
+  // resumen — mismo criterio que gyms, antes de calcular nada del flujo genérico.
+  if (isVeterinariaRubro(shop.categories?.slug)) {
+    const [upcomingAppointments, treatmentAlerts, patientsCount, followerCount] = await Promise.all([
+      getShopUpcomingAppointments(shop.id),
+      getShopTreatmentAlerts(shop.id),
+      getShopPatientsCount(shop.id),
+      getShopFollowStats(shop.id),
+    ])
+    const headersList = await headers()
+    const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
+    const protocol = headersList.get('x-forwarded-proto') ?? 'http'
+    const shopUrl = `${protocol}://${host}/tienda/${shop.slug}`
+    return (
+      <VetResumen
+        shopName={shop.name}
+        logoUrl={shop.logo_url}
+        coverUrl={shop.cover_url}
+        shopSlug={shop.slug}
+        shopUrl={shopUrl}
+        isVerified={hasVerifiedBadge(shop)}
+        verificationStatus={shop.verification_status}
+        isPaused={shop.is_paused}
+        pausedReason={shop.paused_reason}
+        upcomingAppointments={upcomingAppointments}
+        treatmentAlerts={treatmentAlerts}
+        patientsCount={patientsCount}
+        profileViews={shop.profile_views}
+        whatsappClicks={shop.whatsapp_clicks}
+        followerCount={followerCount}
+      />
+    )
+  }
 
-  const [
-    productsResult,
-    contactsSeries,
-    activeSubscription,
-    allPlans,
-    followerCount,
-    freeMaxForShop,
-    treatmentAlerts,
-  ] = await Promise.all([
-    getMyShopProducts(shop.id, 1, 4),
-    getShopContactsSeries(shop.id, 14),
-    getMyActiveSubscription(shop.id),
-    getActiveSubscriptionPlans(),
-    getShopFollowStats(shop.id),
-    getFreeProductMax(isService, shop.category_id),
-    isVeterinaria ? getShopTreatmentAlerts(shop.id) : Promise.resolve(null),
-  ])
+  const isService = isServiceRubro(shop.categories?.slug)
+
+  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount, freeMaxForShop] =
+    await Promise.all([
+      getMyShopProducts(shop.id, 1, 4),
+      getShopContactsSeries(shop.id, 14),
+      getMyActiveSubscription(shop.id),
+      getActiveSubscriptionPlans(),
+      getShopFollowStats(shop.id),
+      getFreeProductMax(isService, shop.category_id),
+    ])
   const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
   const conversionRate =
@@ -193,22 +221,6 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
           </p>
           <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
             {isExpired ? 'Renovar' : 'Ver planes'}
-          </Button>
-        </div>
-      )}
-
-      {isVeterinaria && treatmentAlerts && (treatmentAlerts.overdue > 0 || treatmentAlerts.upcoming > 0) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning bg-warning/10 p-3">
-          <p className="text-sm text-warning-foreground">
-            {treatmentAlerts.overdue > 0 &&
-              `Tenés ${treatmentAlerts.overdue} tratamiento${treatmentAlerts.overdue === 1 ? '' : 's'} vencido${treatmentAlerts.overdue === 1 ? '' : 's'}`}
-            {treatmentAlerts.overdue > 0 && treatmentAlerts.upcoming > 0 && ' y '}
-            {treatmentAlerts.upcoming > 0 &&
-              `${treatmentAlerts.overdue > 0 ? '' : 'Tenés '}${treatmentAlerts.upcoming} próximo${treatmentAlerts.upcoming === 1 ? '' : 's'} a vencer`}
-            .
-          </p>
-          <Button render={<Link href="/mi-tienda/pacientes" />} nativeButton={false} size="sm">
-            Ver pacientes
           </Button>
         </div>
       )}

@@ -203,6 +203,50 @@ export async function getShopAppointmentStats(shopId: string, days = 14): Promis
   }
 }
 
+/** Próximos turnos pendientes/confirmados para el dashboard de veterinaria — mismo patrón de lectura que getShopAppointments, acotado a futuro y a un puñado de filas. */
+export async function getShopUpcomingAppointments(shopId: string, limit = 5): Promise<AppointmentRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(
+      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at'
+    )
+    .eq('shop_id', shopId)
+    .in('status', ['pending', 'confirmed'])
+    .gte('starts_at', new Date().toISOString())
+    .order('starts_at', { ascending: true })
+    .limit(limit)
+
+  if (error) {
+    console.error('getShopUpcomingAppointments: fallo al leer próximos turnos', { shopId, error })
+    return []
+  }
+
+  return data ?? []
+}
+
+/** Historial de turnos de un paciente para su ficha — mismo patrón de lectura que getShopAppointments, filtrado por patient_id y ordenado desc. */
+export async function getPatientAppointments(patientId: string): Promise<AppointmentRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(
+      'id, shop_id, starts_at, ends_at, status, origin, hold_expires_at, customer_name, customer_phone, customer_email, created_at'
+    )
+    .eq('patient_id', patientId)
+    .order('starts_at', { ascending: false })
+    .limit(50)
+
+  if (error) {
+    console.error('getPatientAppointments: fallo al leer historial de turnos', { patientId, error })
+    return []
+  }
+
+  return data ?? []
+}
+
 /** Público: config mínima para saber si el comercio tiene turnos habilitados. Usa service role porque el visitante no está autenticado. */
 export async function getPublicBookingSettings(shopId: string): Promise<BookingSettings | null> {
   const supabase = createServiceRoleClient()
