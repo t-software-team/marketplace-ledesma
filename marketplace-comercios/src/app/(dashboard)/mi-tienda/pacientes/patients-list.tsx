@@ -4,13 +4,37 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { PawPrint, Search } from 'lucide-react'
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
+import type { ShopReminderAlerts } from '@/lib/patients/alerts'
+import {
+  deriveSpeciesOptions,
+  derivePatientAlertBadge,
+  filterPatients,
+  type PatientStatusFilter,
+} from '@/lib/patients/list-filters'
 import type { PatientRow } from '@/lib/patients/queries'
 import { PatientRowActions } from './patient-row-actions'
+
+const ALL_SPECIES_VALUE = 'todas'
+
+const STATUS_FILTER_OPTIONS: { value: PatientStatusFilter; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'vencido', label: 'Vencido' },
+  { value: 'proximo', label: 'Próximo' },
+  { value: 'al_dia', label: 'Al día' },
+]
+
+function PatientAlertBadge({ alerts }: { alerts: ShopReminderAlerts | undefined }) {
+  const badge = derivePatientAlertBadge(alerts)
+  if (!badge) return null
+  return <Badge variant={badge.variant}>{badge.label}</Badge>
+}
 
 function formatOwner(patient: PatientRow) {
   return [patient.owner_name, patient.owner_phone].filter(Boolean).join(' · ') || '—'
@@ -51,11 +75,28 @@ function PatientAvatar({ patient, size = 36 }: { patient: PatientRow; size?: num
   )
 }
 
-export function PatientsList({ patients, search }: { patients: PatientRow[]; search?: string }) {
+export function PatientsList({
+  patients,
+  search,
+  alertsMap,
+}: {
+  patients: PatientRow[]
+  search?: string
+  alertsMap: Record<string, ShopReminderAlerts>
+}) {
   const router = useRouter()
   const [query, setQuery] = useState(search ?? '')
   const [, startTransition] = useTransition()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [statusFilter, setStatusFilter] = useState<PatientStatusFilter>('todos')
+  const [speciesFilter, setSpeciesFilter] = useState<string | null>(null)
+
+  const speciesOptions = useMemo(() => deriveSpeciesOptions(patients), [patients])
+
+  const filteredPatients = useMemo(
+    () => filterPatients(patients, alertsMap, { statusFilter, speciesFilter }),
+    [patients, alertsMap, statusFilter, speciesFilter]
+  )
 
   function handleSearchChange(value: string) {
     setQuery(value)
@@ -90,14 +131,51 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
         />
       </div>
 
-      {patients.length === 0 ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => setStatusFilter(value as PatientStatusFilter)}
+        >
+          <SelectTrigger aria-label="Filtrar por estado" className="w-40">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_FILTER_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={speciesFilter ?? ALL_SPECIES_VALUE}
+          onValueChange={(value) => setSpeciesFilter(value === ALL_SPECIES_VALUE ? null : value)}
+        >
+          <SelectTrigger aria-label="Filtrar por especie" className="w-40">
+            <SelectValue placeholder="Especie" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_SPECIES_VALUE}>Todas las especies</SelectItem>
+            {speciesOptions.map((species) => (
+              <SelectItem key={species} value={species}>
+                {species}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filteredPatients.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
-          No encontramos pacientes que coincidan con &quot;{query}&quot;.
+          {patients.length === 0
+            ? `No encontramos pacientes que coincidan con "${query}".`
+            : 'Ningún paciente coincide con los filtros seleccionados.'}
         </p>
       ) : (
         <>
           <div className="flex flex-col gap-3 sm:hidden">
-            {patients.map((patient) => (
+            {filteredPatients.map((patient) => (
               <Card key={patient.id}>
                 <CardContent className="flex items-center justify-between gap-2 p-3">
                   <Link
@@ -106,7 +184,10 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
                   >
                     <PatientAvatar patient={patient} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{patient.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate text-sm font-medium">{patient.name}</p>
+                        <PatientAlertBadge alerts={alertsMap[patient.id]} />
+                      </div>
                       <p className="truncate text-xs text-muted-foreground">
                         {[patient.species, patient.breed].filter(Boolean).join(' · ') || 'Sin especie'}
                       </p>
@@ -133,7 +214,7 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {patients.map((patient) => (
+                {filteredPatients.map((patient) => (
                   <TableRow key={patient.id}>
                     <TableCell className="font-medium">
                       <Link
@@ -142,6 +223,7 @@ export function PatientsList({ patients, search }: { patients: PatientRow[]; sea
                       >
                         <PatientAvatar patient={patient} />
                         {patient.name}
+                        <PatientAlertBadge alerts={alertsMap[patient.id]} />
                       </Link>
                     </TableCell>
                     <TableCell>

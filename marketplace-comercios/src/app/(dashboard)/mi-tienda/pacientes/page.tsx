@@ -8,6 +8,7 @@ import { Suspense } from 'react'
 import { isVeterinariaRubro } from '@/lib/category-icons'
 import { getMyShop } from '@/lib/shops/queries'
 import { getShopPatients } from '@/lib/patients/queries'
+import { getShopPatientAlertsMap } from '@/lib/patients/alerts'
 import { PatientsList } from './patients-list'
 
 interface PacientesPageProps {
@@ -27,7 +28,10 @@ export default async function PacientesPage({ searchParams }: PacientesPageProps
     redirect('/mi-tienda')
   }
 
-  const patients = await getShopPatients(shop.id, { search })
+  const [patients, alertsMap] = await Promise.all([
+    getShopPatients(shop.id, { search }),
+    getShopPatientAlertsMap(shop.id),
+  ])
 
   return (
     <div className="space-y-4">
@@ -55,7 +59,7 @@ export default async function PacientesPage({ searchParams }: PacientesPageProps
           }
         />
       ) : (
-        <PatientsList patients={patients} search={search} />
+        <PatientsList patients={patients} search={search} alertsMap={alertsMap} />
       )}
     </div>
   )
