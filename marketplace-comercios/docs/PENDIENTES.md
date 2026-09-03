@@ -344,12 +344,15 @@ colarlo dentro de otro PR funcional.
 `patient-photos` (ítem 11) y `product-images`, el bucket
 `patient-documents` **no** se crea en la migración SQL.
 
-**Pendiente:** crear el bucket `patient-documents` en el dashboard de
-Supabase (público o privado a definir — se sube documentación
-potencialmente sensible de la mascota, evaluar si conviene privado + URLs
-firmadas en vez de público como `patient-photos`) + sus policies de Storage
-(INSERT/UPDATE/DELETE restringido al dueño autenticado del `shop_id`,
-primer segmento del path `shopId/patientId/uuid.ext`) antes de que la subida
-de adjuntos funcione en producción. La UI que consume esto (timeline de
-historial clínico) es PR7b — hasta que el bucket exista, la subida fallará
-con "No pudimos subir el documento".
+**Resuelto (2026-09-03):** bucket `patient-documents` creado —
+**público** (no privado/firmado, porque `uploadPatientDocument` usa
+`getPublicUrl`, mismo criterio que `patient-photos`; si en el futuro se
+quiere restringir el acceso a los adjuntos habría que migrar a
+`createSignedUrl` primero), límite 10MB, mime types
+`image/png,image/jpeg,image/webp,application/pdf`. Con sus 4 policies de
+Storage (SELECT pública; INSERT/UPDATE/DELETE restringido al dueño
+autenticado del `shop_id`, primer segmento del path
+`shopId/patientId/uuid.ext`). Aplicado directo en la base real vía
+`supabase db query`, sin migración SQL (consistente con el resto de los
+buckets del proyecto). La subida de adjuntos del historial clínico ya
+funciona en runtime.
