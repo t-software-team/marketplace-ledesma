@@ -12,7 +12,8 @@ import { ShareButton } from '@/components/shared/share-button'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
-import { isGymRubro, isServiceRubro } from '@/lib/category-icons'
+import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
+import { getShopTreatmentAlerts } from '@/lib/treatments/queries'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
 import { getGymDashboardStats, getMyGymAccess, getRecentGymCheckIns } from '@/lib/gym/queries'
@@ -111,16 +112,25 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   }
 
   const isService = isServiceRubro(shop.categories?.slug)
+  const isVeterinaria = isVeterinariaRubro(shop.categories?.slug)
 
-  const [productsResult, contactsSeries, activeSubscription, allPlans, followerCount, freeMaxForShop] =
-    await Promise.all([
-      getMyShopProducts(shop.id, 1, 4),
-      getShopContactsSeries(shop.id, 14),
-      getMyActiveSubscription(shop.id),
-      getActiveSubscriptionPlans(),
-      getShopFollowStats(shop.id),
-      getFreeProductMax(isService, shop.category_id),
-    ])
+  const [
+    productsResult,
+    contactsSeries,
+    activeSubscription,
+    allPlans,
+    followerCount,
+    freeMaxForShop,
+    treatmentAlerts,
+  ] = await Promise.all([
+    getMyShopProducts(shop.id, 1, 4),
+    getShopContactsSeries(shop.id, 14),
+    getMyActiveSubscription(shop.id),
+    getActiveSubscriptionPlans(),
+    getShopFollowStats(shop.id),
+    getFreeProductMax(isService, shop.category_id),
+    isVeterinaria ? getShopTreatmentAlerts(shop.id) : Promise.resolve(null),
+  ])
   const { products: recentProducts, totalCount: productsCount } = productsResult
   const contactsThisWeek = contactsSeries.slice(-7).reduce((sum, day) => sum + day.contactos, 0)
   const conversionRate =
@@ -183,6 +193,22 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
           </p>
           <Button render={<Link href="/mi-tienda/suscripcion" />} nativeButton={false} size="sm">
             {isExpired ? 'Renovar' : 'Ver planes'}
+          </Button>
+        </div>
+      )}
+
+      {isVeterinaria && treatmentAlerts && (treatmentAlerts.overdue > 0 || treatmentAlerts.upcoming > 0) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-warning bg-warning/10 p-3">
+          <p className="text-sm text-warning-foreground">
+            {treatmentAlerts.overdue > 0 &&
+              `Tenés ${treatmentAlerts.overdue} tratamiento${treatmentAlerts.overdue === 1 ? '' : 's'} vencido${treatmentAlerts.overdue === 1 ? '' : 's'}`}
+            {treatmentAlerts.overdue > 0 && treatmentAlerts.upcoming > 0 && ' y '}
+            {treatmentAlerts.upcoming > 0 &&
+              `${treatmentAlerts.overdue > 0 ? '' : 'Tenés '}${treatmentAlerts.upcoming} próximo${treatmentAlerts.upcoming === 1 ? '' : 's'} a vencer`}
+            .
+          </p>
+          <Button render={<Link href="/mi-tienda/pacientes" />} nativeButton={false} size="sm">
+            Ver pacientes
           </Button>
         </div>
       )}

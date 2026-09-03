@@ -186,3 +186,19 @@ export function appointmentReminderEmail(shopName: string, whenText: string) {
     ),
   }
 }
+
+export function treatmentReminderEmail(
+  shopName: string,
+  petName: string,
+  doseLabel: string | null,
+  whenText: string
+) {
+  return {
+    subject: `Recordatorio: ${petName} tiene un tratamiento próximo`,
+    html: layout(
+      'Recordatorio de tratamiento',
+      `<p><strong>${petName}</strong> tiene ${doseLabel ? `<strong>${doseLabel}</strong>` : 'un tratamiento'} programado para el <strong>${whenText}</strong>.</p>
+       <p>Contactá a <strong>${shopName}</strong> para coordinar el turno.</p>`
+    ),
+  }
+}

@@ -192,6 +192,46 @@ export async function getTreatmentTemplateDoses(templateId: string): Promise<Tre
   return data ?? []
 }
 
+export interface ShopTreatmentAlerts {
+  overdue: number
+  upcoming: number
+}
+
+// Cuenta cuántas next_due_at caen en 'vencido'/'proximo' reusando
+// deriveTreatmentStatus (misma lógica que el badge de estado, no se
+// duplica). Extraído como función pura para poder testearla sin mockear
+// Supabase, mismo patrón que resolveStaffNavItems en PR3.
+export function countTreatmentAlerts(nextDueAts: (string | null)[]): ShopTreatmentAlerts {
+  let overdue = 0
+  let upcoming = 0
+
+  for (const nextDueAt of nextDueAts) {
+    if (!nextDueAt) continue
+    const status = deriveTreatmentStatus(nextDueAt)
+    if (status === 'vencido') overdue++
+    else if (status === 'proximo') upcoming++
+  }
+
+  return { overdue, upcoming }
+}
+
+export async function getShopTreatmentAlerts(shopId: string): Promise<ShopTreatmentAlerts> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('treatment_applications')
+    .select('next_due_at, patients!inner(shop_id)')
+    .eq('patients.shop_id', shopId)
+    .not('next_due_at', 'is', null)
+
+  if (error) {
+    console.error('getShopTreatmentAlerts: fallo al traer alertas', { shopId, error })
+    return { overdue: 0, upcoming: 0 }
+  }
+
+  return countTreatmentAlerts((data ?? []).map((row) => row.next_due_at))
+}
+
 export async function getPatientTreatments(
   patientId: string
 ): Promise<TreatmentApplicationWithStatus[]> {

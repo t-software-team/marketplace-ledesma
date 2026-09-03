@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeNextDueAt, deriveTreatmentStatus } from './queries'
+import { computeNextDueAt, countTreatmentAlerts, deriveTreatmentStatus } from './queries'
 
 describe('deriveTreatmentStatus', () => {
   it('devuelve al_dia cuando next_due_at es null (sin recordatorio)', () => {
@@ -65,5 +65,22 @@ describe('computeNextDueAt', () => {
   it('dosis recurrente sin recurrence_interval_days -> null (dato inconsistente)', () => {
     const dose = { dose_number: 1, is_recurring: true, recurrence_interval_days: null }
     expect(computeNextDueAt(appliedAt, dose, [])).toBeNull()
+  })
+})
+
+describe('countTreatmentAlerts', () => {
+  it('cuenta vencidos y próximos, ignora al_dia y null', () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const soon = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+    const far = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+
+    expect(countTreatmentAlerts([past, soon, far, null, past])).toEqual({
+      overdue: 2,
+      upcoming: 1,
+    })
+  })
+
+  it('devuelve ceros para una lista vacía', () => {
+    expect(countTreatmentAlerts([])).toEqual({ overdue: 0, upcoming: 0 })
   })
 })

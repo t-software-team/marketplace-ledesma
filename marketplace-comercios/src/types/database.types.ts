@@ -2054,6 +2054,18 @@ export type Database = {
           starts_at: string
         }[]
       }
+      enqueue_treatment_reminders: {
+        Args: never
+        Returns: {
+          dose_label: string
+          id: string
+          next_due_at: string
+          owner_email: string
+          owner_name: string
+          patient_name: string
+          shop_name: string
+        }[]
+      }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       expire_pending_holds: { Args: { p_shop_id: string }; Returns: undefined }
       expire_subscriptions: { Args: never; Returns: undefined }
