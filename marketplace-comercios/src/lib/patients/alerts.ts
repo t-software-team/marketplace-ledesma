@@ -45,25 +45,33 @@ interface PatientDueDate {
   due_at: string | null
 }
 
+export interface PatientAlertSummary extends ShopReminderAlerts {
+  /** La fecha más próxima entre todas las alertas vencidas/próximas del paciente. */
+  nextDueAt: string | null
+}
+
 /**
  * Combina due dates de tratamientos + recordatorios agrupados por paciente
- * en un mapa {patientId: {overdue, upcoming}}. Función pura, testeable sin
- * mockear Supabase.
+ * en un mapa {patientId: {overdue, upcoming, nextDueAt}}. Función pura,
+ * testeable sin mockear Supabase.
  */
 export function combinePatientAlertsMap(
   treatmentDueDates: PatientDueDate[],
   reminderDueDates: PatientDueDate[]
-): Record<string, ShopReminderAlerts> {
-  const map: Record<string, ShopReminderAlerts> = {}
+): Record<string, PatientAlertSummary> {
+  const map: Record<string, PatientAlertSummary> = {}
 
   for (const { patient_id, due_at } of [...treatmentDueDates, ...reminderDueDates]) {
     if (!due_at) continue
     const status = deriveTreatmentStatus(due_at)
     if (status === 'al_dia') continue
 
-    const current = map[patient_id] ?? { overdue: 0, upcoming: 0 }
+    const current = map[patient_id] ?? { overdue: 0, upcoming: 0, nextDueAt: null }
     if (status === 'vencido') current.overdue++
     else current.upcoming++
+    if (!current.nextDueAt || new Date(due_at).getTime() < new Date(current.nextDueAt).getTime()) {
+      current.nextDueAt = due_at
+    }
     map[patient_id] = current
   }
 
@@ -94,7 +102,7 @@ async function getShopTreatmentDueDatesByPatient(shopId: string): Promise<Patien
  */
 export async function getShopPatientAlertsMap(
   shopId: string
-): Promise<Record<string, ShopReminderAlerts>> {
+): Promise<Record<string, PatientAlertSummary>> {
   const [treatmentDueDates, reminderDueDates] = await Promise.all([
     getShopTreatmentDueDatesByPatient(shopId),
     listShopReminderDueDatesByPatient(shopId),

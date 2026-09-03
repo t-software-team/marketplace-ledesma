@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
-import type { ShopReminderAlerts } from '@/lib/patients/alerts'
+import type { PatientAlertSummary } from '@/lib/patients/alerts'
 import {
   deriveSpeciesOptions,
   derivePatientAlertBadge,
@@ -30,10 +30,27 @@ const STATUS_FILTER_OPTIONS: { value: PatientStatusFilter; label: string }[] = [
   { value: 'al_dia', label: 'Al día' },
 ]
 
-function PatientAlertBadge({ alerts }: { alerts: ShopReminderAlerts | undefined }) {
+function PatientAlertBadge({ alerts }: { alerts: PatientAlertSummary | undefined }) {
   const badge = derivePatientAlertBadge(alerts)
   if (!badge) return null
   return <Badge variant={badge.variant}>{badge.label}</Badge>
+}
+
+function NextDueDate({ alerts }: { alerts: PatientAlertSummary | undefined }) {
+  if (!alerts?.nextDueAt) return null
+  return (
+    <span className="text-xs text-muted-foreground">
+      Próx: {new Date(alerts.nextDueAt).toLocaleDateString('es-AR')}
+    </span>
+  )
+}
+
+function TreatmentCount({ count }: { count: number }) {
+  return (
+    <span className="text-xs text-muted-foreground">
+      {count} tratamiento{count === 1 ? '' : 's'}
+    </span>
+  )
 }
 
 function formatOwner(patient: PatientRow) {
@@ -79,10 +96,12 @@ export function PatientsList({
   patients,
   search,
   alertsMap,
+  treatmentCounts,
 }: {
   patients: PatientRow[]
   search?: string
-  alertsMap: Record<string, ShopReminderAlerts>
+  alertsMap: Record<string, PatientAlertSummary>
+  treatmentCounts: Record<string, number>
 }) {
   const router = useRouter()
   const [query, setQuery] = useState(search ?? '')
@@ -192,6 +211,10 @@ export function PatientsList({
                         {[patient.species, patient.breed].filter(Boolean).join(' · ') || 'Sin especie'}
                       </p>
                       <p className="truncate text-xs text-muted-foreground">{formatOwner(patient)}</p>
+                      <div className="flex items-center gap-2">
+                        <TreatmentCount count={treatmentCounts[patient.id] ?? 0} />
+                        <NextDueDate alerts={alertsMap[patient.id]} />
+                      </div>
                     </div>
                   </Link>
                   <div className="flex shrink-0 items-center gap-1.5">
@@ -210,6 +233,8 @@ export function PatientsList({
                   <TableHead>Paciente</TableHead>
                   <TableHead>Especie / raza</TableHead>
                   <TableHead>Dueño</TableHead>
+                  <TableHead>Tratamientos</TableHead>
+                  <TableHead>Próx. vencimiento</TableHead>
                   <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -234,6 +259,12 @@ export function PatientsList({
                         {formatOwner(patient)}
                         <OwnerWhatsAppButton patient={patient} />
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <TreatmentCount count={treatmentCounts[patient.id] ?? 0} />
+                    </TableCell>
+                    <TableCell>
+                      <NextDueDate alerts={alertsMap[patient.id]} />
                     </TableCell>
                     <TableCell className="text-center">
                       <PatientRowActions patientId={patient.id} />

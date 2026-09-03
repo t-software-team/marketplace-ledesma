@@ -34,8 +34,8 @@ describe('combinePatientAlertsMap', () => {
     )
 
     expect(result).toEqual({
-      p1: { overdue: 1, upcoming: 1 },
-      p3: { overdue: 1, upcoming: 0 },
+      p1: { overdue: 1, upcoming: 1, nextDueAt: past },
+      p3: { overdue: 1, upcoming: 0, nextDueAt: past },
     })
   })
 
@@ -47,5 +47,17 @@ describe('combinePatientAlertsMap', () => {
     ])
 
     expect(result).toEqual({})
+  })
+
+  it('keeps the earliest due date when a patient has multiple alerts', () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const soon = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+
+    const result = combinePatientAlertsMap(
+      [{ patient_id: 'p1', due_at: soon }],
+      [{ patient_id: 'p1', due_at: past }]
+    )
+
+    expect(result.p1.nextDueAt).toBe(past)
   })
 })

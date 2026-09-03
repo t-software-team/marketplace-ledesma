@@ -51,7 +51,7 @@ interface VetResumenProps {
   pausedReason?: string | null
   upcomingAppointments: AppointmentRow[]
   treatmentAlerts: ShopReminderAlerts
-  alertedPatients: { id: string; name: string; overdue: number; upcoming: number }[]
+  alertedPatients: { id: string; name: string; overdue: number; upcoming: number; nextDueAt: string | null }[]
   patientsCount: number
   profileViews: number
   whatsappClicks: number
@@ -299,13 +299,20 @@ export function VetResumen({
               <LinkCard key={patient.id} href={`/mi-tienda/pacientes/${patient.id}`} alert>
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-medium">{patient.name}</span>
-                  <span className="shrink-0 text-xs text-warning-foreground">
-                    {patient.overdue > 0 &&
-                      `${patient.overdue} vencido${patient.overdue === 1 ? '' : 's'}`}
-                    {patient.overdue > 0 && patient.upcoming > 0 && ' · '}
-                    {patient.upcoming > 0 &&
-                      `${patient.upcoming} próximo${patient.upcoming === 1 ? '' : 's'}`}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-0.5">
+                    <span className="text-xs text-warning-foreground">
+                      {patient.overdue > 0 &&
+                        `${patient.overdue} vencido${patient.overdue === 1 ? '' : 's'}`}
+                      {patient.overdue > 0 && patient.upcoming > 0 && ' · '}
+                      {patient.upcoming > 0 &&
+                        `${patient.upcoming} próximo${patient.upcoming === 1 ? '' : 's'}`}
+                    </span>
+                    {patient.nextDueAt && (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(patient.nextDueAt).toLocaleDateString('es-AR')}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </LinkCard>
             ))

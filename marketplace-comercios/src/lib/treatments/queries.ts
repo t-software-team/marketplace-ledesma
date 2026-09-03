@@ -232,6 +232,31 @@ export async function getShopTreatmentAlerts(shopId: string): Promise<ShopTreatm
   return countTreatmentAlerts((data ?? []).map((row) => row.next_due_at))
 }
 
+/**
+ * Cantidad de tratamientos aplicados por paciente, para mostrar en el
+ * listado de pacientes. Un solo select agrupado en el cliente en vez de un
+ * count por paciente, ya que la lista de pacientes no está paginada.
+ */
+export async function getShopPatientTreatmentCounts(shopId: string): Promise<Record<string, number>> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('treatment_applications')
+    .select('patient_id, patients!inner(shop_id)')
+    .eq('patients.shop_id', shopId)
+
+  if (error) {
+    console.error('getShopPatientTreatmentCounts: fallo al traer tratamientos', { shopId, error })
+    return {}
+  }
+
+  const counts: Record<string, number> = {}
+  for (const row of data ?? []) {
+    counts[row.patient_id] = (counts[row.patient_id] ?? 0) + 1
+  }
+  return counts
+}
+
 export async function getPatientTreatments(
   patientId: string
 ): Promise<TreatmentApplicationWithStatus[]> {

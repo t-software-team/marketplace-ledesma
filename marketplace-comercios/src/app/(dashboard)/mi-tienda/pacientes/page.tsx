@@ -9,6 +9,7 @@ import { isVeterinariaRubro } from '@/lib/category-icons'
 import { getMyShop } from '@/lib/shops/queries'
 import { getShopPatients } from '@/lib/patients/queries'
 import { getShopPatientAlertsMap } from '@/lib/patients/alerts'
+import { getShopPatientTreatmentCounts } from '@/lib/treatments/queries'
 import { PatientsList } from './patients-list'
 
 interface PacientesPageProps {
@@ -28,9 +29,10 @@ export default async function PacientesPage({ searchParams }: PacientesPageProps
     redirect('/mi-tienda')
   }
 
-  const [patients, alertsMap] = await Promise.all([
+  const [patients, alertsMap, treatmentCounts] = await Promise.all([
     getShopPatients(shop.id, { search }),
     getShopPatientAlertsMap(shop.id),
+    getShopPatientTreatmentCounts(shop.id),
   ])
 
   return (
@@ -59,7 +61,12 @@ export default async function PacientesPage({ searchParams }: PacientesPageProps
           }
         />
       ) : (
-        <PatientsList patients={patients} search={search} alertsMap={alertsMap} />
+        <PatientsList
+          patients={patients}
+          search={search}
+          alertsMap={alertsMap}
+          treatmentCounts={treatmentCounts}
+        />
       )}
     </div>
   )
