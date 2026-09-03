@@ -126,6 +126,7 @@ export default async function MiTiendaLayout({
           ? [
               { href: '/mi-tienda/pacientes', label: 'Pacientes', icon: 'paw' } as DashboardNavItem,
               { href: '/mi-tienda/tratamientos', label: 'Tratamientos', icon: 'syringe' } as DashboardNavItem,
+              { href: '/mi-tienda/equipo', label: 'Equipo', icon: 'user-cog' } as DashboardNavItem,
             ]
           : []),
         { href: '/mi-tienda/promociones', label: 'Promociones', icon: 'megaphone' },
