@@ -46,6 +46,7 @@ import {
 } from "@/lib/turnos/actions";
 import type { AppointmentRow } from "@/lib/turnos/queries";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
+import { buildTreatmentShortcutUrl } from "@/lib/turnos/treatment-shortcut";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { ManualAppointmentDialog } from "./manual-appointment-dialog";
@@ -258,10 +259,26 @@ export function AppointmentsTable({
     });
   }
 
-  function handleComplete(id: string) {
+  function handleComplete(id: string, patientId: string | null) {
     startTransition(async () => {
       const result = await completeAppointment(id);
-      refresh("Turno marcado como completado", result.error);
+      if (result.error) {
+        refresh("Turno marcado como completado", result.error);
+        return;
+      }
+      toast.add({ title: "Turno marcado como completado", type: "success" });
+      router.refresh();
+      if (patientId) {
+        toast.add({
+          title: "¿Registrar el tratamiento aplicado?",
+          type: "info",
+          actionProps: {
+            children: "Registrar tratamiento",
+            onClick: () =>
+              router.push(buildTreatmentShortcutUrl(patientId)),
+          },
+        });
+      }
     });
   }
 
@@ -535,7 +552,10 @@ export function AppointmentsTable({
                                     <DropdownMenuItem
                                       disabled={isPending}
                                       onClick={() =>
-                                        handleComplete(appointment.id)
+                                        handleComplete(
+                                          appointment.id,
+                                          appointment.patient_id,
+                                        )
                                       }
                                     >
                                       Marcar completado

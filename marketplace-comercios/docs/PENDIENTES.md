@@ -333,3 +333,26 @@ inflar el PR con un rename mecánico de imports en todo el proyecto.
 Es un cambio de organización/cosmético, sin impacto funcional — no bloquea
 nada hoy. Buen candidato para una sesión de limpieza dedicada, no para
 colarlo dentro de otro PR funcional.
+
+## 13. Bucket `patient-documents` pendiente de provisión manual (módulo Veterinaria, PR7a, 2026-09-03)
+
+**Contexto:** el historial clínico de pacientes (`patient_notes` +
+`patient_note_attachments`, migración `20260926000000_patient_notes.sql`,
+`src/lib/patients/notes-actions.ts`) permite adjuntar fotos/PDFs por nota vía
+`uploadPatientDocument(shopId, patientId, file)`
+(`src/lib/shops/upload-image.ts`). Siguiendo la misma convención que
+`patient-photos` (ítem 11) y `product-images`, el bucket
+`patient-documents` **no** se crea en la migración SQL.
+
+**Resuelto (2026-09-03):** bucket `patient-documents` creado —
+**público** (no privado/firmado, porque `uploadPatientDocument` usa
+`getPublicUrl`, mismo criterio que `patient-photos`; si en el futuro se
+quiere restringir el acceso a los adjuntos habría que migrar a
+`createSignedUrl` primero), límite 10MB, mime types
+`image/png,image/jpeg,image/webp,application/pdf`. Con sus 4 policies de
+Storage (SELECT pública; INSERT/UPDATE/DELETE restringido al dueño
+autenticado del `shop_id`, primer segmento del path
+`shopId/patientId/uuid.ext`). Aplicado directo en la base real vía
+`supabase db query`, sin migración SQL (consistente con el resto de los
+buckets del proyecto). La subida de adjuntos del historial clínico ya
+funciona en runtime.

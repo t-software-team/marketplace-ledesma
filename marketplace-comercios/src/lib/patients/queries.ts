@@ -99,6 +99,23 @@ export async function searchPatientsByOwner(
   return data ?? []
 }
 
+/** Cantidad de pacientes del comercio para el dashboard — count exact head, no trae filas. */
+export async function getShopPatientsCount(shopId: string): Promise<number> {
+  const supabase = await createClient()
+
+  const { count, error } = await supabase
+    .from('patients')
+    .select('id', { count: 'exact', head: true })
+    .eq('shop_id', shopId)
+
+  if (error) {
+    console.error('getShopPatientsCount: fallo al contar pacientes', { shopId, error })
+    return 0
+  }
+
+  return count ?? 0
+}
+
 export async function getPatient(shopId: string, id: string): Promise<PatientRow | null> {
   const supabase = await createClient()
 

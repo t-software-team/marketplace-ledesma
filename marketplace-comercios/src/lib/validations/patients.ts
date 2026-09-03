@@ -26,3 +26,16 @@ export const patientSchema = z.object({
 })
 
 export type PatientFormValues = z.infer<typeof patientSchema>
+
+export const patientReminderSchema = z.object({
+  label: z.string().min(1, 'El texto del recordatorio es obligatorio').max(200),
+  due_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ingresá una fecha válida'),
+})
+
+export type PatientReminderFormValues = z.infer<typeof patientReminderSchema>
+
+export const patientNoteSchema = z.object({
+  content: z.string().min(1, 'El contenido de la nota es obligatorio').max(4000),
+})
+
+export type PatientNoteFormValues = z.infer<typeof patientNoteSchema>
