@@ -8,6 +8,7 @@ import { calculateAge } from '@/lib/patients/age'
 import { getPatientTreatments, getTreatmentTemplatesWithDoses } from '@/lib/treatments/queries'
 import { getPatientAppointments } from '@/lib/turnos/queries'
 import { listPatientReminders } from '@/lib/patients/reminders-queries'
+import { listPatientNotes } from '@/lib/patients/notes-queries'
 import { BackLink } from '@/components/shared/back-link'
 import { Button } from '@/components/ui/button'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
@@ -16,6 +17,8 @@ import { TreatmentHistory } from './treatment-history'
 import { AppointmentHistory } from './appointment-history'
 import { AddReminderDialog } from './add-reminder-dialog'
 import { ReminderList } from './reminder-list'
+import { AddNoteDialog } from './add-note-dialog'
+import { NoteHistory } from './note-history'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
@@ -44,11 +47,12 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
     notFound()
   }
 
-  const [treatments, templates, appointments, reminders] = await Promise.all([
+  const [treatments, templates, appointments, reminders, notes] = await Promise.all([
     getPatientTreatments(patient.id),
     getTreatmentTemplatesWithDoses(shop.id),
     getPatientAppointments(patient.id),
     listPatientReminders(patient.id),
+    listPatientNotes(patient.id),
   ])
 
   const age = calculateAge(patient.birth_date)
@@ -145,6 +149,14 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           ownerName={patient.owner_name}
           ownerPhone={patient.owner_phone}
         />
+      </div>
+
+      <div className="space-y-3 border-t border-border pt-6">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-heading text-base">Historial clínico</h2>
+          <AddNoteDialog shopId={shop.id} patientId={patient.id} />
+        </div>
+        <NoteHistory patientId={patient.id} notes={notes} />
       </div>
 
       <div className="space-y-3 border-t border-border pt-6">
