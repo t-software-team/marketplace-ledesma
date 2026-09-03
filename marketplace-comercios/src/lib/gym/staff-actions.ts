@@ -61,7 +61,7 @@ async function activateStaffInvite(
 export async function inviteGymStaff(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const access = await getMyGymAccess()
   if (!access) return { error: 'No tenés un comercio creado' }
-  if (access.role !== 'owner') return { error: 'Esta acción es solo para el dueño del gimnasio' }
+  if (access.role !== 'owner') return { error: 'Esta acción es solo para el dueño del comercio' }
 
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
   if (!EMAIL_RE.test(email)) return { error: 'Ingresá un email válido' }
@@ -83,7 +83,7 @@ export async function inviteGymStaff(_prev: ActionState, formData: FormData): Pr
     .maybeSingle()
 
   if (existing?.status === 'active') {
-    return { error: 'Esa persona ya tiene acceso a este gimnasio' }
+    return { error: 'Esa persona ya tiene acceso a este comercio' }
   }
 
   let inviteToken = existing?.invite_token as string | undefined
@@ -128,7 +128,7 @@ export async function inviteGymStaff(_prev: ActionState, formData: FormData): Pr
 export async function revokeGymStaff(staffId: string): Promise<ActionState> {
   const access = await getMyGymAccess()
   if (!access) return { error: 'No tenés un comercio creado' }
-  if (access.role !== 'owner') return { error: 'Esta acción es solo para el dueño del gimnasio' }
+  if (access.role !== 'owner') return { error: 'Esta acción es solo para el dueño del comercio' }
 
   const supabase = await createClient()
   const { error } = await supabase

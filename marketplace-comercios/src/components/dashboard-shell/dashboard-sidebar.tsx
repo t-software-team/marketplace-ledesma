@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BarChart3,
+  Calendar,
   CreditCard,
   Flag,
   History,
@@ -19,6 +20,8 @@ import {
   Users,
   Wallet,
   LogIn,
+  PawPrint,
+  Syringe,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
@@ -37,10 +40,13 @@ const ICONS = {
   dashboard: LayoutDashboard,
   sparkles: Sparkles,
   users: Users,
+  calendar: Calendar,
   'user-cog': UserCog,
   wallet: Wallet,
   login: LogIn,
   'bar-chart': BarChart3,
+  paw: PawPrint,
+  syringe: Syringe,
 } as const
 
 export type DashboardNavIcon = keyof typeof ICONS

@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   graphql_public: {
     Tables: {
@@ -73,6 +73,7 @@ export type Database = {
           hold_expires_at: string | null
           id: string
           origin: Database["public"]["Enums"]["appointment_origin"]
+          patient_id: string | null
           reminder_sent_at: string | null
           shop_id: string
           starts_at: string
@@ -88,6 +89,7 @@ export type Database = {
           hold_expires_at?: string | null
           id?: string
           origin?: Database["public"]["Enums"]["appointment_origin"]
+          patient_id?: string | null
           reminder_sent_at?: string | null
           shop_id: string
           starts_at: string
@@ -103,6 +105,7 @@ export type Database = {
           hold_expires_at?: string | null
           id?: string
           origin?: Database["public"]["Enums"]["appointment_origin"]
+          patient_id?: string | null
           reminder_sent_at?: string | null
           shop_id?: string
           starts_at?: string
@@ -110,6 +113,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "appointments_shop_id_fkey"
             columns: ["shop_id"]
@@ -631,6 +641,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gym_plans_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          birth_date: string | null
+          breed: string | null
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          owner_email: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          photo_url: string | null
+          sex: string | null
+          shop_id: string
+          species: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          photo_url?: string | null
+          sex?: string | null
+          shop_id: string
+          species?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          photo_url?: string | null
+          sex?: string | null
+          shop_id?: string
+          species?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -1557,6 +1629,155 @@ export type Database = {
           },
         ]
       }
+      treatment_applications: {
+        Row: {
+          applied_at: string
+          created_at: string
+          id: string
+          next_due_at: string | null
+          notes: string | null
+          patient_id: string
+          product_name: string | null
+          reminder_sent_at: string | null
+          template_dose_id: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string
+          created_at?: string
+          id?: string
+          next_due_at?: string | null
+          notes?: string | null
+          patient_id: string
+          product_name?: string | null
+          reminder_sent_at?: string | null
+          template_dose_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string
+          created_at?: string
+          id?: string
+          next_due_at?: string | null
+          notes?: string | null
+          patient_id?: string
+          product_name?: string | null
+          reminder_sent_at?: string | null
+          template_dose_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_applications_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_applications_template_dose_id_fkey"
+            columns: ["template_dose_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_template_doses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_applications_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_template_doses: {
+        Row: {
+          age_weeks: number | null
+          created_at: string
+          dose_number: number
+          id: string
+          interval_days_after_previous: number | null
+          is_recurring: boolean
+          label: string
+          recurrence_interval_days: number | null
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          age_weeks?: number | null
+          created_at?: string
+          dose_number: number
+          id?: string
+          interval_days_after_previous?: number | null
+          is_recurring?: boolean
+          label: string
+          recurrence_interval_days?: number | null
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          age_weeks?: number | null
+          created_at?: string
+          dose_number?: number
+          id?: string
+          interval_days_after_previous?: number | null
+          is_recurring?: boolean
+          label?: string
+          recurrence_interval_days?: number | null
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_template_doses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          shop_id: string
+          species: string | null
+          type: Database["public"]["Enums"]["treatment_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          shop_id: string
+          species?: string | null
+          type: Database["public"]["Enums"]["treatment_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          shop_id?: string
+          species?: string | null
+          type?: Database["public"]["Enums"]["treatment_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_templates_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       geography_columns: {
@@ -1754,6 +1975,15 @@ export type Database = {
         Args: { p_appointment_id: string }
         Returns: string
       }
+      assert_owns_patient: { Args: { p_patient_id: string }; Returns: string }
+      assert_owns_treatment_application: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
+      assert_owns_treatment_template: {
+        Args: { p_template_id: string }
+        Returns: string
+      }
       block_slot: {
         Args: { p_ends_at: string; p_shop_id: string; p_starts_at: string }
         Returns: string
@@ -1784,6 +2014,7 @@ export type Database = {
           p_customer_email?: string
           p_customer_name: string
           p_customer_phone?: string
+          p_patient_id?: string
           p_shop_id: string
           p_starts_at: string
         }
@@ -1832,6 +2063,18 @@ export type Database = {
           shop_id: string
           shop_name: string
           starts_at: string
+        }[]
+      }
+      enqueue_treatment_reminders: {
+        Args: never
+        Returns: {
+          dose_label: string
+          id: string
+          next_due_at: string
+          owner_email: string
+          owner_name: string
+          patient_name: string
+          shop_name: string
         }[]
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
@@ -2053,6 +2296,7 @@ export type Database = {
         Args: { p_metric: string; p_shop_id: string }
         Returns: undefined
       }
+      is_shop_staff: { Args: { p_shop_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       log_admin_action: {
         Args: {
@@ -2779,6 +3023,7 @@ export type Database = {
         | "active"
         | "expired"
         | "rejected"
+      treatment_type: "vacuna" | "desparasitacion"
       user_role: "client" | "shop_admin" | "superadmin"
       verification_status: "pending" | "verified" | "rejected"
     }
@@ -2804,12 +3049,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2833,11 +3078,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2858,11 +3103,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2883,11 +3128,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2900,11 +3145,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2938,6 +3183,7 @@ export const Constants = {
       ],
       report_status: ["pending", "reviewed", "dismissed"],
       subscription_status: ["none", "pending", "active", "expired", "rejected"],
+      treatment_type: ["vacuna", "desparasitacion"],
       user_role: ["client", "shop_admin", "superadmin"],
       verification_status: ["pending", "verified", "rejected"],
     },

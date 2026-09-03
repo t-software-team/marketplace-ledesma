@@ -79,6 +79,7 @@ export interface ShopNotificationDetails {
   created_at: string
   review?: { rating: number; comment: string | null } | null
   contact?: { productId: string | null; productName: string | null } | null
+  appointment?: { customerName: string | null; startsAt: string } | null
 }
 
 export async function getMyShopNotifications(
@@ -96,8 +97,11 @@ export async function getMyShopNotifications(
   const contactIds = notifications
     .filter((n) => n.type === 'new_contact')
     .map((n) => n.reference_id)
+  const appointmentIds = notifications
+    .filter((n) => n.type === 'new_turno_request')
+    .map((n) => n.reference_id)
 
-  const [{ data: reviews }, { data: contacts }] = await Promise.all([
+  const [{ data: reviews }, { data: contacts }, { data: appointments }] = await Promise.all([
     reviewIds.length
       ? supabase.from('shop_reviews').select('id, rating, comment').in('id', reviewIds)
       : Promise.resolve({ data: [] as { id: string; rating: number; comment: string | null }[] }),
@@ -109,10 +113,14 @@ export async function getMyShopNotifications(
       : Promise.resolve({
           data: [] as { id: string; product_id: string | null; products: { name: string } | null }[],
         }),
+    appointmentIds.length
+      ? supabase.from('appointments').select('id, customer_name, starts_at').in('id', appointmentIds)
+      : Promise.resolve({ data: [] as { id: string; customer_name: string | null; starts_at: string }[] }),
   ])
 
   const reviewById = new Map((reviews ?? []).map((r) => [r.id, r]))
   const contactById = new Map((contacts ?? []).map((c) => [c.id, c]))
+  const appointmentById = new Map((appointments ?? []).map((a) => [a.id, a]))
 
   return {
     notifications: notifications.map((notification) => {
@@ -129,6 +137,15 @@ export async function getMyShopNotifications(
           ...notification,
           contact: contact
             ? { productId: contact.product_id, productName: contact.products?.name ?? null }
+            : null,
+        }
+      }
+      if (notification.type === 'new_turno_request') {
+        const appointment = appointmentById.get(notification.reference_id)
+        return {
+          ...notification,
+          appointment: appointment
+            ? { customerName: appointment.customer_name, startsAt: appointment.starts_at }
             : null,
         }
       }

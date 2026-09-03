@@ -2,11 +2,19 @@ import { createClient } from '@/lib/supabase/client'
 
 const IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
-const BUCKET_LIMITS: Record<'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions', number> = {
+const BUCKET_LIMITS: Record<
+  'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions' | 'patient-photos',
+  number
+> = {
   'shop-logos': 5 * 1024 * 1024,
   'shop-covers': 10 * 1024 * 1024,
   'product-images': 5 * 1024 * 1024,
   'shop-promotions': 5 * 1024 * 1024,
+  // NOTA (runbook): a diferencia de los demás buckets de este objeto, este es
+  // nuevo (módulo Pacientes) y todavía no está provisionado en Supabase — el
+  // bucket + sus policies de Storage se crean a mano en el dashboard antes de
+  // poder subir fotos en producción. Ver docs/PENDIENTES.md.
+  'patient-photos': 5 * 1024 * 1024,
 }
 
 function assertValidImage(bucket: keyof typeof BUCKET_LIMITS, file: File) {
@@ -134,7 +142,7 @@ export function getThumbnailUrl(url: string | null | undefined): string | null {
 }
 
 export async function uploadShopImage(
-  bucket: 'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions',
+  bucket: 'shop-logos' | 'shop-covers' | 'product-images' | 'shop-promotions' | 'patient-photos',
   shopId: string,
   file: File
 ) {

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
+  Calendar,
   CalendarX,
   Clock,
   FileCheck,
@@ -112,6 +113,12 @@ const NOTIFICATION_TYPE_CONFIG: NotificationTypeConfigMap = {
     icon: Package,
     style: 'bg-primary/10 text-primary',
     href: (notification) => `/producto/${notification.reference_id}`,
+  },
+  new_turno_request: {
+    label: 'Nueva solicitud de turno',
+    icon: Calendar,
+    style: 'bg-primary/15 text-primary',
+    href: () => '/mi-tienda/turnos',
   },
 }
 

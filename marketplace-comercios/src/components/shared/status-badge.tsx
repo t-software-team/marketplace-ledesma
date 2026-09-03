@@ -13,6 +13,11 @@ const STATUS_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
   dismissed: { label: 'Descartado', variant: 'destructive' },
   expired: { label: 'Vencida', variant: 'destructive' },
   none: { label: 'Sin suscripción', variant: 'outline' },
+  confirmed: { label: 'Confirmado', variant: 'success' },
+  cancelled: { label: 'Cancelado', variant: 'destructive' },
+  completed: { label: 'Completado', variant: 'success' },
+  no_show: { label: 'No-show', variant: 'destructive' },
+  blocked: { label: 'Bloqueado', variant: 'outline' },
 }
 
 interface StatusBadgeProps {
