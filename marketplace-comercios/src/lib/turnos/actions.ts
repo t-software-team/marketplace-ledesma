@@ -255,11 +255,13 @@ export async function cancelAppointment(
 
 export async function completeAppointment(
   appointmentId: string,
+  amountCharged?: number,
 ): Promise<TurnoActionState> {
   const supabase = await createClient();
 
   const { error } = await supabase.rpc("complete_appointment", {
     p_appointment_id: appointmentId,
+    p_amount_charged: amountCharged ?? null,
   });
 
   if (error) {

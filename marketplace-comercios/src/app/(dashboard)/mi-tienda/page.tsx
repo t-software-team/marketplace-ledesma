@@ -2,30 +2,19 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { Eye, MessageCircle, Package, Percent, Store, Users } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Eye, MessageCircle, Package, Percent, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ShopLinkCard } from '@/components/shop/shop-link-card'
-import { ShopQrDialog } from '@/components/shop/shop-qr-dialog'
-import { ShareButton } from '@/components/shared/share-button'
+import { ShopProfileHeader } from '@/components/shop/shop-profile-header'
 import { StatusBadge } from '@/components/shared/status-badge'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
-import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
-import { getShopPatientAlertsMap, getShopReminderAlerts } from '@/lib/patients/alerts'
-import {
-  getMonthlyTreatmentCount,
-  getShopActivityFeed,
-  getWeeklyCompletedAppointments,
-  groupPatientsBySpecies,
-} from '@/lib/patients/dashboard-queries'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
 import { VetResumen } from '@/components/vet/vet-resumen'
+import { getVetResumenProps } from '@/components/vet/vet-resumen-data'
 import { getGymDashboardStats, getMyGymAccess, getRecentGymCheckIns } from '@/lib/gym/queries'
-import { getShopPatients, getShopPatientsCount } from '@/lib/patients/queries'
-import { getShopUpcomingAppointments } from '@/lib/turnos/queries'
 import { getBenefitLines } from '@/lib/shops/benefits'
 import { hasVerifiedBadge } from '@/lib/shops/badge'
 import {
@@ -123,70 +112,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   // Veterinarias get a dedicated management dashboard instead of the catalog
   // resumen — mismo criterio que gyms, antes de calcular nada del flujo genérico.
   if (isVeterinariaRubro(shop.categories?.slug)) {
-    const [
-      upcomingAppointments,
-      treatmentAlerts,
-      patientsCount,
-      followerCount,
-      patientAlertsMap,
-      patients,
-      weeklyCompletedAppointments,
-      monthlyTreatmentCount,
-      activityFeed,
-    ] = await Promise.all([
-      getShopUpcomingAppointments(shop.id),
-      getShopReminderAlerts(shop.id),
-      getShopPatientsCount(shop.id),
-      getShopFollowStats(shop.id),
-      getShopPatientAlertsMap(shop.id),
-      getShopPatients(shop.id),
-      getWeeklyCompletedAppointments(shop.id),
-      getMonthlyTreatmentCount(shop.id),
-      getShopActivityFeed(shop.id),
-    ])
-    const patientNameById = new Map(patients.map((patient) => [patient.id, patient.name]))
-    const speciesBreakdown = groupPatientsBySpecies(patients)
-    const alertedPatients = Object.entries(patientAlertsMap)
-      .map(([patientId, alerts]) => ({
-        id: patientId,
-        name: patientNameById.get(patientId) ?? 'Paciente',
-        ...alerts,
-      }))
-      .sort((a, b) => b.overdue - a.overdue || b.upcoming - a.upcoming)
-    const headersList = await headers()
-    const host = headersList.get('x-forwarded-host') ?? headersList.get('host')
-    const protocol = headersList.get('x-forwarded-proto') ?? 'http'
-    const shopUrl = `${protocol}://${host}/tienda/${shop.slug}`
-    return (
-      <VetResumen
-        shopName={shop.name}
-        logoUrl={shop.logo_url}
-        coverUrl={shop.cover_url}
-        shopSlug={shop.slug}
-        shopUrl={shopUrl}
-        isVerified={hasVerifiedBadge(shop)}
-        verificationStatus={shop.verification_status}
-        isPaused={shop.is_paused}
-        pausedReason={shop.paused_reason}
-        upcomingAppointments={upcomingAppointments}
-        treatmentAlerts={treatmentAlerts}
-        alertedPatients={alertedPatients}
-        patients={patients.map((patient) => ({
-          id: patient.id,
-          name: patient.name,
-          species: patient.species,
-          owner_name: patient.owner_name,
-        }))}
-        patientsCount={patientsCount}
-        speciesBreakdown={speciesBreakdown}
-        weeklyCompletedAppointments={weeklyCompletedAppointments}
-        monthlyTreatmentCount={monthlyTreatmentCount}
-        activityFeed={activityFeed}
-        profileViews={shop.profile_views}
-        whatsappClicks={shop.whatsapp_clicks}
-        followerCount={followerCount}
-      />
-    )
+    return <VetResumen {...(await getVetResumenProps(shop))} />
   }
 
   const isService = isServiceRubro(shop.categories?.slug)
@@ -276,75 +202,17 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       />
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="relative h-28 bg-gradient-to-br from-primary/30 to-destacado/30 sm:h-36">
-          {shop.cover_url && (
-            <Image
-              src={shop.cover_url}
-              alt={`Portada de ${shop.name}`}
-              fill
-              className="object-cover"
-              sizes="768px"
-            />
-          )}
-        </div>
-        <div className="flex flex-wrap items-end justify-between gap-3 px-4 pb-4">
-          <div className="flex items-end gap-3">
-            <div className="relative -mt-8 size-16 shrink-0 overflow-hidden rounded-full border-4 border-surface bg-muted sm:size-20">
-              {shop.logo_url ? (
-                <Image src={shop.logo_url} alt={shop.name} fill className="object-cover" sizes="80px" />
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  <Store className="size-6" aria-hidden />
-                </div>
-              )}
-            </div>
-            <div className="pb-0.5">
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-xl font-heading sm:text-2xl">{shop.name}</h1>
-                {hasVerifiedBadge(shop) && <VerifiedStamp className="size-6" />}
-              </div>
-              {shop.is_paused ? (
-                <Badge variant="warning" className="mt-1">
-                  En pausa{shop.paused_reason ? `: ${shop.paused_reason}` : ''}
-                </Badge>
-              ) : (
-                <StatusBadge status={shop.verification_status} className="mt-1" />
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 pb-0.5">
-            <ShopQrDialog shopName={shop.name} shopUrl={shopUrl} triggerVariant="icon" />
-            <ShareButton
-              title={shop.name}
-              text={`Mirá ${shop.name} en Proxi Marketplace`}
-              url={shopUrl}
-              variant="outline"
-              size="icon"
-            />
-            <Button
-              render={<Link href={`/tienda/${shop.slug}`} target="_blank" />}
-              nativeButton={false}
-              variant="outline"
-              className="gap-1.5"
-            >
-              Ver tienda pública
-            </Button>
-          </div>
-        </div>
-
-        <div className="border-t border-border px-4 py-3 md:px-6">
-          <ShareButton
-            title={shop.name}
-            text={`¿Nos regalás una reseña en Proxi? Contanos cómo te fue con ${shop.name}:`}
-            url={shopUrl}
-            variant="ghost"
-            size="sm"
-            icon="star"
-            label="Invitar a reseñar"
-            copiedLabel="Link copiado"
-            className="w-full justify-center sm:w-auto"
-          />
-        </div>
+        <ShopProfileHeader
+          shopName={shop.name}
+          logoUrl={shop.logo_url}
+          coverUrl={shop.cover_url}
+          shopSlug={shop.slug}
+          shopUrl={shopUrl}
+          isVerified={hasVerifiedBadge(shop)}
+          verificationStatus={shop.verification_status}
+          isPaused={shop.is_paused}
+          pausedReason={shop.paused_reason}
+        />
       </div>
 
       <div className="space-y-3">
