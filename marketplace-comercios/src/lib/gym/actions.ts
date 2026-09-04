@@ -11,7 +11,7 @@ import {
 } from '@/lib/validations/gym'
 import { getGymMembers, getMyGymAccess, getTodayCheckIns, type GymMemberSearchResult } from '@/lib/gym/queries'
 import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
-import { addDaysToDate, argentinaToday } from '@/lib/timezone'
+import { addDaysToDate, argentinaStartOfTodayUTC, argentinaToday } from '@/lib/timezone'
 
 export type ActionState = {
   error: string | null
@@ -356,6 +356,7 @@ export async function checkInGymMember(memberId: string): Promise<CheckInResult>
     shop_id: shopId,
     member_id: memberId,
     created_by: user.id,
+    outcome: activePeriod ? 'allowed' : 'denied_expired',
   })
 
   if (error) {
@@ -521,6 +522,27 @@ async function settleMembership(
   if (paymentError) {
     console.error('settleMembership: fallo al registrar pago', { memberId, error: paymentError })
     return 'La membresía se creó, pero no pudimos registrar el pago'
+  }
+
+  // Best-effort: if this member was turned away earlier today for an
+  // expired membership, flip that log entry to 'allowed' now that they've
+  // paid — it's the same visit, so we update in place instead of inserting
+  // a second check-in row. Scoped to today only; older denials are history,
+  // not this visit. Must never fail the renewal itself.
+  try {
+    const todayStart = argentinaStartOfTodayUTC().toISOString()
+    await supabase
+      .from('gym_check_ins')
+      .update({ outcome: 'allowed' })
+      .eq('shop_id', shopId)
+      .eq('member_id', memberId)
+      .eq('outcome', 'denied_expired')
+      .gte('checked_in_at', todayStart)
+  } catch (reconcileError) {
+    console.error('settleMembership: fallo al reconciliar el ingreso de hoy', {
+      memberId,
+      error: reconcileError,
+    })
   }
 
   return null
