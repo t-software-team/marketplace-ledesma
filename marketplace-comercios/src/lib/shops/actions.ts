@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import type { ZodError } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { createPublicClient } from '@/lib/supabase/public'
 import { createPaymentLink } from '@/lib/galiopay/client'
 import { syncGalioPaySubscription } from '@/lib/galiopay/sync'
 import { createPreference } from '@/lib/mercadopago/client'
@@ -1690,4 +1691,27 @@ export async function logShopContact(shopId: string, productId?: string) {
   if (error) {
     console.error('logShopContact: fallo al registrar contacto', { shopId, error })
   }
+}
+
+/** Trae el WhatsApp de una tienda bajo demanda (no en el listado de
+ * promociones) para minimizar exposición masiva de contacto en el feed
+ * público — solo se llama cuando el visitante abre una story y toca el
+ * botón de WhatsApp. */
+export async function getShopWhatsapp(shopId: string): Promise<string | null> {
+  const allowed = await checkRateLimit('get_shop_whatsapp', 30, 60 * 60)
+  if (!allowed) return null
+
+  const supabase = createPublicClient()
+  const { data, error } = await supabase
+    .from('shops')
+    .select('whatsapp_number')
+    .eq('id', shopId)
+    .maybeSingle()
+
+  if (error) {
+    console.error('getShopWhatsapp: fallo al traer el contacto', { shopId, error })
+    return null
+  }
+
+  return data?.whatsapp_number ?? null
 }

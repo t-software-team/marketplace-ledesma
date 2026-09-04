@@ -10,6 +10,7 @@ import { InstagramIcon } from '@/components/shared/instagram-icon'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { toast } from '@/components/ui/toast'
 import { toWhatsAppNumber } from '@/lib/whatsapp'
+import { getShopWhatsapp } from '@/lib/shops/actions'
 import { StoryPreview, type TextPosition, type TextSize } from './story-preview'
 
 const STORY_DURATION_MS = 6000
@@ -22,7 +23,6 @@ export interface StoryPromotion {
   shopName: string
   shopSlug: string
   shopLogoUrl: string | null
-  shopWhatsapp: string
   isVerified?: boolean
   productName?: string | null
   shopUrl: string
@@ -48,6 +48,7 @@ export function PromotionStoryDialog({
   onIndexChange,
 }: PromotionStoryDialogProps) {
   const [progress, setProgress] = useState(0)
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false)
   const startRef = useRef<number>(0)
   const frameRef = useRef<number | undefined>(undefined)
 
@@ -123,10 +124,28 @@ export function PromotionStoryDialog({
     }
   }
 
-  function handleWhatsAppShare() {
-    const phone = toWhatsAppNumber(promotion.shopWhatsapp)
-    const message = `${shareText} ${promotion.shopUrl}`
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
+  async function handleWhatsAppShare() {
+    if (isSendingWhatsApp) return
+    setIsSendingWhatsApp(true)
+    try {
+      // Abrimos la pestaña en blanco de forma síncrona (dentro del gesto del
+      // click) y recién le seteamos la URL cuando llega el número — así los
+      // navegadores no bloquean el popup por venir de un await.
+      const tab = window.open('', '_blank', 'noopener,noreferrer')
+      const whatsappNumber = await getShopWhatsapp(promotion.shopId)
+      if (!whatsappNumber) {
+        tab?.close()
+        toast.add({ title: 'No pudimos abrir WhatsApp', type: 'error' })
+        return
+      }
+      const phone = toWhatsAppNumber(whatsappNumber)
+      const message = `${shareText} ${promotion.shopUrl}`
+      if (tab) {
+        tab.location.href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+      }
+    } finally {
+      setIsSendingWhatsApp(false)
+    }
   }
 
   function handleFacebookShare() {
@@ -218,7 +237,8 @@ export function PromotionStoryDialog({
             <button
               type="button"
               onClick={handleWhatsAppShare}
-              className="flex flex-col items-center gap-1 rounded-lg py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              disabled={isSendingWhatsApp}
+              className="flex flex-col items-center gap-1 rounded-lg py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
             >
               <MessageCircle className="size-4.5 text-success" aria-hidden />
               WhatsApp

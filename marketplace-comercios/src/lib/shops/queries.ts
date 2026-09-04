@@ -272,7 +272,7 @@ export const getActivePromotions = unstable_cache(
       .select(
         `
         id, image_url, text, expires_at, text_position, text_size, text_color, bg_color,
-        shops ( id, name, slug, logo_url, whatsapp_number, verification_status, subscription_status ),
+        shops ( id, name, slug, logo_url, verification_status, subscription_status ),
         products ( id, name )
       `,
       )
