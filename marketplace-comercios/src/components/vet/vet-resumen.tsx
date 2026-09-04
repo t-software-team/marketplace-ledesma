@@ -130,7 +130,7 @@ export function VetResumen({
   const conversionRate = profileViews > 0 ? Math.round((whatsappClicks / profileViews) * 100) : null
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-8 lg:max-w-none">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative size-12 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
@@ -296,17 +296,6 @@ export function VetResumen({
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="space-y-1 px-4 pt-5">
-          <Users className="size-4 text-muted-foreground" aria-hidden />
-          <p className="text-xs text-muted-foreground">Pacientes</p>
-          <p className="font-heading text-3xl">{patientsCount}</p>
-          {speciesBreakdown.length > 0 && (
-            <p className="text-xs text-muted-foreground">{formatSpeciesBreakdown(speciesBreakdown)}</p>
-          )}
-        </CardContent>
-      </Card>
-
       {hasAlerts && (
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-1">
@@ -349,74 +338,89 @@ export function VetResumen({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-4 lg:grid lg:grid-cols-3 lg:items-start lg:gap-4 lg:space-y-0">
+        <div className="space-y-4">
+          <Card>
+            <CardContent className="space-y-1 px-4 pt-5">
+              <Users className="size-4 text-muted-foreground" aria-hidden />
+              <p className="text-xs text-muted-foreground">Pacientes</p>
+              <p className="font-heading text-3xl">{patientsCount}</p>
+              {speciesBreakdown.length > 0 && (
+                <p className="text-xs text-muted-foreground">{formatSpeciesBreakdown(speciesBreakdown)}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
+            <Card>
+              <CardContent className="space-y-1 px-3 pt-4">
+                <CalendarClock className="size-4 text-muted-foreground" aria-hidden />
+                <p className="truncate text-xs text-muted-foreground">Turnos completados esta semana</p>
+                <p className="font-heading text-xl font-mono">{weeklyCompletedAppointments}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="space-y-1 px-3 pt-4">
+                <Stethoscope className="size-4 text-muted-foreground" aria-hidden />
+                <p className="truncate text-xs text-muted-foreground">Tratamientos este mes</p>
+                <p className="font-heading text-xl font-mono">{monthlyTreatmentCount}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         <Card>
-          <CardContent className="space-y-1 px-3 pt-4">
-            <CalendarClock className="size-4 text-muted-foreground" aria-hidden />
-            <p className="truncate text-xs text-muted-foreground">Turnos completados esta semana</p>
-            <p className="font-heading text-xl font-mono">{weeklyCompletedAppointments}</p>
+          <CardContent className="space-y-2 pt-6">
+            <p className="text-sm font-medium">Próximos turnos</p>
+            {upcomingAppointments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No hay turnos próximos. Van a aparecer acá apenas se agende uno.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {upcomingAppointments.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm last:border-0"
+                  >
+                    <span className="truncate">{appointment.customer_name ?? 'Sin nombre'}</span>
+                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                      {formatDateTime(appointment.starts_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
+
         <Card>
-          <CardContent className="space-y-1 px-3 pt-4">
-            <Stethoscope className="size-4 text-muted-foreground" aria-hidden />
-            <p className="truncate text-xs text-muted-foreground">Tratamientos este mes</p>
-            <p className="font-heading text-xl font-mono">{monthlyTreatmentCount}</p>
+          <CardContent className="space-y-2 pt-6">
+            <p className="text-sm font-medium">Actividad reciente</p>
+            {activityFeed.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Todavía no hay actividad reciente.</p>
+            ) : (
+              <div className="space-y-1">
+                {activityFeed.map((item, index) => (
+                  <Link
+                    key={`${item.kind}-${item.patientId}-${item.at}-${index}`}
+                    href={`/mi-tienda/pacientes/${item.patientId}`}
+                    className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm transition-colors last:border-0 hover:text-primary"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <History className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="truncate">{item.label}</span>
+                    </span>
+                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                      {formatDateTime(item.at)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardContent className="space-y-2 pt-6">
-          <p className="text-sm font-medium">Próximos turnos</p>
-          {upcomingAppointments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No hay turnos próximos. Van a aparecer acá apenas se agende uno.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              {upcomingAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm last:border-0"
-                >
-                  <span className="truncate">{appointment.customer_name ?? 'Sin nombre'}</span>
-                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                    {formatDateTime(appointment.starts_at)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="space-y-2 pt-6">
-          <p className="text-sm font-medium">Actividad reciente</p>
-          {activityFeed.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Todavía no hay actividad reciente.</p>
-          ) : (
-            <div className="space-y-1">
-              {activityFeed.map((item, index) => (
-                <Link
-                  key={`${item.kind}-${item.patientId}-${item.at}-${index}`}
-                  href={`/mi-tienda/pacientes/${item.patientId}`}
-                  className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm transition-colors last:border-0 hover:text-primary"
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <History className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                    <span className="truncate">{item.label}</span>
-                  </span>
-                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                    {formatDateTime(item.at)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       <div className="flex flex-wrap gap-2">
         <Button render={<Link href="/mi-tienda/pacientes" />} nativeButton={false} variant="outline">
