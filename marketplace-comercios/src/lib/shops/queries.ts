@@ -272,11 +272,14 @@ export const getActivePromotions = unstable_cache(
       .select(
         `
         id, image_url, text, expires_at, text_position, text_size, text_color, bg_color,
-        shops ( id, name, slug, logo_url, verification_status, subscription_status ),
+        shops!inner ( id, name, slug, logo_url, verification_status, subscription_status ),
         products ( id, name )
       `,
       )
       .gt("expires_at", new Date().toISOString())
+      .eq("shops.is_active", true)
+      .eq("shops.is_paused", false)
+      .is("shops.deleted_at", null)
       .order("created_at", { ascending: false })
       .limit(30);
 
