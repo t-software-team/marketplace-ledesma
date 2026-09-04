@@ -156,20 +156,18 @@ async function resolveSelfCheckin(
   const dayEnd = argentinaStartOfDayUTC(addDaysToDate(day, 1)).toISOString()
 
   // Match by the phone's trailing digits. Stored phones may carry formatting or
-  // a country-code prefix, so compare digit-only and by suffix. Filtering in JS
-  // (not SQL) keeps it correct regardless of how the number was typed in.
-  const { data: roster } = await service
+  // a country-code prefix, so compare digit-only and by suffix. `phone_digits_reversed`
+  // is a generated column storing the digits reversed, so a suffix match becomes an
+  // index-able prefix match (`reverse(digits)` typed so far reversed).
+  const reversedDigits = digits.split('').reverse().join('')
+  const { data } = await service
     .from('gym_members')
-    .select('id, full_name, phone')
+    .select('id, full_name')
     .eq('shop_id', shopId)
     .eq('is_archived', false)
-    .not('phone', 'is', null)
+    .like('phone_digits_reversed', `${reversedDigits}%`)
     .limit(5000)
-
-  const matches = (roster ?? []).filter((m) => {
-    const phone = (m.phone ?? '').replace(/\D/g, '')
-    return phone.length >= digits.length && phone.endsWith(digits)
-  })
+  const matches = data ?? []
 
   // Unknown member: denied, and recorded (by the typed digits) for the audit.
   if (matches.length === 0) {

@@ -452,6 +452,7 @@ export type Database = {
           is_archived: boolean
           notes: string | null
           phone: string | null
+          phone_digits_reversed: string | null
           shop_id: string
         }
         Insert: {
@@ -466,6 +467,7 @@ export type Database = {
           is_archived?: boolean
           notes?: string | null
           phone?: string | null
+          phone_digits_reversed?: string | null
           shop_id: string
         }
         Update: {
@@ -480,6 +482,7 @@ export type Database = {
           is_archived?: boolean
           notes?: string | null
           phone?: string | null
+          phone_digits_reversed?: string | null
           shop_id?: string
         }
         Relationships: [
