@@ -16,10 +16,12 @@ export interface PatientNoteRow {
   category: PatientNoteCategory
   created_at: string
   updated_at: string
+  created_by: string | null
+  author_name: string | null
   attachments: PatientNoteAttachmentRow[]
 }
 
-const NOTE_COLUMNS = 'id, patient_id, content, category, created_at, updated_at'
+const NOTE_COLUMNS = 'id, patient_id, content, category, created_at, updated_at, created_by'
 const ATTACHMENT_COLUMNS = 'id, note_id, url, file_name, created_at'
 
 /**
@@ -44,6 +46,18 @@ export async function listPatientNotes(patientId: string): Promise<PatientNoteRo
 
   if (!notes || notes.length === 0) return []
 
+  // created_by apunta a auth.users, no a profiles (no hay FK directa para
+  // hacer embed) — se resuelve el nombre aparte, mismo patrón que
+  // `getGymMember` en `gym/queries.ts`.
+  const authorIds = [...new Set(notes.map((note) => note.created_by).filter((id): id is string => !!id))]
+  const authorNames = new Map<string, string>()
+  if (authorIds.length > 0) {
+    const { data: authorProfiles } = await supabase.from('profiles').select('id, full_name').in('id', authorIds)
+    for (const profile of authorProfiles ?? []) {
+      if (profile.full_name) authorNames.set(profile.id, profile.full_name)
+    }
+  }
+
   const { data: attachments, error: attachmentsError } = await supabase
     .from('patient_note_attachments')
     .select(ATTACHMENT_COLUMNS)
@@ -55,7 +69,12 @@ export async function listPatientNotes(patientId: string): Promise<PatientNoteRo
 
   if (attachmentsError) {
     console.error('listPatientNotes: fallo al traer adjuntos', { patientId, attachmentsError })
-    return notes.map((note) => ({ ...note, category: note.category as PatientNoteCategory, attachments: [] }))
+    return notes.map((note) => ({
+      ...note,
+      category: note.category as PatientNoteCategory,
+      author_name: note.created_by ? (authorNames.get(note.created_by) ?? null) : null,
+      attachments: [],
+    }))
   }
 
   const attachmentsByNoteId = new Map<string, PatientNoteAttachmentRow[]>()
@@ -68,6 +87,7 @@ export async function listPatientNotes(patientId: string): Promise<PatientNoteRo
   return notes.map((note) => ({
     ...note,
     category: note.category as PatientNoteCategory,
+    author_name: note.created_by ? (authorNames.get(note.created_by) ?? null) : null,
     attachments: attachmentsByNoteId.get(note.id) ?? [],
   }))
 }

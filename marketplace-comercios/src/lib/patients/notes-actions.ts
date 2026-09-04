@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { getMyShop } from '@/lib/shops/queries'
 import { patientNoteSchema } from '@/lib/validations/patients'
 
@@ -46,6 +46,7 @@ export async function createPatientNote(
   }
 
   const supabase = await createClient()
+  const user = await getAuthUser()
 
   const { data: patient, error: patientError } = await supabase
     .from('patients')
@@ -64,7 +65,12 @@ export async function createPatientNote(
 
   const { data: note, error } = await supabase
     .from('patient_notes')
-    .insert({ patient_id: patientId, content: parsed.data.content, category: parsed.data.category })
+    .insert({
+      patient_id: patientId,
+      content: parsed.data.content,
+      category: parsed.data.category,
+      created_by: user?.id ?? null,
+    })
     .select('id')
     .single()
 

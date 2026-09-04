@@ -685,6 +685,7 @@ export type Database = {
           category: string
           content: string
           created_at: string
+          created_by: string | null
           id: string
           patient_id: string
           updated_at: string
@@ -693,6 +694,7 @@ export type Database = {
           category?: string
           content: string
           created_at?: string
+          created_by?: string | null
           id?: string
           patient_id: string
           updated_at?: string
@@ -701,6 +703,7 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           patient_id?: string
           updated_at?: string
