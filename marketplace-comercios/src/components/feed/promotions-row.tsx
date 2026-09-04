@@ -22,7 +22,6 @@ interface Promotion {
     name: string
     slug: string
     logo_url: string | null
-    whatsapp_number: string
     verification_status: string
     subscription_status: string
   } | null
@@ -48,7 +47,6 @@ export function PromotionsRow({ promotions }: { promotions: Promotion[] }) {
       shopName: promotion.shops.name,
       shopSlug: promotion.shops.slug,
       shopLogoUrl: promotion.shops.logo_url,
-      shopWhatsapp: promotion.shops.whatsapp_number,
       isVerified: hasVerifiedBadge(promotion.shops),
       productName: promotion.products?.name,
       shopUrl: `${getBaseUrl()}/tienda/${promotion.shops.slug}`,
