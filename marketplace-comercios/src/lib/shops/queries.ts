@@ -1475,3 +1475,33 @@ export async function getProductVideoLimitInfo(shopId: string) {
     reached: max !== null && used >= max,
   };
 }
+
+export type StaffStatus = 'pending' | 'active' | 'revoked'
+
+export interface StaffRow {
+  id: string
+  invited_email: string
+  status: StaffStatus
+  created_at: string
+  accepted_at: string | null
+}
+
+/** Owner's team roster (Equipo page). Excludes revoked rows so the list only
+ * shows current/pending access — revocation history isn't shown, just cut. */
+export async function getStaff(shopId: string): Promise<StaffRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('shop_staff')
+    .select('id, invited_email, status, created_at, accepted_at')
+    .eq('shop_id', shopId)
+    .neq('status', 'revoked')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (error) {
+    console.error('getStaff: fallo al traer el equipo', { shopId, error })
+    return []
+  }
+
+  return (data ?? []) as StaffRow[]
+}
