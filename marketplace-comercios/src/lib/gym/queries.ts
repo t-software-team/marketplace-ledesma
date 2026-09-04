@@ -140,36 +140,6 @@ export async function getMyGymAccess(): Promise<GymAccess | null> {
   }
 }
 
-export type GymStaffStatus = 'pending' | 'active' | 'revoked'
-
-export interface GymStaffRow {
-  id: string
-  invited_email: string
-  status: GymStaffStatus
-  created_at: string
-  accepted_at: string | null
-}
-
-/** Owner's team roster (Equipo page). Excludes revoked rows so the list only
- * shows current/pending access — revocation history isn't shown, just cut. */
-export async function getGymStaff(shopId: string): Promise<GymStaffRow[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('shop_staff')
-    .select('id, invited_email, status, created_at, accepted_at')
-    .eq('shop_id', shopId)
-    .neq('status', 'revoked')
-    .order('created_at', { ascending: false })
-    .limit(200)
-
-  if (error) {
-    console.error('getGymStaff: fallo al traer el equipo', { shopId, error })
-    return []
-  }
-
-  return (data ?? []) as GymStaffRow[]
-}
-
 export async function getGymPlans(shopId: string): Promise<GymPlan[]> {
   const supabase = await createClient()
   const { data, error } = await supabase

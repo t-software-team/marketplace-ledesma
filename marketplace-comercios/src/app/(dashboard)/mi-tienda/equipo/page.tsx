@@ -2,11 +2,12 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/empty-state'
-import { getMyGymAccess, getGymStaff, type GymStaffStatus } from '@/lib/gym/queries'
+import { getMyGymAccess } from '@/lib/gym/queries'
+import { getStaff, type StaffStatus } from '@/lib/shops/queries'
 import { InviteStaffDialog } from './invite-staff-dialog'
 import { RevokeStaffButton } from './revoke-staff-button'
 
-const STATUS_LABEL: Record<GymStaffStatus, { label: string; variant: 'success' | 'warning' | 'outline' }> = {
+const STATUS_LABEL: Record<StaffStatus, { label: string; variant: 'success' | 'warning' | 'outline' }> = {
   pending: { label: 'Invitación enviada', variant: 'warning' },
   active: { label: 'Activo', variant: 'success' },
   revoked: { label: 'Revocado', variant: 'outline' },
@@ -22,7 +23,7 @@ export default async function EquipoPage() {
   // Staff no gestiona el equipo — es una decisión exclusiva del dueño.
   if (access.role !== 'owner') redirect('/mi-tienda/ingresos')
 
-  const staff = await getGymStaff(access.shopId)
+  const staff = await getStaff(access.shopId)
 
   return (
     <div className="space-y-4">
