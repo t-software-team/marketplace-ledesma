@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toast'
 import { checkInGymMember, searchGymMembers } from '@/lib/gym/actions'
 import type { GymMemberSearchResult } from '@/lib/gym/queries'
+import { useGymCheckinSound } from '@/hooks/use-gym-checkin-sound'
 
 type View = 'form' | 'success' | 'warning' | 'error'
 
@@ -32,6 +33,7 @@ export function CheckInClient() {
   } | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { playSuccessSound, playDangerSound } = useGymCheckinSound()
 
   const viewConfig = {
     success: {
@@ -103,34 +105,10 @@ export function CheckInClient() {
     }
   }, [view])
 
-  // Sonido corto de éxito con Web Audio API
   useEffect(() => {
-    if (view !== 'success') return
-
-    try {
-      const AudioContextCtor =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-      if (!AudioContextCtor) return
-
-      const ctx = new AudioContextCtor()
-      const oscillator = ctx.createOscillator()
-      const gainNode = ctx.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(ctx.destination)
-
-      oscillator.frequency.value = 800
-      oscillator.type = 'sine'
-      gainNode.gain.setValueAtTime(0.3, ctx.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3)
-
-      oscillator.start(ctx.currentTime)
-      oscillator.stop(ctx.currentTime + 0.3)
-    } catch (err) {
-      console.error('CheckInClient: fallo al reproducir sonido de éxito', err)
-    }
-  }, [view])
+    if (view === 'success') playSuccessSound()
+    if (view === 'warning') playDangerSound()
+  }, [view, playSuccessSound, playDangerSound])
 
   const register = (member: GymMemberSearchResult) => {
     startTransition(async () => {

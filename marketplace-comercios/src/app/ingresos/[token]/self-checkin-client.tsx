@@ -5,6 +5,7 @@ import { CheckCircle2, AlertTriangle, XCircle, UserX, Users, Clock, WifiOff } fr
 import { NumberPad } from '@/components/ui/number-pad'
 import { InstallAppButton } from '@/components/shared/install-app-button'
 import { useGymOfflineCheckin } from '@/hooks/use-gym-offline-checkin'
+import { useGymCheckinSound } from '@/hooks/use-gym-checkin-sound'
 import { gymSelfCheckin, type SelfCheckinResult } from '@/lib/gym/self-checkin-actions'
 
 // A check-in resolved from the on-device cache while offline. The real
@@ -18,27 +19,6 @@ type Mode = 'partial' | 'full'
 
 const RESET_MS = 4000
 
-/** Short success chime via Web Audio API. No asset to load. */
-function playSuccessChime() {
-  try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-    if (!Ctx) return
-    const ctx = new Ctx()
-    const oscillator = ctx.createOscillator()
-    const gain = ctx.createGain()
-    oscillator.connect(gain)
-    gain.connect(ctx.destination)
-    oscillator.type = 'sine'
-    oscillator.frequency.value = 880
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35)
-    oscillator.start(ctx.currentTime)
-    oscillator.stop(ctx.currentTime + 0.35)
-  } catch (err) {
-    console.error('SelfCheckinClient: fallo al reproducir sonido', err)
-  }
-}
-
 export function SelfCheckinClient({ token, gymName }: { token: string; gymName: string }) {
   const [value, setValue] = useState('')
   const [mode, setMode] = useState<Mode>('partial')
@@ -46,6 +26,7 @@ export function SelfCheckinClient({ token, gymName }: { token: string; gymName: 
   const [result, setResult] = useState<ViewResult | null>(null)
   const [isPending, startTransition] = useTransition()
   const { isOnline, pendingCount, matchLocal, enqueue } = useGymOfflineCheckin(token)
+  const { playSuccessSound, playDangerSound } = useGymCheckinSound()
 
   const reset = useCallback(() => {
     setView('form')
@@ -62,8 +43,9 @@ export function SelfCheckinClient({ token, gymName }: { token: string; gymName: 
   }, [view, reset])
 
   useEffect(() => {
-    if (view === 'active') playSuccessChime()
-  }, [view])
+    if (view === 'active') playSuccessSound()
+    if (view === 'expired' || view === 'not_found') playDangerSound()
+  }, [view, playSuccessSound, playDangerSound])
 
   const maxLen = mode === 'partial' ? 4 : 15
   const minLen = mode === 'partial' ? 4 : 6
