@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { Button } from '@/components/ui/button'
-import { acceptGymStaffInviteAndRedirect } from '@/lib/gym/staff-actions'
+import { acceptStaffInviteAndRedirect } from '@/lib/shops/staff-actions'
 
 export function AcceptInviteButton({ token }: { token: string }) {
   const [isPending, startTransition] = useTransition()
@@ -13,10 +13,10 @@ export function AcceptInviteButton({ token }: { token: string }) {
     setError(null)
     startTransition(async () => {
       try {
-        const result = await acceptGymStaffInviteAndRedirect(token)
+        const result = await acceptStaffInviteAndRedirect(token)
         if (result?.error) setError(result.error)
       } catch (err) {
-        // acceptGymStaffInviteAndRedirect throws Next's internal redirect
+        // acceptStaffInviteAndRedirect throws Next's internal redirect
         // signal on success — anything else is a real failure.
         if (isRedirectError(err)) throw err
         console.error('AcceptInviteButton: fallo inesperado al aceptar', err)

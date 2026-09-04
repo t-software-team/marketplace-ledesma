@@ -99,7 +99,7 @@ export function shopVerificationRejectedEmail(shopName: string) {
   }
 }
 
-export function gymStaffInviteEmail(shopName: string, inviteToken: string) {
+export function staffInviteEmail(shopName: string, inviteToken: string) {
   return {
     subject: `Te invitaron a trabajar en ${shopName} — Proxi Marketplace`,
     html: layout(

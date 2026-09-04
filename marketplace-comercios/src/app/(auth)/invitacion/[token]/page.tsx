@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getAuthUser } from '@/lib/supabase/server'
-import { getGymStaffInvitePreview } from '@/lib/gym/staff-actions'
+import { getStaffInvitePreview } from '@/lib/shops/staff-actions'
 import { AcceptInviteButton } from './accept-invite-button'
 import { CreateAccountAcceptForm } from './create-account-accept-form'
 
@@ -12,7 +12,7 @@ type PageProps = {
 
 export default async function InvitacionPage({ params }: PageProps) {
   const { token } = await params
-  const preview = await getGymStaffInvitePreview(token)
+  const preview = await getStaffInvitePreview(token)
 
   if (preview.status === 'invalid') {
     return (

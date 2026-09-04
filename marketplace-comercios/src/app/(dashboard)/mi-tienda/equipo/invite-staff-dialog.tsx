@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { UserPlus } from 'lucide-react'
-import { inviteGymStaff } from '@/lib/gym/staff-actions'
+import { inviteStaff } from '@/lib/shops/staff-actions'
 import type { ActionState } from '@/lib/gym/actions'
 
 const initialState: ActionState = { error: null }
@@ -22,7 +22,7 @@ const initialState: ActionState = { error: null }
 export function InviteStaffDialog() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [state, formAction, isPending] = useActionState(inviteGymStaff, initialState)
+  const [state, formAction, isPending] = useActionState(inviteStaff, initialState)
   const submitted = useRef(false)
 
   useEffect(() => {
