@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { PawPrint, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -19,6 +19,7 @@ import {
   type PatientStatusFilter,
 } from '@/lib/patients/list-filters'
 import type { PatientRow } from '@/lib/patients/queries'
+import { SpeciesIcon } from '@/lib/patients/species-icon'
 import { PatientRowActions } from './patient-row-actions'
 
 const ALL_SPECIES_VALUE = 'todas'
@@ -85,7 +86,7 @@ function PatientAvatar({ patient, size = 36 }: { patient: PatientRow; size?: num
         />
       ) : (
         <div className="flex h-full items-center justify-center text-muted-foreground">
-          <PawPrint className="size-4" aria-hidden />
+          <SpeciesIcon species={patient.species} className="size-4" aria-hidden />
         </div>
       )}
     </div>
