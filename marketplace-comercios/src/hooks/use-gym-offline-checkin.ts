@@ -31,9 +31,10 @@ type LocalMatch =
  */
 export function useGymOfflineCheckin(token: string) {
   const [roster, setRoster] = useState<GymOfflineRosterEntry[]>([])
-  const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator === 'undefined' ? true : navigator.onLine
-  )
+  // Always starts true to match the server-rendered markup (no `navigator` on
+  // the server); the real value is synced right after mount in the effect
+  // below, once hydration has already reconciled against the SSR output.
+  const [isOnline, setIsOnline] = useState(true)
   const [pendingCount, setPendingCount] = useState(0)
 
   const refreshQueueCount = useCallback(async () => {
@@ -74,6 +75,8 @@ export function useGymOfflineCheckin(token: string) {
   }, [token, refreshQueueCount])
 
   useEffect(() => {
+    setIsOnline(navigator.onLine)
+
     // Kick off the initial load/sync inside an async IIFE rather than as bare
     // effect-body statements — the state updates all happen after an await,
     // never synchronously while the effect itself is running.
