@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils'
 import type { AppointmentRow } from '@/lib/turnos/queries'
 import type { ShopReminderAlerts } from '@/lib/patients/alerts'
 import type { ActivityFeedItem, SpeciesBreakdownItem } from '@/lib/patients/dashboard-queries'
+import { QuickLogCard, type QuickLogPatient } from './quick-log-card'
 
 const SPECIES_LABELS: Record<string, string> = {
   perro: 'perros',
@@ -66,6 +67,7 @@ interface VetResumenProps {
   upcomingAppointments: AppointmentRow[]
   treatmentAlerts: ShopReminderAlerts
   alertedPatients: { id: string; name: string; overdue: number; upcoming: number; nextDueAt: string | null }[]
+  patients: QuickLogPatient[]
   patientsCount: number
   speciesBreakdown: SpeciesBreakdownItem[]
   weeklyCompletedAppointments: number
@@ -116,6 +118,7 @@ export function VetResumen({
   upcomingAppointments,
   treatmentAlerts,
   alertedPatients,
+  patients,
   patientsCount,
   speciesBreakdown,
   weeklyCompletedAppointments,
@@ -295,6 +298,8 @@ export function VetResumen({
           Ver turnos
         </Button>
       </div>
+
+      <QuickLogCard patients={patients} />
 
       {hasAlerts && (
         <div className="space-y-2">

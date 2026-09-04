@@ -25,7 +25,7 @@ import { NoteHistory } from './note-history'
 
 interface PatientDetailPageProps {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ tratamiento?: string }>
+  searchParams: Promise<{ tratamiento?: string; recordatorio?: string; nota?: string }>
 }
 
 // Detalle de paciente: ficha básica (PR1) + sección de Tratamientos
@@ -33,7 +33,7 @@ interface PatientDetailPageProps {
 // historial con su status derivado (al día/próximo/vencido).
 export default async function PatientDetailPage({ params, searchParams }: PatientDetailPageProps) {
   const { id } = await params
-  const { tratamiento } = await searchParams
+  const { tratamiento, recordatorio, nota } = await searchParams
   const shop = await getMyShop()
 
   if (!shop) {
@@ -163,7 +163,7 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           <CardHeader>
             <CardTitle>Recordatorios</CardTitle>
             <CardAction>
-              <AddReminderDialog patientId={patient.id} />
+              <AddReminderDialog patientId={patient.id} defaultOpen={recordatorio === 'nuevo'} />
             </CardAction>
           </CardHeader>
           <CardContent>
@@ -181,7 +181,7 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           <CardHeader>
             <CardTitle>Historial clínico</CardTitle>
             <CardAction>
-              <AddNoteDialog shopId={shop.id} patientId={patient.id} />
+              <AddNoteDialog shopId={shop.id} patientId={patient.id} defaultOpen={nota === 'nueva'} />
             </CardAction>
           </CardHeader>
           <CardContent>

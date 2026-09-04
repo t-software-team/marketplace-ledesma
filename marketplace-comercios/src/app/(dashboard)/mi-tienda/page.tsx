@@ -171,6 +171,12 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         upcomingAppointments={upcomingAppointments}
         treatmentAlerts={treatmentAlerts}
         alertedPatients={alertedPatients}
+        patients={patients.map((patient) => ({
+          id: patient.id,
+          name: patient.name,
+          species: patient.species,
+          owner_name: patient.owner_name,
+        }))}
         patientsCount={patientsCount}
         speciesBreakdown={speciesBreakdown}
         weeklyCompletedAppointments={weeklyCompletedAppointments}

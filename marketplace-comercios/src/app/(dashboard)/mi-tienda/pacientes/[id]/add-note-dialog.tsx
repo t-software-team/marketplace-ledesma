@@ -17,6 +17,7 @@ import { useSpeechToText } from '@/hooks/use-speech-to-text'
 interface AddNoteDialogProps {
   shopId: string
   patientId: string
+  defaultOpen?: boolean
 }
 
 const initialState: PatientNoteActionState = { error: null }
@@ -24,8 +25,8 @@ const initialState: PatientNoteActionState = { error: null }
 const ALLOWED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf']
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
-export function AddNoteDialog({ shopId, patientId }: AddNoteDialogProps) {
-  const [open, setOpen] = useState(false)
+export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNoteDialogProps) {
+  const [open, setOpen] = useState(defaultOpen)
   const [state, setState] = useState<PatientNoteActionState>(initialState)
   const [content, setContent] = useState('')
   const { isListening, isSupported, start, stop } = useSpeechToText((text) =>
