@@ -16,6 +16,7 @@ import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-i
 import { getShopPatientAlertsMap, getShopReminderAlerts } from '@/lib/patients/alerts'
 import {
   getMonthlyTreatmentCount,
+  getShopActivityFeed,
   getWeeklyCompletedAppointments,
   groupPatientsBySpecies,
 } from '@/lib/patients/dashboard-queries'
@@ -131,6 +132,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       patients,
       weeklyCompletedAppointments,
       monthlyTreatmentCount,
+      activityFeed,
     ] = await Promise.all([
       getShopUpcomingAppointments(shop.id),
       getShopReminderAlerts(shop.id),
@@ -140,6 +142,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
       getShopPatients(shop.id),
       getWeeklyCompletedAppointments(shop.id),
       getMonthlyTreatmentCount(shop.id),
+      getShopActivityFeed(shop.id),
     ])
     const patientNameById = new Map(patients.map((patient) => [patient.id, patient.name]))
     const speciesBreakdown = groupPatientsBySpecies(patients)
@@ -172,6 +175,7 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         speciesBreakdown={speciesBreakdown}
         weeklyCompletedAppointments={weeklyCompletedAppointments}
         monthlyTreatmentCount={monthlyTreatmentCount}
+        activityFeed={activityFeed}
         profileViews={shop.profile_views}
         whatsappClicks={shop.whatsapp_clicks}
         followerCount={followerCount}

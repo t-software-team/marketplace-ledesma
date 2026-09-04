@@ -99,6 +99,110 @@ export async function getWeeklyCompletedAppointments(shopId: string): Promise<nu
   return count ?? 0
 }
 
+export interface ActivityFeedSourceItem {
+  kind: 'treatment' | 'note'
+  at: string
+  patientId: string
+  patientName: string
+  label: string
+}
+
+export type ActivityFeedItem = ActivityFeedSourceItem
+
+/**
+ * Mezcla tratamientos aplicados + notas de historial clínico (ya traídos por
+ * separado), ordena por fecha desc y corta a `limit`. Pura — sin acceso a
+ * Supabase, testeable directamente.
+ */
+export function mergeActivityFeed(
+  treatments: ActivityFeedSourceItem[],
+  notes: ActivityFeedSourceItem[],
+  limit: number
+): ActivityFeedItem[] {
+  return [...treatments, ...notes]
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .slice(0, limit)
+}
+
+interface TreatmentApplicationFeedRow {
+  patient_id: string
+  applied_at: string
+  patients: { name: string } | null
+  treatment_templates: { name: string } | null
+}
+
+interface PatientNoteFeedRow {
+  patient_id: string
+  created_at: string
+  patients: { name: string } | null
+}
+
+/**
+ * Feed de actividad reciente del comercio: últimas aplicaciones de
+ * tratamiento + últimas notas de historial clínico, mezcladas y ordenadas
+ * por fecha. Cada fuente se trae con `limit` propio (misma cota) para no
+ * perder items recientes de un tipo por exceso del otro.
+ */
+export async function getShopActivityFeed(shopId: string, limit = 8): Promise<ActivityFeedItem[]> {
+  const supabase = await createClient()
+
+  const [treatmentsResult, notesResult] = await Promise.all([
+    supabase
+      .from('treatment_applications')
+      .select('patient_id, applied_at, patients!inner(shop_id, name), treatment_templates(name)')
+      .eq('patients.shop_id', shopId)
+      .order('applied_at', { ascending: false })
+      .limit(limit),
+    supabase
+      .from('patient_notes')
+      .select('patient_id, created_at, patients!inner(shop_id, name)')
+      .eq('patients.shop_id', shopId)
+      .order('created_at', { ascending: false })
+      .limit(limit),
+  ])
+
+  if (treatmentsResult.error) {
+    console.error('getShopActivityFeed: fallo al traer tratamientos aplicados', {
+      shopId,
+      error: treatmentsResult.error,
+    })
+  }
+  if (notesResult.error) {
+    console.error('getShopActivityFeed: fallo al traer notas', { shopId, error: notesResult.error })
+  }
+
+  const treatmentItems: ActivityFeedSourceItem[] = (
+    (treatmentsResult.data ?? []) as unknown as TreatmentApplicationFeedRow[]
+  ).map((row) => {
+    const patientName = row.patients?.name ?? 'un paciente'
+    const templateName = row.treatment_templates?.name
+    return {
+      kind: 'treatment',
+      at: row.applied_at,
+      patientId: row.patient_id,
+      patientName,
+      label: templateName
+        ? `Se aplicó ${templateName} a ${patientName}`
+        : `Se aplicó un tratamiento a ${patientName}`,
+    }
+  })
+
+  const noteItems: ActivityFeedSourceItem[] = ((notesResult.data ?? []) as unknown as PatientNoteFeedRow[]).map(
+    (row) => {
+      const patientName = row.patients?.name ?? 'un paciente'
+      return {
+        kind: 'note',
+        at: row.created_at,
+        patientId: row.patient_id,
+        patientName,
+        label: `Nueva nota en ${patientName}`,
+      }
+    }
+  )
+
+  return mergeActivityFeed(treatmentItems, noteItems, limit)
+}
+
 /**
  * Tratamientos aplicados (applied_at) en el mes calendario en curso, mismo
  * patrón de join `patients!inner(shop_id)` que getShopTreatmentAlerts.

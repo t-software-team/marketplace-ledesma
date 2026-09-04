@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   Eye,
+  History,
   MessageCircle,
   PawPrint,
   Percent,
@@ -28,7 +29,7 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { cn } from '@/lib/utils'
 import type { AppointmentRow } from '@/lib/turnos/queries'
 import type { ShopReminderAlerts } from '@/lib/patients/alerts'
-import type { SpeciesBreakdownItem } from '@/lib/patients/dashboard-queries'
+import type { ActivityFeedItem, SpeciesBreakdownItem } from '@/lib/patients/dashboard-queries'
 
 const SPECIES_LABELS: Record<string, string> = {
   perro: 'perros',
@@ -69,6 +70,7 @@ interface VetResumenProps {
   speciesBreakdown: SpeciesBreakdownItem[]
   weeklyCompletedAppointments: number
   monthlyTreatmentCount: number
+  activityFeed: ActivityFeedItem[]
   profileViews: number
   whatsappClicks: number
   followerCount: number
@@ -118,6 +120,7 @@ export function VetResumen({
   speciesBreakdown,
   weeklyCompletedAppointments,
   monthlyTreatmentCount,
+  activityFeed,
   profileViews,
   whatsappClicks,
   followerCount,
@@ -382,6 +385,33 @@ export function VetResumen({
                     {formatDateTime(appointment.starts_at)}
                   </span>
                 </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-2 pt-6">
+          <p className="text-sm font-medium">Actividad reciente</p>
+          {activityFeed.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Todavía no hay actividad reciente.</p>
+          ) : (
+            <div className="space-y-1">
+              {activityFeed.map((item, index) => (
+                <Link
+                  key={`${item.kind}-${item.patientId}-${item.at}-${index}`}
+                  href={`/mi-tienda/pacientes/${item.patientId}`}
+                  className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm transition-colors last:border-0 hover:text-primary"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <History className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="truncate">{item.label}</span>
+                  </span>
+                  <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                    {formatDateTime(item.at)}
+                  </span>
+                </Link>
               ))}
             </div>
           )}

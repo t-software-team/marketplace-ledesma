@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { getMonthRange, getWeekRange, groupPatientsBySpecies } from './dashboard-queries'
+import {
+  getMonthRange,
+  getWeekRange,
+  groupPatientsBySpecies,
+  mergeActivityFeed,
+  type ActivityFeedSourceItem,
+} from './dashboard-queries'
 
 describe('groupPatientsBySpecies', () => {
   it('agrupa y cuenta por especie', () => {
@@ -63,5 +69,78 @@ describe('getMonthRange', () => {
     const { start, end } = getMonthRange(now)
     expect(start).toBe('2026-02-01T03:00:00.000Z')
     expect(end).toBe('2026-03-01T03:00:00.000Z')
+  })
+})
+
+describe('mergeActivityFeed', () => {
+  const treatment = (at: string, patientName = 'Firulais'): ActivityFeedSourceItem => ({
+    kind: 'treatment',
+    at,
+    patientId: 'p1',
+    patientName,
+    label: 'Se aplicó Antiparasitario a Firulais',
+  })
+  const note = (at: string, patientName = 'Michi'): ActivityFeedSourceItem => ({
+    kind: 'note',
+    at,
+    patientId: 'p2',
+    patientName,
+    label: 'Nueva nota en Michi',
+  })
+
+  it('devuelve solo tratamientos cuando no hay notas', () => {
+    const result = mergeActivityFeed(
+      [treatment('2026-03-01T10:00:00.000Z'), treatment('2026-03-02T10:00:00.000Z')],
+      [],
+      8
+    )
+    expect(result.map((item) => item.at)).toEqual([
+      '2026-03-02T10:00:00.000Z',
+      '2026-03-01T10:00:00.000Z',
+    ])
+  })
+
+  it('devuelve solo notas cuando no hay tratamientos', () => {
+    const result = mergeActivityFeed(
+      [],
+      [note('2026-03-01T10:00:00.000Z'), note('2026-03-02T10:00:00.000Z')],
+      8
+    )
+    expect(result.map((item) => item.at)).toEqual([
+      '2026-03-02T10:00:00.000Z',
+      '2026-03-01T10:00:00.000Z',
+    ])
+  })
+
+  it('mezcla tratamientos y notas ordenados por fecha desc', () => {
+    const result = mergeActivityFeed(
+      [treatment('2026-03-01T10:00:00.000Z'), treatment('2026-03-03T10:00:00.000Z')],
+      [note('2026-03-02T10:00:00.000Z')],
+      8
+    )
+    expect(result.map((item) => ({ kind: item.kind, at: item.at }))).toEqual([
+      { kind: 'treatment', at: '2026-03-03T10:00:00.000Z' },
+      { kind: 'note', at: '2026-03-02T10:00:00.000Z' },
+      { kind: 'treatment', at: '2026-03-01T10:00:00.000Z' },
+    ])
+  })
+
+  it('corta al límite indicado cuando hay más items que el límite', () => {
+    const treatments = ['2026-03-01', '2026-03-02', '2026-03-03', '2026-03-04', '2026-03-05'].map(
+      (day) => treatment(`${day}T10:00:00.000Z`)
+    )
+    const notes = ['2026-03-06', '2026-03-07', '2026-03-08'].map((day) => note(`${day}T10:00:00.000Z`))
+    const result = mergeActivityFeed(treatments, notes, 4)
+    expect(result).toHaveLength(4)
+    expect(result.map((item) => item.at)).toEqual([
+      '2026-03-08T10:00:00.000Z',
+      '2026-03-07T10:00:00.000Z',
+      '2026-03-06T10:00:00.000Z',
+      '2026-03-05T10:00:00.000Z',
+    ])
+  })
+
+  it('lista vacía en ambas fuentes devuelve arreglo vacío', () => {
+    expect(mergeActivityFeed([], [], 8)).toEqual([])
   })
 })
