@@ -4,7 +4,7 @@ import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { revokeGymStaff } from '@/lib/gym/staff-actions'
+import { revokeStaff } from '@/lib/shops/staff-actions'
 
 export function RevokeStaffButton({ staffId, email }: { staffId: string; email: string }) {
   const router = useRouter()
@@ -13,7 +13,7 @@ export function RevokeStaffButton({ staffId, email }: { staffId: string; email: 
   const revoke = () => {
     if (!confirm(`¿Quitar el acceso de ${email}? Va a dejar de poder entrar al panel.`)) return
     startTransition(async () => {
-      const res = await revokeGymStaff(staffId)
+      const res = await revokeStaff(staffId)
       if (res.error) {
         toast.add({ title: 'No pudimos quitar el acceso', description: res.error, type: 'error' })
         return

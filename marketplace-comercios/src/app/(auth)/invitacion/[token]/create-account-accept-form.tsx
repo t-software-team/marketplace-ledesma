@@ -8,7 +8,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { acceptInviteSchema, type AcceptInviteFormValues } from '@/lib/validations/auth'
-import { acceptGymStaffInviteNewAccountAndRedirect } from '@/lib/gym/staff-actions'
+import { acceptStaffInviteNewAccountAndRedirect } from '@/lib/shops/staff-actions'
 
 export function CreateAccountAcceptForm({ token, email }: { token: string; email: string }) {
   const [isPending, startTransition] = useTransition()
@@ -28,7 +28,7 @@ export function CreateAccountAcceptForm({ token, email }: { token: string; email
         const formData = new FormData()
         formData.set('fullName', values.fullName)
         formData.set('password', values.password)
-        const result = await acceptGymStaffInviteNewAccountAndRedirect(token, formData)
+        const result = await acceptStaffInviteNewAccountAndRedirect(token, formData)
         if (result?.error) setError(result.error)
       } catch (err) {
         if (isRedirectError(err)) throw err
