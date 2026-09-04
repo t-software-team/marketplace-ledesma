@@ -28,6 +28,19 @@ import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { cn } from '@/lib/utils'
 import type { AppointmentRow } from '@/lib/turnos/queries'
 import type { ShopReminderAlerts } from '@/lib/patients/alerts'
+import type { SpeciesBreakdownItem } from '@/lib/patients/dashboard-queries'
+
+const SPECIES_LABELS: Record<string, string> = {
+  perro: 'perros',
+  gato: 'gatos',
+  otro: 'otros',
+}
+
+function formatSpeciesBreakdown(breakdown: SpeciesBreakdownItem[]): string {
+  return breakdown
+    .map(({ species, count }) => `${count} ${SPECIES_LABELS[species] ?? species}`)
+    .join(' · ')
+}
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString('es-AR', {
@@ -53,6 +66,9 @@ interface VetResumenProps {
   treatmentAlerts: ShopReminderAlerts
   alertedPatients: { id: string; name: string; overdue: number; upcoming: number; nextDueAt: string | null }[]
   patientsCount: number
+  speciesBreakdown: SpeciesBreakdownItem[]
+  weeklyCompletedAppointments: number
+  monthlyTreatmentCount: number
   profileViews: number
   whatsappClicks: number
   followerCount: number
@@ -99,6 +115,9 @@ export function VetResumen({
   treatmentAlerts,
   alertedPatients,
   patientsCount,
+  speciesBreakdown,
+  weeklyCompletedAppointments,
+  monthlyTreatmentCount,
   profileViews,
   whatsappClicks,
   followerCount,
@@ -279,6 +298,9 @@ export function VetResumen({
           <Users className="size-4 text-muted-foreground" aria-hidden />
           <p className="text-xs text-muted-foreground">Pacientes</p>
           <p className="font-heading text-3xl">{patientsCount}</p>
+          {speciesBreakdown.length > 0 && (
+            <p className="text-xs text-muted-foreground">{formatSpeciesBreakdown(speciesBreakdown)}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -323,6 +345,23 @@ export function VetResumen({
           )}
         </div>
       )}
+
+      <div className="grid grid-cols-2 gap-2">
+        <Card>
+          <CardContent className="space-y-1 px-3 pt-4">
+            <CalendarClock className="size-4 text-muted-foreground" aria-hidden />
+            <p className="truncate text-xs text-muted-foreground">Turnos completados esta semana</p>
+            <p className="font-heading text-xl font-mono">{weeklyCompletedAppointments}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="space-y-1 px-3 pt-4">
+            <Stethoscope className="size-4 text-muted-foreground" aria-hidden />
+            <p className="truncate text-xs text-muted-foreground">Tratamientos este mes</p>
+            <p className="font-heading text-xl font-mono">{monthlyTreatmentCount}</p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardContent className="space-y-2 pt-6">

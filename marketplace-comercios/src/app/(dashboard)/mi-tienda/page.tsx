@@ -14,6 +14,11 @@ import { TrendAreaChart } from '@/components/shared/trend-area-chart'
 import { VerifiedStamp } from '@/components/shared/verified-stamp'
 import { isGymRubro, isServiceRubro, isVeterinariaRubro } from '@/lib/category-icons'
 import { getShopPatientAlertsMap, getShopReminderAlerts } from '@/lib/patients/alerts'
+import {
+  getMonthlyTreatmentCount,
+  getWeeklyCompletedAppointments,
+  groupPatientsBySpecies,
+} from '@/lib/patients/dashboard-queries'
 import { planMatchesShop } from '@/lib/shops/plan-scope'
 import { GymResumen } from '@/components/gym/gym-resumen'
 import { VetResumen } from '@/components/vet/vet-resumen'
@@ -117,16 +122,27 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
   // Veterinarias get a dedicated management dashboard instead of the catalog
   // resumen — mismo criterio que gyms, antes de calcular nada del flujo genérico.
   if (isVeterinariaRubro(shop.categories?.slug)) {
-    const [upcomingAppointments, treatmentAlerts, patientsCount, followerCount, patientAlertsMap, patients] =
-      await Promise.all([
-        getShopUpcomingAppointments(shop.id),
-        getShopReminderAlerts(shop.id),
-        getShopPatientsCount(shop.id),
-        getShopFollowStats(shop.id),
-        getShopPatientAlertsMap(shop.id),
-        getShopPatients(shop.id),
-      ])
+    const [
+      upcomingAppointments,
+      treatmentAlerts,
+      patientsCount,
+      followerCount,
+      patientAlertsMap,
+      patients,
+      weeklyCompletedAppointments,
+      monthlyTreatmentCount,
+    ] = await Promise.all([
+      getShopUpcomingAppointments(shop.id),
+      getShopReminderAlerts(shop.id),
+      getShopPatientsCount(shop.id),
+      getShopFollowStats(shop.id),
+      getShopPatientAlertsMap(shop.id),
+      getShopPatients(shop.id),
+      getWeeklyCompletedAppointments(shop.id),
+      getMonthlyTreatmentCount(shop.id),
+    ])
     const patientNameById = new Map(patients.map((patient) => [patient.id, patient.name]))
+    const speciesBreakdown = groupPatientsBySpecies(patients)
     const alertedPatients = Object.entries(patientAlertsMap)
       .map(([patientId, alerts]) => ({
         id: patientId,
@@ -153,6 +169,9 @@ export default async function MyShopPage({ searchParams }: MyShopPageProps) {
         treatmentAlerts={treatmentAlerts}
         alertedPatients={alertedPatients}
         patientsCount={patientsCount}
+        speciesBreakdown={speciesBreakdown}
+        weeklyCompletedAppointments={weeklyCompletedAppointments}
+        monthlyTreatmentCount={monthlyTreatmentCount}
         profileViews={shop.profile_views}
         whatsappClicks={shop.whatsapp_clicks}
         followerCount={followerCount}
