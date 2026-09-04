@@ -14,7 +14,7 @@ import { SpeciesIcon } from '@/lib/patients/species-icon'
 import { BackLink } from '@/components/shared/back-link'
 import { Button } from '@/components/ui/button'
 import { WhatsAppButton } from '@/components/shared/whatsapp-button'
-import { CollapsibleSection } from '@/components/shared/collapsible-section'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ApplyTreatmentDialog } from './apply-treatment-dialog'
 import { TreatmentHistory } from './treatment-history'
 import { AppointmentHistory } from './appointment-history'
@@ -64,7 +64,7 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
     <div
       className={cn(
         'fixed inset-x-0 bottom-0 z-40 flex items-center gap-2 border-t border-border bg-surface p-3',
-        'lg:static lg:z-auto lg:flex-col lg:items-stretch lg:border-0 lg:bg-transparent lg:p-0'
+        'lg:static lg:z-auto lg:border-0 lg:bg-transparent lg:p-0'
       )}
     >
       {patient.owner_phone && (
@@ -72,7 +72,8 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
           phoneNumber={patient.owner_phone}
           message={`Hola ${patient.owner_name ?? ''}, te contactamos por ${patient.name}`}
           variant="outline"
-          className="flex-1 justify-center lg:flex-none lg:justify-start"
+          compact
+          className="h-7 flex-1 justify-center gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] lg:flex-none [&_svg]:size-3.5"
         />
       )}
       <Button
@@ -80,7 +81,7 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
         nativeButton={false}
         variant="outline"
         size="sm"
-        className="flex-1 justify-center lg:flex-none lg:justify-start"
+        className="flex-1 justify-center lg:flex-none"
       >
         <Pencil className="size-4" aria-hidden />
         Editar
@@ -94,23 +95,22 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
   )
 
   return (
-    <div className="max-w-2xl space-y-4 pb-20 lg:max-w-none lg:pb-0">
+    <div className="max-w-3xl space-y-4 pb-20 lg:pb-0">
       <BackLink href="/mi-tienda/pacientes" />
 
-      <div className="lg:grid lg:grid-cols-[280px_1fr] lg:items-start lg:gap-6">
-        <div className="lg:sticky lg:top-6 lg:space-y-4">
-          <div className="flex items-center justify-between gap-2 lg:block">
-            <h1 className="flex items-center gap-2 text-2xl font-heading">
-              <SpeciesIcon
-                species={patient.species}
-                className="size-6 shrink-0 text-muted-foreground"
-                aria-hidden
-              />
-              {patient.name}
-            </h1>
-          </div>
-
-          <dl className="grid grid-cols-2 gap-4 text-sm lg:mt-4 lg:grid-cols-1">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <SpeciesIcon
+              species={patient.species}
+              className="size-6 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            {patient.name}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
             <div>
               <dt className="text-xs text-muted-foreground">Especie</dt>
               <dd>{patient.species ?? '—'}</dd>
@@ -145,15 +145,28 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
             </div>
           </dl>
 
-          <div className="lg:mt-4">{quickActions}</div>
-        </div>
+          <div className="border-t border-border pt-4">{quickActions}</div>
+        </CardContent>
+      </Card>
 
-        <div className="mt-4 space-y-1 lg:mt-0 xl:grid xl:grid-cols-2 xl:gap-x-6 xl:space-y-0">
-          <CollapsibleSection title="Tratamientos aplicados" defaultOpen>
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Tratamientos aplicados</CardTitle>
+          </CardHeader>
+          <CardContent>
             <TreatmentHistory patientId={patient.id} treatments={treatments} />
-          </CollapsibleSection>
+          </CardContent>
+        </Card>
 
-          <CollapsibleSection title="Recordatorios" action={<AddReminderDialog patientId={patient.id} />}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recordatorios</CardTitle>
+            <CardAction>
+              <AddReminderDialog patientId={patient.id} />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
             <ReminderList
               patientId={patient.id}
               reminders={reminders}
@@ -161,19 +174,29 @@ export default async function PatientDetailPage({ params, searchParams }: Patien
               ownerName={patient.owner_name}
               ownerPhone={patient.owner_phone}
             />
-          </CollapsibleSection>
+          </CardContent>
+        </Card>
 
-          <CollapsibleSection
-            title="Historial clínico"
-            action={<AddNoteDialog shopId={shop.id} patientId={patient.id} />}
-          >
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial clínico</CardTitle>
+            <CardAction>
+              <AddNoteDialog shopId={shop.id} patientId={patient.id} />
+            </CardAction>
+          </CardHeader>
+          <CardContent>
             <NoteHistory shopId={shop.id} patientId={patient.id} notes={notes} />
-          </CollapsibleSection>
+          </CardContent>
+        </Card>
 
-          <CollapsibleSection title="Historial de turnos">
+        <Card>
+          <CardHeader>
+            <CardTitle>Historial de turnos</CardTitle>
+          </CardHeader>
+          <CardContent>
             <AppointmentHistory appointments={appointments} />
-          </CollapsibleSection>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
