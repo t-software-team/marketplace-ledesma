@@ -11,6 +11,7 @@ import {
 } from '@/lib/gym/queries'
 import { getGymBenefits, getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { SociosList } from './socios-list'
+import { SociosSearch } from './socios-search'
 
 const FILTERS: { value: GymMemberStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'Todos' },
@@ -96,6 +97,8 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
           para sumar socios sin tope.
         </p>
       )}
+
+      <SociosSearch />
 
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((filter) => {

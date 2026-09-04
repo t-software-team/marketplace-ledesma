@@ -92,10 +92,12 @@ function ProgressRing({
 function LinkCard({
   href,
   alert,
+  className,
   children,
 }: {
   href: string
   alert?: boolean
+  className?: string
   children: React.ReactNode
 }) {
   return (
@@ -105,7 +107,7 @@ function LinkCard({
         alert
           ? 'border border-warning bg-warning/10 text-warning-foreground hover:bg-warning/15'
           : 'border border-border bg-card hover:border-primary'
-      }`}
+      } ${className ?? ''}`}
     >
       <div className="min-w-0 flex-1">{children}</div>
       <ChevronRight className="size-4 shrink-0 opacity-60" aria-hidden />
@@ -115,7 +117,6 @@ function LinkCard({
 
 export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckIns }: GymResumenProps) {
   const monthRevenue = stats.revenue_month_cash + stats.revenue_month_transfer
-  const hasRisk = stats.expired_members > 0 || stats.expiring_soon > 0
 
   return (
     <div className="space-y-6 pb-8">
@@ -182,10 +183,10 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
       {/* Riesgo: agrupa lo que necesita acción, con el mismo tratamiento
           visual (fondo con tinte, no solo un borde) que ya usa el resto de
           la app para avisos de suscripción. */}
-      {hasRisk && (
-        <div className="grid gap-2 sm:grid-cols-2">
+      {(stats.expired_members > 0 || stats.members_without_phone > 0) && (
+        <div className="flex flex-wrap gap-2 justify-between">
           {stats.expired_members > 0 && (
-            <LinkCard href="/mi-tienda/socios" alert>
+            <LinkCard href="/mi-tienda/socios" alert className="flex-1 basis-64">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="size-4 shrink-0" aria-hidden />
                 <p className="text-sm">
@@ -195,13 +196,16 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
               </div>
             </LinkCard>
           )}
-          {stats.expiring_soon > 0 && (
-            <LinkCard href="/mi-tienda/vencimientos" alert>
+          {stats.members_without_phone > 0 && (
+            <LinkCard href="/mi-tienda/socios" alert className="flex-1 basis-64">
               <div className="flex items-center gap-2">
-                <CalendarClock className="size-4 shrink-0" aria-hidden />
+                <Smartphone className="size-4 shrink-0" aria-hidden />
                 <p className="text-sm">
-                  <strong>{stats.expiring_soon}</strong> {stats.expiring_soon === 1 ? 'vence' : 'vencen'} en
-                  7 días
+                  <strong>{stats.members_without_phone}</strong>{' '}
+                  {stats.members_without_phone === 1
+                    ? 'socio no tiene celular cargado'
+                    : 'socios no tienen celular cargado'}{' '}
+                  y no pueden usar el autoingreso.
                 </p>
               </div>
             </LinkCard>
@@ -209,16 +213,13 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
         </div>
       )}
 
-      {stats.members_without_phone > 0 && (
-        <LinkCard href="/mi-tienda/socios" alert>
+      {stats.expiring_soon > 0 && (
+        <LinkCard href="/mi-tienda/vencimientos" alert>
           <div className="flex items-center gap-2">
-            <Smartphone className="size-4 shrink-0" aria-hidden />
+            <CalendarClock className="size-4 shrink-0" aria-hidden />
             <p className="text-sm">
-              <strong>{stats.members_without_phone}</strong>{' '}
-              {stats.members_without_phone === 1
-                ? 'socio no tiene celular cargado'
-                : 'socios no tienen celular cargado'}{' '}
-              y no pueden usar el autoingreso.
+              <strong>{stats.expiring_soon}</strong> {stats.expiring_soon === 1 ? 'vence' : 'vencen'} en 7
+              días
             </p>
           </div>
         </LinkCard>

@@ -720,6 +720,57 @@ export async function getGymReport(shopId: string, from: string, to: string): Pr
   }
 }
 
+export interface GymCheckinHourBucket {
+  hour: number
+  count: number
+}
+
+const ARGENTINA_HOUR_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Argentina/Buenos_Aires',
+  hour: 'numeric',
+  hour12: false,
+})
+
+/** The local Argentina hour (0-23) a UTC timestamp falls in. */
+function argentinaHour(date: Date): number {
+  // Intl returns '24' for midnight with hour12: false; normalize to 0.
+  const hour = Number(ARGENTINA_HOUR_FORMATTER.format(date))
+  return hour === 24 ? 0 : hour
+}
+
+/**
+ * Distribution of allowed check-ins by Argentina-local hour of day, for the
+ * "most frequent hour" chart. Bounded the same way as getGymReport.
+ */
+export async function getGymCheckinHourDistribution(
+  shopId: string,
+  from: string,
+  to: string
+): Promise<GymCheckinHourBucket[]> {
+  const supabase = await createClient()
+  const rangeStart = argentinaStartOfDayUTC(from).toISOString()
+  const rangeEnd = argentinaStartOfDayUTC(addDaysToDate(to, 1)).toISOString()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('checked_in_at')
+    .eq('shop_id', shopId)
+    .eq('outcome', 'allowed')
+    .gte('checked_in_at', rangeStart)
+    .lt('checked_in_at', rangeEnd)
+    .limit(20000)
+
+  if (error) {
+    console.error('getGymCheckinHourDistribution: fallo al traer ingresos', { shopId, from, to, error })
+  }
+
+  const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }))
+  for (const row of data ?? []) {
+    buckets[argentinaHour(new Date(row.checked_in_at))].count++
+  }
+  return buckets
+}
+
 export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {
   const supabase = await createClient()
   const startOfDay = argentinaStartOfTodayUTC()
