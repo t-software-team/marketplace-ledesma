@@ -1,23 +1,24 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { Loader2, Paperclip, X } from 'lucide-react'
+import { Loader2, Paperclip, Pencil, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { FieldError } from '@/components/shared/field-error'
 import { toast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { uploadPatientDocument } from '@/lib/shops/upload-image'
-import { createPatientNote, type PatientNoteActionState } from '@/lib/patients/notes-actions'
-import { NOTE_CATEGORY_OPTIONS } from '@/lib/patients/note-categories'
 import { VoiceNoteButton } from '@/components/shared/voice-note-button'
 import { VoiceOverlay } from '@/components/shared/voice-overlay'
 import { useSpeechToText } from '@/hooks/use-speech-to-text'
+import { uploadPatientDocument } from '@/lib/shops/upload-image'
+import { updatePatientNote, type PatientNoteActionState } from '@/lib/patients/notes-actions'
+import { NOTE_CATEGORY_OPTIONS } from '@/lib/patients/note-categories'
+import type { PatientNoteRow } from '@/lib/patients/notes-queries'
 
-interface AddNoteDialogProps {
+interface EditNoteDialogProps {
   shopId: string
   patientId: string
-  defaultOpen?: boolean
+  note: PatientNoteRow
 }
 
 const initialState: PatientNoteActionState = { error: null }
@@ -25,10 +26,15 @@ const initialState: PatientNoteActionState = { error: null }
 const ALLOWED_ATTACHMENT_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf']
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
-export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNoteDialogProps) {
-  const [open, setOpen] = useState(defaultOpen)
+/**
+ * Reutiliza el layout de `AddNoteDialog` (contenido + categoría + adjuntos +
+ * dictado) en modo edición. Los adjuntos nuevos se suman a los ya existentes
+ * de la nota — no se pueden quitar adjuntos viejos desde acá.
+ */
+export function EditNoteDialog({ shopId, patientId, note }: EditNoteDialogProps) {
+  const [open, setOpen] = useState(false)
   const [state, setState] = useState<PatientNoteActionState>(initialState)
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState(note.content)
   const { isListening, isSupported, start, stop } = useSpeechToText((text) =>
     setContent((current) => (current ? `${current} ${text}` : text))
   )
@@ -79,7 +85,7 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
           )
         } catch (error) {
           setIsUploading(false)
-          console.error('AddNoteDialog: fallo al subir adjuntos', { shopId, patientId, error })
+          console.error('EditNoteDialog: fallo al subir adjuntos', { shopId, patientId, error })
           const message = error instanceof Error ? error.message : 'No pudimos subir los adjuntos'
           setUploadError(message)
           toast.add({ title: 'No pudimos subir los adjuntos', description: message, type: 'error' })
@@ -88,14 +94,13 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
         setIsUploading(false)
       }
 
-      const result = await createPatientNote(patientId, attachments, initialState, formData)
+      const result = await updatePatientNote(note.id, patientId, attachments, initialState, formData)
       setState(result)
       if (result.error) {
-        toast.add({ title: 'No pudimos guardar la nota', description: result.error, type: 'error' })
+        toast.add({ title: 'No pudimos actualizar la nota', description: result.error, type: 'error' })
       } else {
-        toast.add({ title: 'Nota agregada', type: 'success' })
+        toast.add({ title: 'Nota actualizada', type: 'success' })
         setFiles([])
-        setContent('')
         setOpen(false)
       }
     })
@@ -106,21 +111,23 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
   return (
     <>
     <Dialog open={open && !isListening} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm" />}>Nueva nota</DialogTrigger>
+      <DialogTrigger render={<Button variant="ghost" size="icon-sm" aria-label="Editar nota" />}>
+        <Pencil className="size-4" aria-hidden />
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nueva nota de historial</DialogTitle>
+          <DialogTitle>Editar nota</DialogTitle>
         </DialogHeader>
         <form action={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <label htmlFor="content" className="text-sm font-medium">
+              <label htmlFor="edit-content" className="text-sm font-medium">
                 Contenido
               </label>
               {isSupported && <VoiceNoteButton disabled={isBusy} onStart={start} />}
             </div>
             <Textarea
-              id="content"
+              id="edit-content"
               name="content"
               required
               value={content}
@@ -132,13 +139,13 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="category" className="text-sm font-medium">
+            <label htmlFor="edit-category" className="text-sm font-medium">
               Categoría
             </label>
             <select
-              id="category"
+              id="edit-category"
               name="category"
-              defaultValue="otro"
+              defaultValue={note.category}
               className="h-9 w-full rounded-lg border border-border bg-surface px-3 text-sm"
             >
               {NOTE_CATEGORY_OPTIONS.map((option) => (
@@ -151,7 +158,7 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Adjuntos</label>
+            <label className="text-sm font-medium">Agregar adjuntos</label>
             <Button
               type="button"
               variant="outline"
@@ -191,7 +198,10 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
               </ul>
             )}
             {uploadError && <p className="text-xs text-destructive">{uploadError}</p>}
-            <p className="text-xs text-muted-foreground">Imágenes o PDF. Hasta 10MB por archivo.</p>
+            <p className="text-xs text-muted-foreground">
+              Los adjuntos existentes de la nota no se pueden quitar desde acá. Imágenes o PDF, hasta
+              10MB por archivo.
+            </p>
           </div>
 
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
@@ -205,7 +215,7 @@ export function AddNoteDialog({ shopId, patientId, defaultOpen = false }: AddNot
             ) : isPending ? (
               'Guardando...'
             ) : (
-              'Guardar'
+              'Guardar cambios'
             )}
           </Button>
         </form>

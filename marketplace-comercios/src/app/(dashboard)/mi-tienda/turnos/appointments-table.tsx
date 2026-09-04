@@ -21,6 +21,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -141,6 +142,10 @@ export function AppointmentsTable({
   const [manualOpen, setManualOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [rescheduleId, setRescheduleId] = useState<string | null>(null);
+  const [completeTarget, setCompleteTarget] = useState<{
+    id: string;
+    patientId: string | null;
+  } | null>(null);
   const [tab, setTab] = useState<Tab>("pending");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
@@ -259,13 +264,19 @@ export function AppointmentsTable({
     });
   }
 
-  function handleComplete(id: string, patientId: string | null) {
+  function handleCompleteSubmit(formData: FormData) {
+    if (!completeTarget) return;
+    const { id, patientId } = completeTarget;
+    const rawAmount = formData.get("amount_charged") as string;
+    const amountCharged = rawAmount.trim() ? Number(rawAmount) : undefined;
+
     startTransition(async () => {
-      const result = await completeAppointment(id);
+      const result = await completeAppointment(id, amountCharged);
       if (result.error) {
         refresh("Turno marcado como completado", result.error);
         return;
       }
+      setCompleteTarget(null);
       toast.add({ title: "Turno marcado como completado", type: "success" });
       router.refresh();
       if (patientId) {
@@ -552,10 +563,10 @@ export function AppointmentsTable({
                                     <DropdownMenuItem
                                       disabled={isPending}
                                       onClick={() =>
-                                        handleComplete(
-                                          appointment.id,
-                                          appointment.patient_id,
-                                        )
+                                        setCompleteTarget({
+                                          id: appointment.id,
+                                          patientId: appointment.patient_id,
+                                        })
                                       }
                                     >
                                       Marcar completado
@@ -623,6 +634,36 @@ export function AppointmentsTable({
             <DialogFooter>
               <Button type="submit" disabled={isPending}>
                 {isPending ? "Guardando..." : "Bloquear"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(completeTarget)}
+        onOpenChange={(open) => !open && setCompleteTarget(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Marcar turno como completado</DialogTitle>
+            <DialogDescription>
+              Si querés, cargá el monto total cobrado en esta visita (consulta + productos
+              vendidos, todo junto). Es opcional y queda reflejado en tus ingresos del dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <form action={handleCompleteSubmit} className="space-y-3">
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              name="amount_charged"
+              aria-label="Monto cobrado"
+              placeholder="Monto cobrado (opcional)"
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Guardando..." : "Completar"}
               </Button>
             </DialogFooter>
           </form>

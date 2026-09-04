@@ -65,6 +65,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          amount_charged: number | null
           created_at: string
           customer_email: string | null
           customer_name: string | null
@@ -81,6 +82,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount_charged?: number | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
@@ -97,6 +99,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount_charged?: number | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string | null
@@ -682,22 +685,28 @@ export type Database = {
       }
       patient_notes: {
         Row: {
+          category: string
           content: string
           created_at: string
+          created_by: string | null
           id: string
           patient_id: string
           updated_at: string
         }
         Insert: {
+          category?: string
           content: string
           created_at?: string
+          created_by?: string | null
           id?: string
           patient_id: string
           updated_at?: string
         }
         Update: {
+          category?: string
           content?: string
           created_at?: string
+          created_by?: string | null
           id?: string
           patient_id?: string
           updated_at?: string
@@ -2108,7 +2117,7 @@ export type Database = {
         Returns: boolean
       }
       complete_appointment: {
-        Args: { p_appointment_id: string }
+        Args: { p_amount_charged?: number | null; p_appointment_id: string }
         Returns: undefined
       }
       confirm_appointment: {

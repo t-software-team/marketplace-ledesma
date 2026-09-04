@@ -45,7 +45,6 @@ export default async function EditPatientPage({ params }: EditPatientPageProps) 
           sex: patient.sex,
           birth_date: patient.birth_date,
           weight: patient.weight,
-          notes: patient.notes,
           photo_url: patient.photo_url,
           owner_name: patient.owner_name,
           owner_email: patient.owner_email,

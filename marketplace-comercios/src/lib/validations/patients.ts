@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+export const PATIENT_NOTE_CATEGORIES = ['consulta', 'cirugia', 'analisis', 'vacunacion', 'otro'] as const
+
+export type PatientNoteCategory = (typeof PATIENT_NOTE_CATEGORIES)[number]
+
 export const patientSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio').max(100),
   species: z.string().max(60).optional().or(z.literal('')),
@@ -18,7 +22,6 @@ export const patientSchema = z.object({
     .transform((val) => (val ? val : null))
     .refine((val) => val === null || !Number.isNaN(Number(val)), 'El peso debe ser numérico')
     .transform((val) => (val === null ? null : Number(val))),
-  notes: z.string().max(2000).optional().or(z.literal('')),
   photo_url: z.string().optional().or(z.literal('')),
   owner_name: z.string().max(100).optional().or(z.literal('')),
   owner_email: z.string().email('Ingresá un email válido').optional().or(z.literal('')),
@@ -36,6 +39,10 @@ export type PatientReminderFormValues = z.infer<typeof patientReminderSchema>
 
 export const patientNoteSchema = z.object({
   content: z.string().min(1, 'El contenido de la nota es obligatorio').max(4000),
+  category: z
+    .enum(PATIENT_NOTE_CATEGORIES, { message: 'Elegí una categoría válida' })
+    .optional()
+    .default('otro'),
 })
 
 export type PatientNoteFormValues = z.infer<typeof patientNoteSchema>

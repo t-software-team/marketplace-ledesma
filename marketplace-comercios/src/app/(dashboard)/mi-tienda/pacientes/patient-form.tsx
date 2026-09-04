@@ -20,7 +20,6 @@ interface PatientFormProps {
     sex: string | null
     birth_date: string | null
     weight: number | null
-    notes: string | null
     photo_url: string | null
     owner_name: string | null
     owner_email: string | null
@@ -136,20 +135,6 @@ export function PatientForm({ shopId, action, defaultValues, submitLabel }: Pati
             />
             <FieldError message={fieldErrors.weight} />
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="notes" className="text-base font-medium sm:text-sm">
-            Notas
-          </label>
-          <textarea
-            id="notes"
-            name="notes"
-            defaultValue={defaultValues?.notes ?? ''}
-            rows={4}
-            className="w-full rounded-lg border border-border bg-surface p-3 text-sm"
-          />
-          <FieldError message={fieldErrors.notes} />
         </div>
       </section>
 

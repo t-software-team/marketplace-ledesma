@@ -10,12 +10,13 @@ import { createPatientReminder, type PatientReminderActionState } from '@/lib/pa
 
 interface AddReminderDialogProps {
   patientId: string
+  defaultOpen?: boolean
 }
 
 const initialState: PatientReminderActionState = { error: null }
 
-export function AddReminderDialog({ patientId }: AddReminderDialogProps) {
-  const [open, setOpen] = useState(false)
+export function AddReminderDialog({ patientId, defaultOpen = false }: AddReminderDialogProps) {
+  const [open, setOpen] = useState(defaultOpen)
   const [state, setState] = useState<PatientReminderActionState>(initialState)
   const [isPending, startTransition] = useTransition()
   const fieldErrors = state.fieldErrors ?? {}
