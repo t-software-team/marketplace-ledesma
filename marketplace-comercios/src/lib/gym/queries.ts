@@ -211,6 +211,8 @@ export async function getGymMembers(
     .eq('shop_id', shopId)
     .order('created_at', { ascending: false })
     .limit(options.limit ?? GYM_MEMBERS_DEFAULT_LIMIT)
+    .order('expires_at', { referencedTable: 'gym_memberships', ascending: false })
+    .limit(1, { referencedTable: 'gym_memberships' })
 
   if (options.search) {
     // Match by name or document. Strip PostgREST-or metacharacters so the
@@ -233,11 +235,7 @@ export async function getGymMembers(
   const today = argentinaToday()
 
   const members: GymMemberWithStatus[] = (data ?? []).map((row) => {
-    const periods = (row.gym_memberships ?? []) as { expires_at: string }[]
-    const expiresAt = periods.reduce<string | null>(
-      (latest, p) => (latest === null || p.expires_at > latest ? p.expires_at : latest),
-      null
-    )
+    const expiresAt = (row.gym_memberships ?? [])[0]?.expires_at ?? null
     const status: GymMemberStatus = row.is_archived
       ? 'archived'
       : expiresAt && expiresAt >= today
@@ -577,23 +575,39 @@ export async function getExpiringMembers(
   shopId: string,
   withinDays = 7
 ): Promise<ExpiringMember[]> {
-  const members = await getGymMembers(shopId, { status: 'active', limit: 500 })
+  const supabase = await createClient()
+  const today = argentinaToday()
+  const cutoff = addDaysToDate(today, withinDays)
 
-  const result: ExpiringMember[] = []
-  for (const m of members) {
-    if (!m.expires_at) continue
-    const daysLeft = daysFromArgentinaToday(m.expires_at)
-    if (daysLeft >= 0 && daysLeft <= withinDays) {
-      result.push({
-        id: m.id,
-        full_name: m.full_name,
-        phone: m.phone,
-        expires_at: m.expires_at,
-        days_left: daysLeft,
-      })
-    }
+  const { data, error } = await supabase
+    .from('gym_memberships')
+    .select('expires_at, gym_members!inner(id, full_name, phone, is_archived, shop_id)')
+    .eq('gym_members.shop_id', shopId)
+    .eq('gym_members.is_archived', false)
+    .gte('expires_at', today)
+    .lte('expires_at', cutoff)
+    .order('expires_at', { ascending: true })
+
+  if (error) {
+    console.error('getExpiringMembers: fallo al traer socios por vencer', { shopId, error })
+    return []
   }
-  return result.sort((a, b) => a.days_left - b.days_left)
+
+  // Ascending order + Map keeps the soonest expires_at per member if a
+  // member somehow has more than one row within the window.
+  const byMember = new Map<string, ExpiringMember>()
+  for (const row of data ?? []) {
+    const member = row.gym_members
+    if (!member || byMember.has(member.id)) continue
+    byMember.set(member.id, {
+      id: member.id,
+      full_name: member.full_name,
+      phone: member.phone,
+      expires_at: row.expires_at,
+      days_left: daysFromArgentinaToday(row.expires_at),
+    })
+  }
+  return Array.from(byMember.values())
 }
 
 /** Widest range a report can span — bounds the check-ins/payments scan below. */
@@ -704,6 +718,57 @@ export async function getGymReport(shopId: string, from: string, to: string): Pr
       revenue_mercadopago: revenueMercadopago,
     },
   }
+}
+
+export interface GymCheckinHourBucket {
+  hour: number
+  count: number
+}
+
+const ARGENTINA_HOUR_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/Argentina/Buenos_Aires',
+  hour: 'numeric',
+  hour12: false,
+})
+
+/** The local Argentina hour (0-23) a UTC timestamp falls in. */
+function argentinaHour(date: Date): number {
+  // Intl returns '24' for midnight with hour12: false; normalize to 0.
+  const hour = Number(ARGENTINA_HOUR_FORMATTER.format(date))
+  return hour === 24 ? 0 : hour
+}
+
+/**
+ * Distribution of allowed check-ins by Argentina-local hour of day, for the
+ * "most frequent hour" chart. Bounded the same way as getGymReport.
+ */
+export async function getGymCheckinHourDistribution(
+  shopId: string,
+  from: string,
+  to: string
+): Promise<GymCheckinHourBucket[]> {
+  const supabase = await createClient()
+  const rangeStart = argentinaStartOfDayUTC(from).toISOString()
+  const rangeEnd = argentinaStartOfDayUTC(addDaysToDate(to, 1)).toISOString()
+
+  const { data, error } = await supabase
+    .from('gym_check_ins')
+    .select('checked_in_at')
+    .eq('shop_id', shopId)
+    .eq('outcome', 'allowed')
+    .gte('checked_in_at', rangeStart)
+    .lt('checked_in_at', rangeEnd)
+    .limit(20000)
+
+  if (error) {
+    console.error('getGymCheckinHourDistribution: fallo al traer ingresos', { shopId, from, to, error })
+  }
+
+  const buckets = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }))
+  for (const row of data ?? []) {
+    buckets[argentinaHour(new Date(row.checked_in_at))].count++
+  }
+  return buckets
 }
 
 export async function getTodayCheckIns(shopId: string, limit = 100): Promise<GymCheckInRow[]> {

@@ -4,8 +4,14 @@ import { Download } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TrendAreaChart } from '@/components/shared/trend-area-chart'
+import { GymCheckinHoursChart } from '@/components/gym/gym-checkin-hours-chart'
 import { getGymBenefits } from '@/lib/shops/queries'
-import { getGymReport, getMyShopId, GYM_REPORT_MAX_DAYS } from '@/lib/gym/queries'
+import {
+  getGymCheckinHourDistribution,
+  getGymReport,
+  getMyShopId,
+  GYM_REPORT_MAX_DAYS,
+} from '@/lib/gym/queries'
 import { resolveGymReportRange } from '@/lib/gym/report-range'
 import { argentinaToday } from '@/lib/timezone'
 
@@ -58,7 +64,10 @@ export default async function ReportesPage({
     )
   }
 
-  const report = await getGymReport(shopId, range.from, range.to)
+  const [report, checkinHours] = await Promise.all([
+    getGymReport(shopId, range.from, range.to),
+    getGymCheckinHourDistribution(shopId, range.from, range.to),
+  ])
   const chartData = report.daily.map((d) => ({ date: formatDateLabel(d.date), ingresos: d.allowed }))
   const revenueTotal = report.totals.revenue_cash + report.totals.revenue_transfer + report.totals.revenue_mercadopago
   const exportHref = `/api/gym/export/reportes?from=${range.from}&to=${range.to}`
@@ -180,6 +189,18 @@ export default async function ReportesPage({
             gradientId="gymReport"
             variant="pulse"
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 pt-6">
+          <div>
+            <p className="text-sm font-medium">Horario más frecuente de ingreso</p>
+            <p className="text-xs text-muted-foreground">
+              Ingresos por hora — {formatDateLabel(range.from)} a {formatDateLabel(range.to)}
+            </p>
+          </div>
+          <GymCheckinHoursChart data={checkinHours} />
         </CardContent>
       </Card>
     </div>
