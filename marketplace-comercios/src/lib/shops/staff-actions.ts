@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceRoleClient } from '@/server/supabase-service-role'
 import { getMyGymAccess } from '@/lib/gym/queries'
 import { sendEmail } from '@/lib/email/client'
-import { gymStaffInviteEmail } from '@/lib/email/templates'
+import { staffInviteEmail } from '@/lib/email/templates'
 import { acceptInviteSchema } from '@/lib/validations/auth'
 import type { ActionState } from './actions'
 
@@ -56,9 +56,9 @@ async function activateStaffInvite(
 /**
  * Owner-only: invites someone to work at the gym by email. They get their
  * own login; the invite only becomes real access once they accept it (see
- * acceptGymStaffInvite) — inviting alone grants nothing.
+ * acceptStaffInvite) — inviting alone grants nothing.
  */
-export async function inviteGymStaff(_prev: ActionState, formData: FormData): Promise<ActionState> {
+export async function inviteStaff(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const access = await getMyGymAccess()
   if (!access) return { error: 'No tenés un comercio creado' }
   if (access.role !== 'owner') return { error: 'Esta acción es solo para el dueño del comercio' }
@@ -98,7 +98,7 @@ export async function inviteGymStaff(_prev: ActionState, formData: FormData): Pr
       .eq('id', existing.id)
 
     if (updateError) {
-      console.error('inviteGymStaff: fallo al reenviar la invitación', { shopId: access.shopId, error: updateError })
+      console.error('inviteStaff: fallo al reenviar la invitación', { shopId: access.shopId, error: updateError })
       return { error: 'No pudimos enviar la invitación' }
     }
     inviteToken = nextToken
@@ -110,13 +110,13 @@ export async function inviteGymStaff(_prev: ActionState, formData: FormData): Pr
       .single()
 
     if (error || !invite) {
-      console.error('inviteGymStaff: fallo al crear la invitación', { shopId: access.shopId, error })
+      console.error('inviteStaff: fallo al crear la invitación', { shopId: access.shopId, error })
       return { error: 'No pudimos enviar la invitación' }
     }
     inviteToken = invite.invite_token
   }
 
-  const { subject, html } = gymStaffInviteEmail(access.shopName, inviteToken!)
+  const { subject, html } = staffInviteEmail(access.shopName, inviteToken!)
   await sendEmail(email, subject, html)
 
   revalidatePath('/mi-tienda/equipo')
@@ -125,7 +125,7 @@ export async function inviteGymStaff(_prev: ActionState, formData: FormData): Pr
 
 /** Owner-only: cuts access. Does not delete history (check-ins, payments the
  * staff member recorded stay attributed to them). */
-export async function revokeGymStaff(staffId: string): Promise<ActionState> {
+export async function revokeStaff(staffId: string): Promise<ActionState> {
   const access = await getMyGymAccess()
   if (!access) return { error: 'No tenés un comercio creado' }
   if (access.role !== 'owner') return { error: 'Esta acción es solo para el dueño del comercio' }
@@ -138,7 +138,7 @@ export async function revokeGymStaff(staffId: string): Promise<ActionState> {
     .eq('shop_id', access.shopId)
 
   if (error) {
-    console.error('revokeGymStaff: fallo al revocar acceso', { staffId, error })
+    console.error('revokeStaff: fallo al revocar acceso', { staffId, error })
     return { error: 'No pudimos revocar el acceso' }
   }
 
@@ -156,7 +156,7 @@ export type AcceptInviteResult = { error: string | null; shopName?: string }
  * here, after independently confirming the logged-in email matches the one
  * invited (so a leaked/forwarded link can't be claimed by someone else).
  */
-export async function acceptGymStaffInvite(token: string): Promise<AcceptInviteResult> {
+export async function acceptStaffInvite(token: string): Promise<AcceptInviteResult> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -183,8 +183,8 @@ export async function acceptGymStaffInvite(token: string): Promise<AcceptInviteR
   return activateStaffInvite(service, invite, user.id)
 }
 
-export async function acceptGymStaffInviteAndRedirect(token: string) {
-  const result = await acceptGymStaffInvite(token)
+export async function acceptStaffInviteAndRedirect(token: string) {
+  const result = await acceptStaffInvite(token)
   if (result.error) return result
   redirect('/mi-tienda/ingresos?bienvenida=1')
 }
@@ -196,7 +196,7 @@ export async function acceptGymStaffInviteAndRedirect(token: string) {
  * already proves ownership of that inbox, so a second "confirm your email"
  * round-trip is redundant friction, not extra security.
  */
-export async function acceptGymStaffInviteNewAccount(
+export async function acceptStaffInviteNewAccount(
   token: string,
   formData: FormData
 ): Promise<AcceptInviteResult> {
@@ -231,7 +231,7 @@ export async function acceptGymStaffInviteNewAccount(
     // Most likely: the email got an account in the meantime (another tab,
     // or they'd actually already signed up) — send them to the normal
     // login path instead of failing outright.
-    console.error('acceptGymStaffInviteNewAccount: fallo al crear la cuenta', {
+    console.error('acceptStaffInviteNewAccount: fallo al crear la cuenta', {
       inviteId: invite.id,
       error: createError,
     })
@@ -248,7 +248,7 @@ export async function acceptGymStaffInviteNewAccount(
   })
 
   if (signInError) {
-    console.error('acceptGymStaffInviteNewAccount: cuenta creada pero falló el login', {
+    console.error('acceptStaffInviteNewAccount: cuenta creada pero falló el login', {
       inviteId: invite.id,
       error: signInError,
     })
@@ -258,8 +258,8 @@ export async function acceptGymStaffInviteNewAccount(
   return activation
 }
 
-export async function acceptGymStaffInviteNewAccountAndRedirect(token: string, formData: FormData) {
-  const result = await acceptGymStaffInviteNewAccount(token, formData)
+export async function acceptStaffInviteNewAccountAndRedirect(token: string, formData: FormData) {
+  const result = await acceptStaffInviteNewAccount(token, formData)
   if (result.error) return result
   redirect('/mi-tienda/ingresos?bienvenida=1')
 }
@@ -270,7 +270,7 @@ export type InvitePreview =
 
 /** Read-only lookup for the invite-accept page — shows what's being accepted
  * before the person commits, without mutating anything. */
-export async function getGymStaffInvitePreview(token: string): Promise<InvitePreview> {
+export async function getStaffInvitePreview(token: string): Promise<InvitePreview> {
   const service = createServiceRoleClient()
   const { data: invite } = await service
     .from('shop_staff')
