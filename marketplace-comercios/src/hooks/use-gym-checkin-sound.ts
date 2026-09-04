@@ -19,6 +19,9 @@ function playTone(frequency: number, durationSec: number) {
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + durationSec)
     oscillator.start(ctx.currentTime)
     oscillator.stop(ctx.currentTime + durationSec)
+    oscillator.onended = () => {
+      ctx.close().catch(() => {})
+    }
   } catch (err) {
     console.error('useGymCheckinSound: fallo al reproducir sonido', err)
   }
