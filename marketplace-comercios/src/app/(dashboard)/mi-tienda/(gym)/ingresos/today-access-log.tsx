@@ -1,10 +1,27 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { createClient } from '@/lib/supabase/client'
 import type { GymAccessLogRow, GymAccessOutcome, GymAccessSource } from '@/lib/gym/queries'
+import { RenewMemberDialog } from '../socios/renew-member-dialog'
+
+interface PlanOption {
+  id: string
+  name: string
+  price: number
+}
 
 const LOG_LIMIT = 200
 
@@ -34,14 +51,17 @@ function formatTime(value: string) {
 interface TodayAccessLogProps {
   shopId: string
   initialLog: GymAccessLogRow[]
+  plans: PlanOption[]
 }
 
 /**
- * Se suscribe a INSERT en gym_check_ins para que un ingreso registrado desde
- * la pantalla pública de autoingreso (otro dispositivo, sin recargar acá)
- * aparezca en vivo, no solo los que dispara el propio mostrador.
+ * Se suscribe a INSERT y UPDATE en gym_check_ins: INSERT para que un ingreso
+ * registrado desde la pantalla pública de autoingreso (otro dispositivo, sin
+ * recargar acá) aparezca en vivo, y UPDATE porque al renovar una membresía
+ * vencida el ingreso de hoy se actualiza in place a 'allowed' (no se inserta
+ * uno nuevo) — sin este listener la fila se quedaría mostrando "Vencida".
  */
-export function TodayAccessLog({ shopId, initialLog }: TodayAccessLogProps) {
+export function TodayAccessLog({ shopId, initialLog, plans }: TodayAccessLogProps) {
   const [log, setLog] = useState(initialLog)
   const [isLive, setIsLive] = useState(false)
 
@@ -66,12 +86,26 @@ export function TodayAccessLog({ shopId, initialLog }: TodayAccessLogProps) {
                 checked_in_at: payload.new.checked_in_at as string,
                 outcome: payload.new.outcome as GymAccessOutcome,
                 source: payload.new.source as GymAccessSource,
+                member_id: memberId,
                 member_name: member?.full_name ?? null,
                 attempted_ref: payload.new.attempted_ref as string | null,
               },
               ...current,
             ].slice(0, LOG_LIMIT)
           })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'gym_check_ins', filter: `shop_id=eq.${shopId}` },
+        (payload) => {
+          setLog((current) =>
+            current.map((row) =>
+              row.id === payload.new.id
+                ? { ...row, outcome: payload.new.outcome as GymAccessOutcome }
+                : row
+            )
+          )
         }
       )
       .subscribe((status) => setIsLive(status === 'SUBSCRIBED'))
@@ -108,26 +142,65 @@ export function TodayAccessLog({ shopId, initialLog }: TodayAccessLogProps) {
         {log.length === 0 ? (
           <p className="text-sm text-muted-foreground">Todavía no hubo actividad hoy.</p>
         ) : (
-          <div className="space-y-1">
-            {log.map((row) => {
-              const cfg = OUTCOME[row.outcome]
-              const label = row.member_name ?? (row.attempted_ref ? `Nº ${row.attempted_ref}` : 'Desconocido')
-              return (
-                <div
-                  key={row.id}
-                  className="flex items-center justify-between gap-2 border-b border-border/50 py-1.5 text-sm last:border-0 animate-in fade-in-0 slide-in-from-top-1"
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Badge variant={cfg.variant}>{cfg.label}</Badge>
-                    <span className="truncate">{label}</span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                    <span>{GYM_ACCESS_SOURCE_LABEL[row.source].toLowerCase()}</span>
-                    <span className="font-mono">{formatTime(row.checked_in_at)}</span>
-                  </div>
-                </div>
-              )
-            })}
+          <div className="max-h-[420px] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Socio</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="hidden sm:table-cell">Origen</TableHead>
+                  <TableHead>Hora</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {log.map((row) => {
+                  const cfg = OUTCOME[row.outcome]
+                  const label =
+                    row.member_name ?? (row.attempted_ref ? `Nº ${row.attempted_ref}` : 'Desconocido')
+                  const canRenew = row.outcome === 'denied_expired' && row.member_id
+                  const canCreate = row.outcome === 'denied_not_found'
+                  return (
+                    <TableRow key={row.id}>
+                      <TableCell>
+                        <span className="truncate">{label}</span>
+                        <p className="text-xs text-muted-foreground sm:hidden">
+                          {GYM_ACCESS_SOURCE_LABEL[row.source]}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={cfg.variant}>{cfg.label}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden text-muted-foreground sm:table-cell">
+                        {GYM_ACCESS_SOURCE_LABEL[row.source]}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                        {formatTime(row.checked_in_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {canRenew && (
+                          <RenewMemberDialog memberId={row.member_id as string} plans={plans} />
+                        )}
+                        {canCreate && (
+                          <Button
+                            render={
+                              <Link
+                                href={`/mi-tienda/socios/nuevo${row.attempted_ref ? `?phone=${encodeURIComponent(row.attempted_ref)}` : ''}`}
+                              />
+                            }
+                            nativeButton={false}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Dar de alta
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>

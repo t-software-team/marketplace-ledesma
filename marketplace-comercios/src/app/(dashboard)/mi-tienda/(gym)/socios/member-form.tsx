@@ -26,7 +26,7 @@ function formatARS(value: number) {
   }).format(value)
 }
 
-export function MemberForm({ plans }: { plans: PlanOption[] }) {
+export function MemberForm({ plans, defaultPhone }: { plans: PlanOption[]; defaultPhone?: string }) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(createGymMember, initialState)
   const [planId, setPlanId] = useState('')
@@ -66,7 +66,7 @@ export function MemberForm({ plans }: { plans: PlanOption[] }) {
           <label htmlFor="phone" className="text-sm font-medium">
             Teléfono <span className="text-muted-foreground">(opcional)</span>
           </label>
-          <Input id="phone" name="phone" inputMode="tel" />
+          <Input id="phone" name="phone" inputMode="tel" defaultValue={defaultPhone} />
         </div>
         <div className="space-y-1">
           <label htmlFor="document" className="text-sm font-medium">

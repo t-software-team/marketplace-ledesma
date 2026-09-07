@@ -59,11 +59,11 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-dvh overflow-hidden">
       <DashboardSidebar navItems={navItems} accent={accent} open={sidebarOpen} />
       <div
         className={cn(
-          'flex min-h-screen w-full flex-1 flex-col transition-all duration-200',
+          'flex h-dvh w-full flex-1 flex-col overflow-hidden transition-all duration-200',
           sidebarOpen ? 'md:ml-60' : 'md:ml-0'
         )}
       >
@@ -89,7 +89,7 @@ export function DashboardShell({
           onToggleSidebar={() => setSidebarOpen((v) => !v)}
           sidebarOpen={sidebarOpen}
         />
-        <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6">
+        <main id="main-content" className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto px-4 py-6 md:px-6">
           <Breadcrumbs navItems={navItems} rootHref={rootHref} rootLabel={sectionTitle} className="mb-4" />
           {children}
         </main>

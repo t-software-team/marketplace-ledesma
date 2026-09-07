@@ -1,6 +1,14 @@
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyDumbbellIllustration } from '@/components/shared/empty-illustrations'
 import { getGymPlans, getMyShopId, type GymPlanKind } from '@/lib/gym/queries'
@@ -53,29 +61,50 @@ export default async function PlanesPage() {
           message="Todavía no cargaste ningún plan. Creá el primero para poder dar de alta socios."
         />
       ) : (
-        <div className="space-y-2">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Plan</TableHead>
+              <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+              <TableHead className="hidden sm:table-cell">Duración</TableHead>
+              <TableHead>Precio</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {plans.map((plan) => (
+              <TableRow key={plan.id}>
+                <TableCell>
                   <p className="truncate font-medium">{plan.name}</p>
+                  <p className="text-xs text-muted-foreground sm:hidden">
+                    {KIND_LABELS[plan.kind]} · {plan.duration_days} día
+                    {plan.duration_days === 1 ? '' : 's'}
+                  </p>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
                   <Badge variant={plan.is_active ? 'default' : 'outline'}>
                     {KIND_LABELS[plan.kind]}
                   </Badge>
-                  {!plan.is_active && <Badge variant="outline">Inactivo</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {plan.duration_days} día{plan.duration_days === 1 ? '' : 's'} ·{' '}
-                  {formatARS(plan.price)}
-                </p>
-              </div>
-              <PlanRowActions planId={plan.id} isActive={plan.is_active} />
-            </div>
-          ))}
-        </div>
+                </TableCell>
+                <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
+                  {plan.duration_days} día{plan.duration_days === 1 ? '' : 's'}
+                </TableCell>
+                <TableCell className="whitespace-nowrap">{formatARS(plan.price)}</TableCell>
+                <TableCell>
+                  {plan.is_active ? (
+                    <Badge variant="default">Activo</Badge>
+                  ) : (
+                    <Badge variant="outline">Inactivo</Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <PlanRowActions planId={plan.id} isActive={plan.is_active} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
     </div>
   )

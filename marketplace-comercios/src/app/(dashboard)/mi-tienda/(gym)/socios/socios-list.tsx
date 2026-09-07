@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
+import { MessageCircle } from 'lucide-react'
 import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -15,6 +15,7 @@ import {
 import { toast } from '@/components/ui/toast'
 import { setGymMemberArchived } from '@/lib/gym/actions'
 import type { GymMemberStatus, GymMemberWithStatus } from '@/lib/gym/queries'
+import { toWhatsAppNumber } from '@/lib/whatsapp'
 import { RenewMemberDialog } from './renew-member-dialog'
 import { EditMemberDialog } from './edit-member-dialog'
 
@@ -68,22 +69,38 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
           {member.full_name}
         </Link>
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
-        {member.document || '—'}
-      </TableCell>
       <TableCell>
         <Badge variant={status.variant}>{status.label}</Badge>
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
+      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
         {formatDate(member.expires_at)}
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
+      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
         {member.phone || '—'}
       </TableCell>
       <TableCell>
         <div className="flex items-center justify-end gap-2">
           {!member.is_archived && (
             <>
+              {member.status === 'expired' && member.phone && (
+                <Button
+                  render={
+                    <a
+                      href={`https://wa.me/${toWhatsAppNumber(member.phone)}?text=${encodeURIComponent(
+                        `Hola ${member.full_name.split(' ')[0]}! Vimos que tu membresía venció, ¿te gustaría renovarla?`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  }
+                  nativeButton={false}
+                  variant="outline"
+                  size="sm"
+                >
+                  <MessageCircle className="mr-1.5 size-4" aria-hidden />
+                  WhatsApp
+                </Button>
+              )}
               <EditMemberDialog member={member} />
               <RenewMemberDialog memberId={member.id} plans={plans} />
             </>
@@ -105,22 +122,23 @@ export function SociosList({
   plans: PlanOption[]
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Socio</TableHead>
-          <TableHead>DNI</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>Vence</TableHead>
-          <TableHead>Teléfono</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {members.map((member) => (
-          <MemberRow key={member.id} member={member} plans={plans} />
-        ))}
-      </TableBody>
-    </Table>
+    <div className="max-h-[calc(100vh-22rem)] overflow-auto rounded-xl border border-border">
+      <table className="w-full caption-bottom text-sm">
+        <TableHeader className="sticky top-0 z-10 bg-surface">
+          <TableRow>
+            <TableHead>Socio</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead className="hidden sm:table-cell">Vence</TableHead>
+            <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {members.map((member) => (
+            <MemberRow key={member.id} member={member} plans={plans} />
+          ))}
+        </TableBody>
+      </table>
+    </div>
   )
 }

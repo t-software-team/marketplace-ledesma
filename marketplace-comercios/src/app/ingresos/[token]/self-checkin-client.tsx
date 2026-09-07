@@ -241,6 +241,14 @@ function ResultScreen({ result }: { result: ViewResult | null }) {
       {name && <p className="text-4xl font-bold sm:text-5xl">{name}</p>}
       <p className="text-2xl font-semibold sm:text-3xl">{config.title()}</p>
       <p className="max-w-md text-lg text-white/90 sm:text-xl">{config.subtitle()}</p>
+
+      {result.status === 'active' && result.daysRemaining <= 7 && (
+        <span className="rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium text-white/90">
+          {result.daysRemaining === 0
+            ? 'Tu membresía vence hoy'
+            : `Te quedan ${result.daysRemaining} día${result.daysRemaining === 1 ? '' : 's'} de membresía`}
+        </span>
+      )}
     </main>
   )
 }

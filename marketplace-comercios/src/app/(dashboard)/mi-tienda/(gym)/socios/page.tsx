@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
 import { EmptyDumbbellIllustration } from '@/components/shared/empty-illustrations'
 import {
+  getGymMemberStatusCounts,
   getGymMembers,
   getGymPlans,
   getMyGymAccess,
@@ -37,11 +38,12 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
     ? (status as GymMemberStatus)
     : undefined
 
-  const [members, plans, limitInfo, benefits] = await Promise.all([
+  const [members, plans, limitInfo, benefits, statusCounts] = await Promise.all([
     getGymMembers(shopId, { search, status: statusFilter }),
     getGymPlans(shopId),
     getGymMemberLimitInfo(shopId),
     getGymBenefits(shopId),
+    getGymMemberStatusCounts(shopId),
   ])
   const activePlans = plans
     .filter((p) => p.is_active)
@@ -52,11 +54,11 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-heading">Socios</h1>
-          <p className="text-xs text-muted-foreground">
-            {limitInfo.max === null
-              ? `${limitInfo.used} socios activos`
-              : `${limitInfo.used} de ${limitInfo.max} socios de tu plan`}
-          </p>
+          {limitInfo.max !== null && (
+            <p className="text-xs text-muted-foreground">
+              {limitInfo.used} de {limitInfo.max} socios de tu plan
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {benefits.exportCsv ? (
@@ -98,25 +100,27 @@ export default async function SociosPage({ searchParams }: SociosPageProps) {
         </p>
       )}
 
-      <SociosSearch />
-
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map((filter) => {
-          const active =
-            filter.value === 'all' ? statusFilter === undefined : statusFilter === filter.value
-          const query = filter.value === 'all' ? '' : `?status=${filter.value}`
-          return (
-            <Button
-              key={filter.value}
-              render={<Link href={`/mi-tienda/socios${query}`} />}
-              nativeButton={false}
-              variant={active ? 'default' : 'outline'}
-              size="sm"
-            >
-              {filter.label}
-            </Button>
-          )
-        })}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map((filter) => {
+            const active =
+              filter.value === 'all' ? statusFilter === undefined : statusFilter === filter.value
+            const query = filter.value === 'all' ? '' : `?status=${filter.value}`
+            const count = statusCounts[filter.value]
+            return (
+              <Button
+                key={filter.value}
+                render={<Link href={`/mi-tienda/socios${query}`} />}
+                nativeButton={false}
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+              >
+                {filter.label} ({count})
+              </Button>
+            )
+          })}
+        </div>
+        <SociosSearch />
       </div>
 
       {members.length === 0 ? (

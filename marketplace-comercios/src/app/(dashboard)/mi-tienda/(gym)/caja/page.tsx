@@ -4,6 +4,14 @@ import { Banknote, ArrowLeftRight, ChevronLeft, ChevronRight, Download } from 'l
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { EmptyState } from '@/components/shared/empty-state'
 import {
   getGymDashboardStats,
@@ -150,36 +158,51 @@ export default async function CajaPage({
       {payments.length === 0 ? (
         <EmptyState message="No hay cobros que coincidan con el filtro." />
       ) : (
-        <div className="space-y-2">
-          {payments.map((payment) => {
-            const isVoided = payment.status === 'voided'
-            return (
-              <div
-                key={payment.id}
-                className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-3 ${isVoided ? 'opacity-60' : ''}`}
-              >
-                <div className="min-w-0">
-                  <p className={`truncate font-medium ${isVoided ? 'line-through' : ''}`}>
-                    {payment.member_name ?? 'Socio'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Socio</TableHead>
+              <TableHead className="hidden sm:table-cell">Fecha</TableHead>
+              <TableHead>Método</TableHead>
+              <TableHead>Monto</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {payments.map((payment) => {
+              const isVoided = payment.status === 'voided'
+              return (
+                <TableRow key={payment.id} className={isVoided ? 'opacity-60' : ''}>
+                  <TableCell>
+                    <p className={`truncate font-medium ${isVoided ? 'line-through' : ''}`}>
+                      {payment.member_name ?? 'Socio'}
+                    </p>
+                    <p className="text-xs text-muted-foreground sm:hidden">
+                      {new Date(payment.paid_at ?? payment.created_at).toLocaleDateString('es-AR')}
+                    </p>
+                    {isVoided && payment.void_reason && (
+                      <p className="text-xs text-muted-foreground">Anulado: {payment.void_reason}</p>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
                     {new Date(payment.paid_at ?? payment.created_at).toLocaleDateString('es-AR')}
-                    {isVoided && payment.void_reason ? ` · Anulado: ${payment.void_reason}` : ''}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={isVoided ? 'outline' : 'outline'}>{METHOD_LABELS[payment.method]}</Badge>
-                  <span className={`font-heading ${isVoided ? 'line-through' : ''}`}>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{METHOD_LABELS[payment.method]}</Badge>
+                  </TableCell>
+                  <TableCell className={`font-heading ${isVoided ? 'line-through' : ''}`}>
                     {formatARS(payment.amount)}
-                  </span>
-                  {!isVoided && (
-                    <VoidPaymentDialog paymentId={payment.id} amountLabel={formatARS(payment.amount)} />
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {!isVoided && (
+                      <VoidPaymentDialog paymentId={payment.id} amountLabel={formatARS(payment.amount)} />
+                    )}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
       )}
 
       {totalPages > 1 && (

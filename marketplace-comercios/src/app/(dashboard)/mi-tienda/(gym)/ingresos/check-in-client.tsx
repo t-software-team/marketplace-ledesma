@@ -18,6 +18,15 @@ function formatDate(value: string | null | undefined) {
   return new Date(`${value}T00:00:00`).toLocaleDateString('es-AR')
 }
 
+function daysRemaining(value: string | null | undefined) {
+  if (!value) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const expires = new Date(`${value}T00:00:00`)
+  const diffDays = Math.round((expires.getTime() - today.getTime()) / 86_400_000)
+  return diffDays >= 0 ? diffDays : null
+}
+
 export function CheckInClient() {
   const router = useRouter()
   const [search, setSearch] = useState('')
@@ -40,7 +49,18 @@ export function CheckInClient() {
       bg: 'bg-green-500',
       icon: CheckCircle2,
       title: 'Ingreso registrado',
-      subtitle: lastResult ? `Membresía vigente hasta ${formatDate(lastResult.expires_at)}.` : '',
+      subtitle: lastResult
+        ? (() => {
+            const remaining = daysRemaining(lastResult.expires_at)
+            const daysLabel =
+              remaining === null
+                ? ''
+                : remaining === 0
+                  ? ' (vence hoy)'
+                  : ` (quedan ${remaining} día${remaining === 1 ? '' : 's'})`
+            return `Membresía vigente hasta ${formatDate(lastResult.expires_at)}${daysLabel}.`
+          })()
+        : '',
     },
     warning: {
       bg: 'bg-amber-500',
@@ -189,6 +209,9 @@ export function CheckInClient() {
             <div className="space-y-2">
               {matches.map((m) => {
                 const vigente = m.status === 'active'
+                const remaining = vigente ? daysRemaining(m.expires_at) : null
+                const remainingLabel =
+                  remaining === null ? '' : remaining === 0 ? ' (vence hoy)' : ` (quedan ${remaining} día${remaining === 1 ? '' : 's'})`
                 return (
                   <div
                     key={m.id}
@@ -199,6 +222,7 @@ export function CheckInClient() {
                       <p className="text-xs text-muted-foreground">
                         {m.document ? `DNI ${m.document} · ` : ''}
                         Vence {formatDate(m.expires_at)}
+                        {remainingLabel}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

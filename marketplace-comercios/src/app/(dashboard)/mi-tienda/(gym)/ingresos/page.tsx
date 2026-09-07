@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
-import { getMyGymAccess, getTodayAccessLog } from '@/lib/gym/queries'
+import { getGymPlans, getMyGymAccess, getTodayAccessLog } from '@/lib/gym/queries'
 import { CheckInClient } from './check-in-client'
 import { SelfCheckinLaunch } from './self-checkin-launch'
 import { TodayAccessLog } from './today-access-log'
@@ -10,7 +10,10 @@ export default async function IngresosPage() {
   if (!access) redirect('/mi-tienda')
   const { shopId, role } = access
 
-  const log = await getTodayAccessLog(shopId)
+  const [log, plans] = await Promise.all([getTodayAccessLog(shopId), getGymPlans(shopId)])
+  const activePlans = plans
+    .filter((p) => p.is_active)
+    .map((p) => ({ id: p.id, name: p.name, price: p.price }))
 
   return (
     <div className="space-y-4">
@@ -30,7 +33,7 @@ export default async function IngresosPage() {
         </CardContent>
       </Card>
 
-      <TodayAccessLog shopId={shopId} initialLog={log} />
+      <TodayAccessLog shopId={shopId} initialLog={log} plans={activePlans} />
     </div>
   )
 }
