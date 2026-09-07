@@ -9,12 +9,14 @@ import {
   ChevronDown,
   ChevronRight,
   Eye,
+  FileText,
   History,
   MessageCircle,
   PawPrint,
   Percent,
   Stethoscope,
   Users,
+  type LucideIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -26,6 +28,11 @@ import type { AppointmentRow } from '@/lib/turnos/queries'
 import type { ShopReminderAlerts } from '@/lib/patients/alerts'
 import type { ActivityFeedItem, SpeciesBreakdownItem, TrendValue } from '@/lib/patients/dashboard-queries'
 import { QuickLogCard, type QuickLogPatient } from './quick-log-card'
+
+const ACTIVITY_ICON: Record<ActivityFeedItem['kind'], LucideIcon> = {
+  treatment: Stethoscope,
+  note: FileText,
+}
 
 const SPECIES_LABELS: Record<string, string> = {
   perro: 'perros',
@@ -316,24 +323,36 @@ export function VetResumen({
           </CardContent>
         </Card>
 
-        {activityFeed.length > 0 && (
-          <div className="space-y-1 px-1">
-            <p className="text-xs font-medium text-muted-foreground">Actividad reciente</p>
-            {activityFeed.map((item, index) => (
-              <Link
-                key={`${item.kind}-${item.patientId}-${item.at}-${index}`}
-                href={`/mi-tienda/pacientes/${item.patientId}`}
-                className="flex items-center justify-between gap-2 py-1 text-xs text-muted-foreground transition-colors hover:text-primary"
-              >
-                <span className="flex min-w-0 items-center gap-1.5">
-                  <History className="size-3 shrink-0" aria-hidden />
-                  <span className="truncate">{item.label}</span>
-                </span>
-                <span className="shrink-0 font-mono">{formatDateTime(item.at)}</span>
-              </Link>
-            ))}
-          </div>
-        )}
+        <Card>
+          <CardContent className="space-y-2 pt-6">
+            <p className="text-sm font-semibold text-muted-foreground">Actividad reciente</p>
+            {activityFeed.length === 0 ? (
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <History className="size-4 shrink-0" aria-hidden />
+                Sin actividad reciente
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {activityFeed.map((item, index) => {
+                  const Icon = ACTIVITY_ICON[item.kind] ?? FileText
+                  return (
+                    <Link
+                      key={`${item.kind}-${item.patientId}-${item.at}-${index}`}
+                      href={`/mi-tienda/pacientes/${item.patientId}`}
+                      className="flex items-center justify-between gap-2 border-b border-border/50 py-2 text-sm text-muted-foreground transition-colors last:border-0 hover:text-primary"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <Icon className="size-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">{item.label}</span>
+                      </span>
+                      <span className="shrink-0 font-mono text-xs">{formatDateTime(item.at)}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       <div className="space-y-3">
