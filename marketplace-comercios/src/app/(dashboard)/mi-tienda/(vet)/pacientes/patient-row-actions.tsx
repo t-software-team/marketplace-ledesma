@@ -16,7 +16,8 @@ export function PatientRowActions({ patientId }: { patientId: string }) {
       try {
         await deletePatient(patientId)
         toast.add({ title: 'Paciente eliminado', type: 'success' })
-      } catch {
+      } catch (error) {
+        console.error('deletePatient: fallo al eliminar paciente', { patientId, error })
         toast.add({ title: 'No pudimos eliminar el paciente', type: 'error' })
       }
     })
@@ -25,12 +26,14 @@ export function PatientRowActions({ patientId }: { patientId: string }) {
   return (
     <div className="flex shrink-0 items-center justify-center gap-1.5">
       <Button
-        render={<Link href={`/mi-tienda/pacientes/${patientId}`} aria-label="Ver ficha" />}
+        render={<Link href={`/mi-tienda/pacientes/${patientId}`} />}
         nativeButton={false}
         variant="outline"
-        size="icon"
+        size="sm"
+        className="gap-1.5"
       >
         <Eye className="size-4" aria-hidden />
+        Historial
       </Button>
 
       <Button

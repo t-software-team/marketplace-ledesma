@@ -16,7 +16,7 @@ const STATUS_MAP: Record<string, { label: string; variant: BadgeVariant }> = {
   confirmed: { label: 'Confirmado', variant: 'success' },
   cancelled: { label: 'Cancelado', variant: 'destructive' },
   completed: { label: 'Completado', variant: 'success' },
-  no_show: { label: 'No-show', variant: 'destructive' },
+  no_show: { label: 'No se presentó', variant: 'destructive' },
   blocked: { label: 'Bloqueado', variant: 'outline' },
 }
 

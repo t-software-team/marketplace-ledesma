@@ -138,6 +138,26 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
         </div>
       </div>
 
+      {/* Ingresos del mes: un total como número principal, efectivo y
+          transferencia como desglose secundario dentro de la misma card. */}
+      <Card>
+        <CardContent className="space-y-3 pt-5">
+          <div>
+            <p className="text-xs text-muted-foreground">Ingresos del mes</p>
+            <p className="font-heading text-2xl text-primary">{formatARS(monthRevenue)}</p>
+          </div>
+          <div className="flex gap-4 border-t border-border/50 pt-3 text-sm">
+            <p className="text-muted-foreground">
+              Efectivo <span className="font-medium text-foreground">{formatARS(stats.revenue_month_cash)}</span>
+            </p>
+            <p className="text-muted-foreground">
+              Transferencia{' '}
+              <span className="font-medium text-foreground">{formatARS(stats.revenue_month_transfer)}</span>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Un solo lugar para las dos acciones más frecuentes, en todos los
           tamaños de pantalla — antes vivían duplicadas entre el header
           desktop y una grilla aparte solo para mobile. */}
@@ -238,26 +258,6 @@ export function GymResumen({ shopName, logoUrl, stats, memberLimit, recentCheckI
           </CardContent>
         </Card>
       )}
-
-      {/* Ingresos del mes: un total como número principal, efectivo y
-          transferencia como desglose secundario dentro de la misma card. */}
-      <Card>
-        <CardContent className="space-y-3 pt-5">
-          <div>
-            <p className="text-xs text-muted-foreground">Ingresos del mes</p>
-            <p className="font-heading text-2xl text-primary">{formatARS(monthRevenue)}</p>
-          </div>
-          <div className="flex gap-4 border-t border-border/50 pt-3 text-sm">
-            <p className="text-muted-foreground">
-              Efectivo <span className="font-medium text-foreground">{formatARS(stats.revenue_month_cash)}</span>
-            </p>
-            <p className="text-muted-foreground">
-              Transferencia{' '}
-              <span className="font-medium text-foreground">{formatARS(stats.revenue_month_transfer)}</span>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       <LinkCard href="/mi-tienda/reportes">
         <div className="flex items-center gap-3">
