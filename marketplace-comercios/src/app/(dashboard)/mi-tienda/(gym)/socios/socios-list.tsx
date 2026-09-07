@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { MessageCircle } from 'lucide-react'
 import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import {
 import { toast } from '@/components/ui/toast'
 import { setGymMemberArchived } from '@/lib/gym/actions'
 import type { GymMemberStatus, GymMemberWithStatus } from '@/lib/gym/queries'
+import { toWhatsAppNumber } from '@/lib/whatsapp'
 import { RenewMemberDialog } from './renew-member-dialog'
 import { EditMemberDialog } from './edit-member-dialog'
 
@@ -80,6 +82,25 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
         <div className="flex items-center justify-end gap-2">
           {!member.is_archived && (
             <>
+              {member.status === 'expired' && member.phone && (
+                <Button
+                  render={
+                    <a
+                      href={`https://wa.me/${toWhatsAppNumber(member.phone)}?text=${encodeURIComponent(
+                        `Hola ${member.full_name.split(' ')[0]}! Vimos que tu membresía venció, ¿te gustaría renovarla?`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  }
+                  nativeButton={false}
+                  variant="outline"
+                  size="sm"
+                >
+                  <MessageCircle className="mr-1.5 size-4" aria-hidden />
+                  WhatsApp
+                </Button>
+              )}
               <EditMemberDialog member={member} />
               <RenewMemberDialog memberId={member.id} plans={plans} />
             </>
