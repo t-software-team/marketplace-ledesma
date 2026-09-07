@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   CalendarDays,
+  FileText,
   List,
   MessageCircle,
   MoreHorizontal,
@@ -29,6 +31,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/toast";
 import {
   DropdownMenu,
@@ -121,8 +128,8 @@ type Tab = "pending" | "today" | "history";
 type ViewMode = "list" | "calendar";
 
 const TABS: { value: Tab; label: string }[] = [
-  { value: "pending", label: "Pendientes" },
   { value: "today", label: "Hoy" },
+  { value: "pending", label: "Pendientes" },
   { value: "history", label: "Historial" },
 ];
 
@@ -146,7 +153,7 @@ export function AppointmentsTable({
     id: string;
     patientId: string | null;
   } | null>(null);
-  const [tab, setTab] = useState<Tab>("pending");
+  const [tab, setTab] = useState<Tab>("today");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [now, setNow] = useState(() => Date.now());
@@ -296,7 +303,7 @@ export function AppointmentsTable({
   function handleNoShow(id: string) {
     startTransition(async () => {
       const result = await markNoShow(id);
-      refresh("Turno marcado como no-show", result.error);
+      refresh("Turno marcado como no se presentó", result.error);
     });
   }
 
@@ -359,24 +366,27 @@ export function AppointmentsTable({
           )}
           <Button
             variant="outline"
-            size="icon"
-            aria-label={viewMode === "list" ? "Ver calendario" : "Ver lista"}
+            className="gap-1.5"
             onClick={() =>
               setViewMode(viewMode === "list" ? "calendar" : "list")
             }
           >
             {viewMode === "list" ? (
-              <CalendarDays className="size-4" aria-hidden />
+              <>
+                <CalendarDays className="size-4" aria-hidden />
+                Calendario
+              </>
             ) : (
-              <List className="size-4" aria-hidden />
+              <>
+                <List className="size-4" aria-hidden />
+                Lista
+              </>
             )}
           </Button>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => setManualOpen(true)}>
-            Alta manual
-          </Button>
+          <Button onClick={() => setManualOpen(true)}>Alta manual</Button>
           <Button variant="outline" onClick={() => setBlockOpen(true)}>
             Bloquear horario
           </Button>
@@ -442,6 +452,7 @@ export function AppointmentsTable({
                   <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Cliente</TableHead>
+                    {isVeterinaria && <TableHead>Paciente</TableHead>}
                     <TableHead>Estado</TableHead>
                     <TableHead>Origen</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
@@ -479,6 +490,31 @@ export function AppointmentsTable({
                             </div>
                           )}
                         </TableCell>
+                        {isVeterinaria && (
+                          <TableCell>
+                            {appointment.patient_id ? (
+                              <div className="flex items-center gap-1.5">
+                                <span>{appointment.patients?.name ?? "—"}</span>
+                                <Tooltip>
+                                  <TooltipTrigger
+                                    render={
+                                      <Link
+                                        href={`/mi-tienda/pacientes/${appointment.patient_id}`}
+                                        aria-label="Ver historial clínico"
+                                        className="text-muted-foreground hover:text-primary"
+                                      />
+                                    }
+                                  >
+                                    <FileText className="size-4" aria-hidden />
+                                  </TooltipTrigger>
+                                  <TooltipContent>Ver historial</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <div className="flex flex-wrap items-center gap-1.5">
                             <StatusBadge status={appointment.status} />
@@ -577,7 +613,7 @@ export function AppointmentsTable({
                                         handleNoShow(appointment.id)
                                       }
                                     >
-                                      Marcar no-show
+                                      No se presentó
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       disabled={isPending}

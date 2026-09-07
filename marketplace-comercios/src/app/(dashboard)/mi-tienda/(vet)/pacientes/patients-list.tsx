@@ -55,7 +55,7 @@ function TreatmentCount({ count }: { count: number }) {
 }
 
 function formatOwner(patient: PatientRow) {
-  return [patient.owner_name, patient.owner_phone].filter(Boolean).join(' · ') || '—'
+  return patient.owner_name || '—'
 }
 
 function OwnerWhatsAppButton({ patient }: { patient: PatientRow }) {
@@ -211,7 +211,9 @@ export function PatientsList({
                       <p className="truncate text-xs text-muted-foreground">
                         {[patient.species, patient.breed].filter(Boolean).join(' · ') || 'Sin especie'}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">{formatOwner(patient)}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {[formatOwner(patient), patient.owner_phone].filter(Boolean).join(' · ')}
+                      </p>
                       <div className="flex items-center gap-2">
                         <TreatmentCount count={treatmentCounts[patient.id] ?? 0} />
                         <NextDueDate alerts={alertsMap[patient.id]} />
@@ -234,6 +236,7 @@ export function PatientsList({
                   <TableHead>Paciente</TableHead>
                   <TableHead>Especie / raza</TableHead>
                   <TableHead>Dueño</TableHead>
+                  <TableHead>Teléfono</TableHead>
                   <TableHead>Tratamientos</TableHead>
                   <TableHead>Próx. vencimiento</TableHead>
                   <TableHead className="text-center">Acciones</TableHead>
@@ -255,9 +258,10 @@ export function PatientsList({
                     <TableCell>
                       {[patient.species, patient.breed].filter(Boolean).join(' · ') || '—'}
                     </TableCell>
+                    <TableCell>{formatOwner(patient)}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {formatOwner(patient)}
+                        {patient.owner_phone ?? '—'}
                         <OwnerWhatsAppButton patient={patient} />
                       </div>
                     </TableCell>
