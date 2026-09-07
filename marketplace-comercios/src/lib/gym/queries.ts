@@ -264,6 +264,52 @@ export async function getGymMembers(
   return members
 }
 
+export interface GymMemberStatusCounts {
+  all: number
+  active: number
+  expired: number
+  archived: number
+}
+
+/**
+ * Counts per tab on the socios page. Lightweight columns only (no name/phone/etc.)
+ * since this just needs to derive status, same logic as getGymMembers.
+ */
+export async function getGymMemberStatusCounts(shopId: string): Promise<GymMemberStatusCounts> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('gym_members')
+    .select('is_archived, gym_memberships(expires_at)')
+    .eq('shop_id', shopId)
+    .order('expires_at', { referencedTable: 'gym_memberships', ascending: false })
+    .limit(1, { referencedTable: 'gym_memberships' })
+    .limit(5000)
+
+  if (error) {
+    console.error('getGymMemberStatusCounts: fallo al contar socios', { shopId, error })
+    return { all: 0, active: 0, expired: 0, archived: 0 }
+  }
+
+  const today = argentinaToday()
+  const counts: GymMemberStatusCounts = { all: 0, active: 0, expired: 0, archived: 0 }
+
+  for (const row of data ?? []) {
+    if (row.is_archived) {
+      counts.archived++
+      continue
+    }
+    const expiresAt = (row.gym_memberships ?? [])[0]?.expires_at ?? null
+    if (expiresAt && expiresAt >= today) {
+      counts.active++
+    } else {
+      counts.expired++
+    }
+    counts.all++
+  }
+
+  return counts
+}
+
 export async function getGymDashboardStats(shopId: string): Promise<GymDashboardStats> {
   const supabase = await createClient()
   const { data, error } = await supabase.rpc('get_gym_dashboard_stats', { p_shop_id: shopId })
@@ -423,6 +469,7 @@ export interface GymAccessLogRow {
   checked_in_at: string
   outcome: GymAccessOutcome
   source: GymAccessSource
+  member_id: string | null
   member_name: string | null
   /** Digits typed at the self check-in when no member matched. */
   attempted_ref: string | null
@@ -810,7 +857,7 @@ export async function getTodayAccessLog(shopId: string, limit = 200): Promise<Gy
 
   const { data, error } = await supabase
     .from('gym_check_ins')
-    .select('id, checked_in_at, outcome, source, attempted_ref, gym_members(full_name)')
+    .select('id, checked_in_at, outcome, source, member_id, attempted_ref, gym_members(full_name)')
     .eq('shop_id', shopId)
     .gte('checked_in_at', startOfDay.toISOString())
     .order('checked_in_at', { ascending: false })
@@ -828,6 +875,7 @@ export async function getTodayAccessLog(shopId: string, limit = 200): Promise<Gy
       checked_in_at: row.checked_in_at,
       outcome: row.outcome as GymAccessOutcome,
       source: row.source as GymAccessSource,
+      member_id: row.member_id,
       member_name: member?.full_name ?? null,
       attempted_ref: row.attempted_ref,
     }
@@ -846,7 +894,7 @@ export async function getGymAccessLogForRange(
 
   const { data, error } = await supabase
     .from('gym_check_ins')
-    .select('id, checked_in_at, outcome, source, attempted_ref, gym_members(full_name)')
+    .select('id, checked_in_at, outcome, source, member_id, attempted_ref, gym_members(full_name)')
     .eq('shop_id', shopId)
     .gte('checked_in_at', rangeStart)
     .lt('checked_in_at', rangeEnd)
@@ -865,6 +913,7 @@ export async function getGymAccessLogForRange(
       checked_in_at: row.checked_in_at,
       outcome: row.outcome as GymAccessOutcome,
       source: row.source as GymAccessSource,
+      member_id: row.member_id,
       member_name: member?.full_name ?? null,
       attempted_ref: row.attempted_ref,
     }

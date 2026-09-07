@@ -7,7 +7,12 @@ import { getGymMemberLimitInfo } from '@/lib/shops/queries'
 import { Button } from '@/components/ui/button'
 import { MemberForm } from '../member-form'
 
-export default async function NuevoSocioPage() {
+export default async function NuevoSocioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ phone?: string }>
+}) {
+  const { phone } = await searchParams
   const access = await getMyGymAccess()
   if (!access) redirect('/mi-tienda')
   const { shopId } = access
@@ -59,7 +64,10 @@ export default async function NuevoSocioPage() {
               plan y cobrarle después.
             </p>
           ) : null}
-          <MemberForm plans={plans.map((p) => ({ id: p.id, name: p.name, price: p.price }))} />
+          <MemberForm
+            plans={plans.map((p) => ({ id: p.id, name: p.name, price: p.price }))}
+            defaultPhone={phone}
+          />
         </CardContent>
       </Card>
     </div>

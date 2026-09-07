@@ -35,7 +35,7 @@ export function SociosSearch() {
       onChange={(event) => handleChange(event.target.value)}
       placeholder="Buscar por nombre o documento..."
       aria-label="Buscar socios"
-      className="max-w-sm"
+      className="w-full sm:max-w-xs"
     />
   )
 }

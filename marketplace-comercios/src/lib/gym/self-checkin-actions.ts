@@ -102,7 +102,7 @@ export async function regenerateGymSelfCheckinToken(): Promise<EnsureTokenResult
 // ---------------------------------------------------------------------------
 
 export type SelfCheckinResult =
-  | { status: 'active'; firstName: string }
+  | { status: 'active'; firstName: string; expiresAt: string; daysRemaining: number }
   | { status: 'already'; firstName: string }
   | { status: 'expired'; firstName: string }
   | { status: 'not_found' }
@@ -235,7 +235,12 @@ async function resolveSelfCheckin(
     return { status: 'error', message: 'No pudimos registrar tu ingreso. Avisá en recepción.' }
   }
 
-  return { status: 'active', firstName }
+  const daysRemaining = Math.round(
+    (new Date(`${activePeriod.expires_at}T00:00:00`).getTime() - new Date(`${day}T00:00:00`).getTime()) /
+      86_400_000
+  )
+
+  return { status: 'active', firstName, expiresAt: activePeriod.expires_at, daysRemaining }
 }
 
 /**

@@ -5,7 +5,6 @@ import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -68,16 +67,13 @@ function MemberRow({ member, plans }: { member: GymMemberWithStatus; plans: Plan
           {member.full_name}
         </Link>
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
-        {member.document || '—'}
-      </TableCell>
       <TableCell>
         <Badge variant={status.variant}>{status.label}</Badge>
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
+      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
         {formatDate(member.expires_at)}
       </TableCell>
-      <TableCell className="whitespace-nowrap text-muted-foreground">
+      <TableCell className="hidden whitespace-nowrap text-muted-foreground sm:table-cell">
         {member.phone || '—'}
       </TableCell>
       <TableCell>
@@ -105,22 +101,23 @@ export function SociosList({
   plans: PlanOption[]
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Socio</TableHead>
-          <TableHead>DNI</TableHead>
-          <TableHead>Estado</TableHead>
-          <TableHead>Vence</TableHead>
-          <TableHead>Teléfono</TableHead>
-          <TableHead className="text-right">Acciones</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {members.map((member) => (
-          <MemberRow key={member.id} member={member} plans={plans} />
-        ))}
-      </TableBody>
-    </Table>
+    <div className="max-h-[calc(100vh-22rem)] overflow-auto rounded-xl border border-border">
+      <table className="w-full caption-bottom text-sm">
+        <TableHeader className="sticky top-0 z-10 bg-surface">
+          <TableRow>
+            <TableHead>Socio</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead className="hidden sm:table-cell">Vence</TableHead>
+            <TableHead className="hidden sm:table-cell">Teléfono</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {members.map((member) => (
+            <MemberRow key={member.id} member={member} plans={plans} />
+          ))}
+        </TableBody>
+      </table>
+    </div>
   )
 }
