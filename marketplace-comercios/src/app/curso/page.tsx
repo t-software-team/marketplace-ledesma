@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function CursoPage() {
   return (
-    <div className="bg-background text-foreground">
+    <div className="overflow-x-hidden bg-background text-foreground">
       <CursoSiteHeader contactUrl={CONTACT_URL} />
       <main>
         <Hero />
