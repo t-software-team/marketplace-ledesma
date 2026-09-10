@@ -10,11 +10,13 @@ import {
   Code2,
   Database,
   GitBranch,
+  Laptop,
   Layers,
   MessageCircle,
   Rocket,
   Sparkles,
   UsersRound,
+  Wallet,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FadeIn } from '@/components/shop/landing/landing-fade-in'
@@ -47,6 +49,8 @@ export default function CursoPage() {
         <PerfilEgreso />
         <NivelDos />
         <Profesor />
+        <Precio />
+        <Faq />
         <FinalCta />
       </main>
       <SiteFooter />
@@ -100,6 +104,7 @@ function Hero() {
 }
 
 const FICHA = [
+  { label: 'Modalidad', value: 'Online, en vivo', icon: Laptop },
   { label: 'Duración', value: '5 meses · 20 semanas', icon: Calendar },
   { label: 'Frecuencia', value: 'Martes y viernes, 60 min', icon: CalendarClock },
   { label: 'Total de clases', value: '40 clases · 40 horas', icon: BookOpen },
@@ -107,7 +112,18 @@ const FICHA = [
   { label: 'Edad', value: '16 años en adelante', icon: UsersRound },
 ] as const
 
-const STACK = ['JavaScript', 'React', 'Supabase', 'Gentle-AI'] as const
+const STACK = [
+  'JavaScript',
+  'React',
+  'Git/GitHub',
+  'SQL',
+  'Supabase',
+  'Gentle-AI',
+  'SDD',
+  'Kilo Code',
+  'OpenCode',
+  'Integración de IA',
+] as const
 
 function FichaGeneral() {
   return (
@@ -220,7 +236,7 @@ const MESES = [
     icon: Layers,
     eje: 'Fundamentos de JavaScript + React básico',
     resultado: 'Construye interfaces con componentes y estado',
-    ia: 'IA apagada',
+    ia: 'IA mínima',
   },
   {
     numero: '3',
@@ -517,6 +533,96 @@ function Profesor() {
             linkedin.com/in/christianit96
           </a>
         </FadeIn>
+      </div>
+    </section>
+  )
+}
+
+const PRECIO_FUNDAMENTOS = [
+  'Clases en vivo, en grupos reducidos, no un video pregrabado que ves solo',
+  'Seguimiento personalizado clase a clase: se corrige tu código, no el de un ejercicio genérico',
+  'Docente con 7 años de experiencia profesional full stack, no un instructor sin experiencia en la industria',
+  'Termina en un proyecto real, publicado en producción, que podés mostrar en una entrevista',
+] as const
+
+function Precio() {
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-3xl px-5 py-16 text-center sm:px-8 sm:py-24">
+        <FadeIn>
+          <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Wallet className="size-6" aria-hidden />
+          </div>
+          <h2 className="mt-5 text-balance font-heading text-2xl tracking-tight text-foreground sm:text-3xl">
+            Inversión
+          </h2>
+          <p className="mt-4 font-heading text-4xl tracking-tight text-foreground sm:text-5xl">
+            $80.000{' '}
+            <span className="text-lg font-normal text-foreground/60 sm:text-xl">por mes</span>
+          </p>
+          <p className="mx-auto mt-3 max-w-lg text-foreground/70">
+            5 cuotas mensuales durante los 5 meses del programa. Sin costos ocultos.
+          </p>
+        </FadeIn>
+
+        <div className="mt-10 space-y-3 text-left">
+          {PRECIO_FUNDAMENTOS.map((item, index) => (
+            <FadeIn key={item} delay={index * 0.06}>
+              <div className="flex items-start gap-2.5 rounded-xl border border-border bg-surface p-4 text-sm text-foreground/80">
+                <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                {item}
+              </div>
+            </FadeIn>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const FAQ = [
+  {
+    q: '¿Necesito experiencia previa en programación?',
+    a: 'No. El curso arranca desde cero, asumiendo que nunca escribiste una línea de código.',
+  },
+  {
+    q: '¿Cuánto tiempo tengo que dedicarle por semana?',
+    a: 'Dos clases en vivo de 60 minutos (martes y viernes) más 4 horas semanales de trabajo fuera de clase.',
+  },
+  {
+    q: '¿Qué pasa si me atraso o me pierdo una clase?',
+    a: 'Las clases se graban y hay seguimiento personalizado para que no te quedes afuera del ritmo del grupo.',
+  },
+  {
+    q: '¿Puedo pagar en cuotas?',
+    a: 'Sí, la inversión se divide en 5 cuotas mensuales, una por cada mes del programa.',
+  },
+  {
+    q: '¿Qué edad mínima se necesita?',
+    a: 'El curso está pensado para mayores de 16 años.',
+  },
+] as const
+
+function Faq() {
+  return (
+    <section className="border-t border-border">
+      <div className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24">
+        <FadeIn className="text-center">
+          <h2 className="text-balance font-heading text-2xl tracking-tight text-foreground sm:text-3xl">
+            Preguntas frecuentes
+          </h2>
+        </FadeIn>
+
+        <div className="mt-10 space-y-4">
+          {FAQ.map((item, index) => (
+            <FadeIn key={item.q} delay={index * 0.06}>
+              <div className="rounded-2xl border border-border bg-surface p-5">
+                <p className="font-heading text-base text-foreground">{item.q}</p>
+                <p className="mt-1.5 text-sm text-foreground/70">{item.a}</p>
+              </div>
+            </FadeIn>
+          ))}
+        </div>
       </div>
     </section>
   )
