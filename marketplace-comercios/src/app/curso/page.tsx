@@ -360,23 +360,23 @@ function Reglas() {
 
 const PERFIL_DESTACADO = [
   {
-    title: 'Uso asistentes de IA y puedo detectar cuándo se equivocan',
-    body: 'Hay muchos perfiles que le piden código a un asistente. Hay pocos que saben leer ese código y reconocer cuándo está mal. Ese criterio es el resultado de cinco meses de trabajo, y es lo que distingue a un desarrollador de un usuario de IA.',
+    title: 'Vas a usar asistentes de IA y vas a saber detectar cuándo se equivocan',
+    body: 'Muchos le piden código a un asistente. Pocos saben leer ese código y reconocer cuándo está mal. Ese criterio lo vas a construir en cinco meses de trabajo, y es lo que te va a distinguir de un usuario de IA.',
   },
   {
-    title: 'Publiqué una aplicación full stack en internet con una URL que puedo mostrar',
-    body: 'No un ejercicio de práctica: una aplicación real, con base de datos y usuarios, funcionando en producción. Un proyecto verificable pesa más que cualquier certificado.',
+    title: 'Vas a publicar una aplicación full stack en internet con una URL que vas a poder mostrar',
+    body: 'No un ejercicio de práctica: vas a construir una aplicación real, con base de datos y usuarios, funcionando en producción. Un proyecto verificable pesa más que cualquier certificado.',
   },
 ] as const
 
 const PERFIL = [
-  'Tomo un problema descrito en lenguaje natural y lo convierto en una secuencia de pasos ejecutable en JavaScript',
-  'Construyo interfaces con React: componentes, props, estado y consumo de datos externos',
-  'Diseño un modelo de datos simple y lo consulto con SQL',
-  'Conecto una aplicación a una base de datos real, con usuarios que se registran e inician sesión',
-  'Trabajo con Git y GitHub en un flujo colaborativo: ramas, pull requests y revisión de código ajeno',
-  'Redacto una especificación antes de programar, porque una especificación clara es la base de una implementación correcta',
-  'Relevo la necesidad real de un cliente y la traduzco en una propuesta con alcance definido',
+  'Vas a tomar un problema descrito en lenguaje natural y lo vas a convertir en una secuencia de pasos ejecutable en JavaScript',
+  'Vas a construir interfaces con React: componentes, props, estado y consumo de datos externos',
+  'Vas a diseñar un modelo de datos simple y lo vas a consultar con SQL',
+  'Vas a conectar una aplicación a una base de datos real, con usuarios que se registran e inician sesión',
+  'Vas a trabajar con Git y GitHub en un flujo colaborativo: ramas, pull requests y revisión de código ajeno',
+  'Vas a redactar una especificación antes de programar, porque una especificación clara es la base de una implementación correcta',
+  'Vas a relevar la necesidad real de un cliente y la vas a traducir en una propuesta con alcance definido',
 ] as const
 
 function PerfilEgreso() {
@@ -388,7 +388,7 @@ function PerfilEgreso() {
             Perfil de egreso
           </h2>
           <p className="mx-auto mt-3 max-w-md text-foreground/70">
-            Nueve competencias evaluadas clase a clase, a lo largo de las 20 semanas del programa.
+            Esto es lo que vas a dominar, clase a clase, a lo largo de las 20 semanas del programa.
           </p>
         </FadeIn>
 
